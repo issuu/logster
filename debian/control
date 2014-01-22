@@ -23,3 +23,10 @@ Provides:
 Description: Logster - Generate metrics for Graphite and Ganglia
  Logster parsees log files and generate metrics for Graphite
  and Ganglia
+
+Package: logster-haproxy-graphite
+Architecture: all
+Depends: logster, haproxy
+Description: Use logster to feed graphite with HAProxy metrics
+ Logster will parse /var/log/haproxy.log and feed that in to
+ graphite for easy plotting.

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+getent passwd logster >/dev/null || \
+    adduser \
+    --system \
+    --quiet \
+    --group \
+    --gecos "Logster app user" \
+    logster

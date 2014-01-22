@@ -9,6 +9,11 @@ if [ -z "$GRAPHITE_HOST_PORT" ]; then
     exit
 fi
 
+LOGDIR=/var/log/logster/
+test -d ${LOGDIR} || mkdir -p ${LOGDIR}
+chown -R logster ${LOGDIR}
+
 logster --output graphite \
-		--graphite-host ${GRAPHITE_HOST_PORT} \
-		HaProxyLogster /var/log/haproxy.log
+	--graphite-host ${GRAPHITE_HOST_PORT} \
+	HaProxyLogster \
+    /var/log/haproxy.log

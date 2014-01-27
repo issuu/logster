@@ -190,7 +190,7 @@ class HaProxyLogster(LogsterParser):
 
         else:
             if self.hostname:
-                self.increment("haproxy.{}.meta.unparsed-lines".format(hostname))
+                self.increment("haproxy.{}.meta.unparsed-lines".format(self.hostname))
 
     def increment(self, name):
         self.counters[name] += 1

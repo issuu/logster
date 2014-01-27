@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 # pull this from default file
 GRAPHITE_HOST_PORT=
@@ -6,7 +6,7 @@ GRAPHITE_HOST_PORT=
 test -f /etc/default/logster-haproxy-graphite && . /etc/default/logster-haproxy-graphite
 
 if [ -z "$GRAPHITE_HOST_PORT" ]; then
-    exit
+    exit 1
 fi
 
 LOGDIR=/var/log/logster/

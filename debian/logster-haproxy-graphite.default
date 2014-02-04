@@ -1,4 +1,5 @@
-
 # Defaults for logster-haproxy-graphite
 
 GRAPHITE_HOST_PORT=graph.issuu.com:2003
+HAPROXY_SOCKET=/var/run/haproxy.socket
+

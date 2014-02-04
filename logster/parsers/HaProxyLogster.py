@@ -23,6 +23,13 @@ NODENAME = os.uname()[1]
 
 PERCENTILES = [0.100, 0.250, 0.500, 0.750, 0.900, 0.950, 0.990, 0.999]
 
+# http://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol
+REQUEST_METHODS = ['GET','HEAD','POST','PUT','DELETE','TRACE','OPTIONS','CONNECT','PATCH']
+
+# http://en.wikipedia.org/wiki/List_of_HTTP_status_codes
+# The most common
+STATUS_CODES = [200,204,206,301,302,304,400,401,403,404,405,408,410,416,500,502,503,504]
+
 # haproxy.<host>.<backend>.request.method
 # haproxy.<host>.<backend>.response.code.<status>
 #
@@ -114,8 +121,11 @@ class showInfo(Cmd):
     def getResultObj(self, res):
         resDict = {}
         for line in res.split('\n'):
-            k, v = line.split(':')
-            resDict[k] = v
+            try:
+                k, v = line.split(':')
+                resDict[k] = v.lstrip()
+            except:
+                pass
 
         return resDict
 
@@ -133,9 +143,6 @@ class listStats(baseStat):
     cmdTxt = "show stat\r\n"
     helpTxt = "Lists backend stats"
 
-    def getResult(self, res):
-        return "\n".join(self.getResultObj(res))
-
     def getResultObj(self, res):
 
         servers = []
@@ -148,22 +155,28 @@ class listStats(baseStat):
 
                 outCols = line.split(',')
                 try:
-                    # exclude frontend/backends without any backend servers
-                    no_of_servers = int(outCols[cols['act']]) + int(outCols[cols['bck']]) + int(outCols[cols['chkdown']])
-                    if (outCols[cols['svname']] == 'BACKEND') and (no_of_servers > 0):
-                        servers.append(" " .join((
-                             "Backend: %s" % outCols[cols['pxname']],
-                             "SrvName: %s" % outCols[cols['svname']],
-                             "Status: %s" % outCols[cols['status']],
-                             "Weight: %s" %  outCols[cols['weight']],
-                             "qCur: %s" % outCols[cols['qcur']],
-                             "sCur: %s" % outCols[cols['scur']],
-                             "eResp: %s" % outCols[cols['eresp']],
-                             "cliAborts: %s" % outCols[cols['cli_abrt']],
-                             "srvAborts: %s" % outCols[cols['srv_abrt']],
-                             "bIn: %s" % outCols[cols['bin']],
-                             "bOut: %s" % outCols[cols['bout']])))
-                except Exception, e:
+                    if outCols[cols['svname']] == 'BACKEND':
+                        # exclude frontend/backends without any backend servers
+                        no_of_servers = int(outCols[cols['act']]) + int(outCols[cols['bck']]) + int(outCols[cols['chkdown']])
+                    if (outCols[cols['svname']] == 'BACKEND' and no_of_servers > 0) or (outCols[cols['svname']] == 'FRONTEND'):
+                        servers.append({
+                              'backend':   outCols[cols['pxname']],
+                              'srvname':   outCols[cols['svname']],
+                              'status':    outCols[cols['status']],
+                              'weight':    outCols[cols['weight']],
+                              'qcur':      outCols[cols['qcur']],
+                              'qmax':      outCols[cols['qmax']],
+                              'scur':      outCols[cols['scur']],
+                              'smax':      outCols[cols['smax']],
+                              'rate':      outCols[cols['rate']],
+                              'ratemax':   outCols[cols['rate_max']],
+                              'retries':   outCols[cols['wretr']],
+                              'eresp':     outCols[cols['eresp']],
+                              'cliaborts': outCols[cols['cli_abrt']],
+                              'srvaborts': outCols[cols['srv_abrt']],
+                              'bin':       outCols[cols['bin']],
+                              'bout':      outCols[cols['bout']]})
+                except:
                     pass
 
         return servers
@@ -245,8 +258,23 @@ class HaProxyLogster(LogsterParser):
         '''extract_method'''
         if request == '<BADREQ>':
             return 'BADREQ'
-        else:
+        elif request.upper() in REQUEST_METHODS:
             return request
+        else:
+            return 'OTHER'
+
+    def extract_status_code(self, status_code):
+        '''extract_status_code'''
+        try:
+            sc = int(status_code)
+            if sc in STATUS_CODES:
+                return str(sc)
+            elif sc >= 100 and sc < 600:
+                return 'OTHER'
+            else:
+                return 'BADREQ'
+        except:
+            return 'BADREQ'
 
     def __init__(self, option_string=None):
 
@@ -265,11 +293,11 @@ class HaProxyLogster(LogsterParser):
         # Plus info stat - session rate ....
         haproxy = HaPConn(opts.socket)
         cmd = showInfo
-        ha_info = haproxy.sendCmd(cmd())
+        ha_info = haproxy.sendCmd(cmd(), objectify=True)
         haproxy.close()
         haproxy = HaPConn(opts.socket)
         cmd = listStats
-        ha_stats = haproxy.sendCmd(cmd())
+        ha_stats = haproxy.sendCmd(cmd(), objectify=True)
         haproxy.close()
 
         #consists of
@@ -384,9 +412,29 @@ class HaProxyLogster(LogsterParser):
         # initialize counters - always send a value
         self.counters["{}.meta.parsed-lines.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
         self.counters["{}.meta.unparsed-lines.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
-        self.counters["{}.meta.startstop.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
-        self.counters["{}.meta.up-down.down.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
-        self.counters["{}.meta.up-down.up.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
+        self.counters["{}.meta.start-stop.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
+
+        self.counters["{}.stats.cur-conns.{}".format(self.prefix, NODENAME.replace(".", "-"))] = int(ha_info['CurrConns'])
+        self.counters["{}.stats.tasks.{}".format(self.prefix, NODENAME.replace(".", "-"))] = int(ha_info['Tasks'])
+        self.counters["{}.stats.run-queue.{}".format(self.prefix, NODENAME.replace(".", "-"))] = int(ha_info['Run_queue'])
+
+        # for each known backend - initialize counters
+        for backend in map(lambda x: "backend-"+x['backend'], filter(lambda y: y['srvname'] == 'BACKEND', ha_stats)) + ["all-backends"]:
+            suffix = "{}.{}".format(NODENAME.replace(".", "-"), backend.replace(".", "-"))
+            for method in ['BADREQ','OTHER']+REQUEST_METHODS:
+                self.counters["{}.request.method.{}.{}".format(self.prefix, method.lower(), suffix)] = 0
+            for status_code in [str(x) for x in STATUS_CODES] + ['BADREQ','OTHER']:
+                self.counters["{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix)] = 0
+            self.counters["{}.meta.up-down.{}".format(self.prefix, suffix)] = 0
+        for haproxy in filter(lambda y: y['srvname'] == 'BACKEND', ha_stats):
+            suffix = "{}.{}".format(NODENAME.replace(".", "-"), "backend-"+haproxy['backend'].replace(".", "-"))
+            self.counters["{}.stats.backend.session-rate.{}".format(self.prefix, suffix)] = haproxy['rate']
+            self.counters["{}.stats.backend.error-response.{}".format(self.prefix, suffix)] = haproxy['eresp']
+            self.counters["{}.stats.backend.client-aborts.{}".format(self.prefix, suffix)] = haproxy['cliaborts']
+            self.counters["{}.stats.backend.server-aborts.{}".format(self.prefix, suffix)] = haproxy['srvaborts']
+        for haproxy in filter(lambda y: y['srvname'] == 'FRONTEND', ha_stats):
+            suffix = "{}.{}".format(NODENAME.replace(".", "-"), "frontend-"+haproxy['backend'].replace(".", "-"))
+            self.counters["{}.stats.frontend.session-rate.{}".format(self.prefix, suffix)] = haproxy['rate']
 
     def parse_line(self, line):
         '''parse_line'''
@@ -396,12 +444,13 @@ class HaProxyLogster(LogsterParser):
             __d = __m.groupdict()
 
             method = self.extract_method(__d['method'])
+            status_code = self.extract_status_code(__d['status_code'])
             self.increment("{}.meta.parsed-lines.{}".format(self.prefix, NODENAME.replace(".", "-")))
 
-            for backend in ["backend." + __d['backend_name'], "all-backends"]:
+            for backend in ["backend-" + __d['backend_name'], "all-backends"]:
                 suffix = "{}.{}".format(NODENAME.replace(".", "-"), backend.replace(".", "-"))
 
-                self.increment("{}.response.status.{}.{}".format(self.prefix, __d['status_code'], suffix))
+                self.increment("{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix))
                 self.increment("{}.request.method.{}.{}".format(self.prefix, method.lower(), suffix))
 
                 self.gauges["{}.bytesread-pct.{}.{}".format(self.prefix, "{}", suffix)].add(__d['bytes_read'])
@@ -411,12 +460,10 @@ class HaProxyLogster(LogsterParser):
             __m = self.updown_pattern.match(line)
             if __m:
                 __d = __m.groupdict()
-                for backend in ["backend." + __d['backend_name'], "all-backends"]:
+                for backend in ["backend-" + __d['backend_name'], "all-backends"]:
                     suffix = "{}.{}".format(NODENAME.replace(".", "-"), backend.replace(".", "-"))
-                    if __d['updown'] == 'DOWN':
-                        self.increment("{}.meta.up-down.down.{}".format(self.prefix, suffix))
-                    elif __d['updown'] == 'UP':
-                        self.increment("{}.meta.up-down.up.{}".format(self.prefix, suffix))
+                    if __d['updown'] == 'DOWN' or __d['updown'] == 'UP':
+                        self.increment("{}.meta.up-down.{}".format(self.prefix, suffix))
                     else:
                         print >> sys.stderr, 'Failed to parse line: %s' % line
                         self.increment("{}.meta.unparsed-lines.{}".format(self.prefix, NODENAME.replace(".", "-")))
@@ -424,7 +471,7 @@ class HaProxyLogster(LogsterParser):
                 __m = self.startstop_pattern.match(line)
                 if __m:
                     __d = __m.groupdict()
-                    self.counters["{}.meta.startstop.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 1
+                    self.counters["{}.meta.start-stop.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 1
                 else:
                     #raise LogsterParsingException, "Failed to parse line: %s" % line
                     print >> sys.stderr, 'Failed to parse line: %s' % line

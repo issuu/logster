@@ -2,12 +2,14 @@
 
 # pull this from default file
 unset GRAPHITE_HOST_PORT
+unset STATSD_HOST_PORT
 unset HAPROXY_SOCKET
 
 test -f /etc/default/logster-haproxy-graphite && . /etc/default/logster-haproxy-graphite
 
-if [ -z "$GRAPHITE_HOST_PORT" -o -z "${HAPROXY_SOCKET}" ]; then
-    echo 'Please set ${GRAPHITE_HOST_PORT} and ${HAPROXY_SOCKET}'
+if [ -z "${GRAPHITE_HOST_PORT}" -o -z "${STATSD_HOST_PORT}" -o -z "${HAPROXY_SOCKET}" ]; then
+    echo 'Please set ${GRAPHITE_HOST_PORT}, ${STATSD_HOST_PORT} and ${HAPROXY_SOCKET}'
+    echo 'See /etc/default/logster-haproxy-graphite'
     exit 1
 fi
 
@@ -15,7 +17,7 @@ LOGDIR=/var/log/logster/
 test -d ${LOGDIR} || mkdir -p ${LOGDIR}
 
 logster --output statsd \
-	--statsd-host graph.issuu.com:8125 \
-    --parser-options "--socket ${HAPROXY_SOCKET}" \
-	HaProxyLogster \
-    /var/log/haproxy.log
+        --statsd-host ${STATSD_HOST_PORT} \
+        --parser-options "--socket ${HAPROXY_SOCKET}" \
+        HaProxyLogster \
+        /var/log/haproxy.log

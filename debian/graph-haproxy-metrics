@@ -1,23 +1,38 @@
 #!/bin/bash
 
-# pull this from default file
+# pull this from the default file
 unset GRAPHITE_HOST_PORT
 unset STATSD_HOST_PORT
 unset HAPROXY_SOCKET
+unset REQUEST_HEADERS
 
 test -f /etc/default/logster-haproxy-graphite && . /etc/default/logster-haproxy-graphite
 
-if [ -z "${GRAPHITE_HOST_PORT}" -o -z "${STATSD_HOST_PORT}" -o -z "${HAPROXY_SOCKET}" ]; then
-    echo 'Please set ${GRAPHITE_HOST_PORT}, ${STATSD_HOST_PORT} and ${HAPROXY_SOCKET}'
+if [ \( -z "${GRAPHITE_HOST_PORT}" -a -z "${STATSD_HOST_PORT}" \) -o -z "${HAPROXY_SOCKET}" ]; then
+    echo 'Please set either ${GRAPHITE_HOST_PORT} or ${STATSD_HOST_PORT} and ${HAPROXY_SOCKET}'
     echo 'See /etc/default/logster-haproxy-graphite'
     exit 1
+fi
+
+unset REQUEST_HEADERS_OPTION
+if [ -n "${REQUEST_HEADERS}" ]; then
+    REQUEST_HEADERS_OPTION=" --headers ${REQUEST_HEADERS}"
 fi
 
 LOGDIR=/var/log/logster/
 test -d ${LOGDIR} || mkdir -p ${LOGDIR}
 
-logster --output statsd \
+if [ -n "${STATSD_HOST_PORT}" ]; then
+    logster --output statsd \
         --statsd-host ${STATSD_HOST_PORT} \
-        --parser-options "--socket ${HAPROXY_SOCKET}" \
+        --parser-options "--socket ${HAPROXY_SOCKET}${REQUEST_HEADERS_OPTION}" \
         HaProxyLogster \
         /var/log/haproxy.log
+else
+    logster --output graphite \
+        --graphite-host ${GRAPHITE_HOST_PORT} \
+        --parser-options "--socket ${HAPROXY_SOCKET}${REQUEST_HEADERS_OPTION}" \
+        HaProxyLogster \
+        /var/log/haproxy.log
+fi
+

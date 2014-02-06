@@ -21,4 +21,5 @@ setup(
         'bin/logster'
     ],
     license='GPL3',
+    install_requires=['ua-parser']
 )

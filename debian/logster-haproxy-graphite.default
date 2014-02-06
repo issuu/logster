@@ -1,6 +1,11 @@
 # Defaults for logster-haproxy-graphite
 
-GRAPHITE_HOST_PORT=graph.issuu.com:2003
+# Select either GRAPHITE_HOST_PORT or STATSD_HOST_PORT
+#GRAPHITE_HOST_PORT=graph.issuu.com:2003
 STATSD_HOST_PORT=graph.issuu.com:8125
+
+# Mandatory
 HAPROXY_SOCKET=/var/run/haproxy.socket
 
+# Optional - comma sep list
+# REQUEST_HEADERS=Via,X-Forwarded-For,DNT,Accept-Encoding,Referrer,User-Agent,X-Forwarded-Proto,X-Forwarded-Ip,X-Real-Ip,Host,Accept-Language,Referer

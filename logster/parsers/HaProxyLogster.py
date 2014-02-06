@@ -10,6 +10,7 @@ import re
 import math
 import optparse
 from collections import defaultdict
+from ua_parser import user_agent_parser
 
 # unbuffered
 #sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
@@ -30,6 +31,9 @@ REQUEST_METHODS = ['GET','HEAD','POST','PUT','DELETE','TRACE','OPTIONS','CONNECT
 # The most common
 STATUS_CODES = [200,204,206,301,302,304,400,401,403,404,405,408,410,416,500,502,503,504]
 
+# Most common
+LANGUAGES = ['en','es','pt','zh','de','it','fr','ru','da','ar']
+
 # haproxy.<host>.<backend>.request.method
 # haproxy.<host>.<backend>.response.code.<status>
 #
@@ -43,6 +47,28 @@ HaP_OK = 1
 HaP_ERR = 2
 HaP_SOCK_ERR = 3
 HaP_BUFSIZE = 8192
+
+def getPreferredLocale(acceptLanguage):
+    languages = acceptLanguage.split(",")
+    locale_q_pairs = []
+    
+    for language in languages:
+        if language.split(";")[0] == language:
+            # no q => q = 1
+            locale_q_pairs.append((language.strip(), "1"))
+        else:
+            try:
+                locale = language.split(";")[0].strip()
+                q = language.split(";")[1].split("=")[1]
+                locale_q_pairs.append((locale, q))
+            except:
+                pass
+
+    if len(locale_q_pairs) > 0:
+        (l,q) = locale_q_pairs[0]
+        # Disregard subtag
+        return l.split('_')[0].split('-')[0].lower()
+    return None
 
 class HaPConn(object):
     """HAProxy Socket object.
@@ -286,8 +312,14 @@ class HaProxyLogster(LogsterParser):
         optparser = optparse.OptionParser()
         optparser.add_option('--socket', '-s', dest='socket', default=None,
                             help='HaProxy Unix Socket')
+        optparser.add_option('--headers', '-x', dest='headers', default=None,
+                            help='HaProxy Captured Request Headers in a comma separated list')
 
         opts, args = optparser.parse_args(args=options)
+
+        self.headers = None
+        if opts.headers:
+            self.headers = opts.headers.split(',')
  
         # Get/parse running haproxy config (frontends, backends, servers)
         # Plus info stat - session rate ....
@@ -361,10 +393,10 @@ class HaProxyLogster(LogsterParser):
         self.add_pattern(r'server_queue', r'\d+', '/')
         self.add_pattern(r'backend_queue', r'\d+')
         # {||||Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.1.1) Gecko/20090715 Firefox/3.5.1}
-        self.add_pattern('captured_request_headers', r'(\{.*\} |)', '')
+        self.add_pattern('captured_request_headers', r'([^}]*|)', r'(\} |)', r'(\{|)')
 
         # {}
-        self.add_pattern('captured_response_headers', r'(\{.*?\} |)', '')
+        self.add_pattern('captured_response_headers', r'([^}]*|)', r'(\} |)', r'(\{|)')
 
         #"GET /goodiesbasket HTTP/1.1" or "<BADREQ>"
         # This final line might not be complete (truncated 1024 buffer)
@@ -418,6 +450,9 @@ class HaProxyLogster(LogsterParser):
         self.counters["{}.stats.tasks.{}".format(self.prefix, NODENAME.replace(".", "-"))] = int(ha_info['Tasks'])
         self.counters["{}.stats.run-queue.{}".format(self.prefix, NODENAME.replace(".", "-"))] = int(ha_info['Run_queue'])
 
+        for lang in ['OTHER']+LANGUAGES:
+            self.counters["{}.stats.language.{}.{}".format(self.prefix, lang.lower(), NODENAME.replace(".", "-"))] = 0
+
         # for each known backend - initialize counters
         for backend in map(lambda x: "backend-"+x['backend'], filter(lambda y: y['srvname'] == 'BACKEND', ha_stats)) + ["all-backends"]:
             suffix = "{}.{}".format(NODENAME.replace(".", "-"), backend.replace(".", "-"))
@@ -443,9 +478,25 @@ class HaProxyLogster(LogsterParser):
         if __m:
             __d = __m.groupdict()
 
+            if self.headers and __d['captured_request_headers']:
+                crhs = __d['captured_request_headers'].split('|')
+                if len(crhs) == len(self.headers):
+                    for i in range(len(crhs)):
+                        __d['crh_'+self.headers[i].lower()] = crhs[i]
+
+                    ua = user_agent_parser.Parse(__d['crh_user-agent'])
+                    al = getPreferredLocale(__d['crh_accept-language'])
+                    #print >> sys.stderr, ua
+
             method = self.extract_method(__d['method'])
             status_code = self.extract_status_code(__d['status_code'])
             self.increment("{}.meta.parsed-lines.{}".format(self.prefix, NODENAME.replace(".", "-")))
+
+            if al:
+                if al in LANGUAGES:
+                    self.increment("{}.stats.language.{}.{}".format(self.prefix, al.lower(), NODENAME.replace(".", "-")))
+                else:
+                    self.increment("{}.stats.language.{}.{}".format(self.prefix, 'other', NODENAME.replace(".", "-")))
 
             for backend in ["backend-" + __d['backend_name'], "all-backends"]:
                 suffix = "{}.{}".format(NODENAME.replace(".", "-"), backend.replace(".", "-"))

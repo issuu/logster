@@ -478,6 +478,8 @@ class HaProxyLogster(LogsterParser):
         if __m:
             __d = __m.groupdict()
 
+            ua = None
+            al = None
             if self.headers and __d['captured_request_headers']:
                 crhs = __d['captured_request_headers'].split('|')
                 if len(crhs) == len(self.headers):

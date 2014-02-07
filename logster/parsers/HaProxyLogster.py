@@ -255,6 +255,7 @@ class HaProxyLogster(LogsterParser):
     method = defaultdict(lambda: defaultdict(lambda: 0))
     response_time = defaultdict(PercentileMetric)
     prefix = PREFIX
+    nodename = NODENAME.replace(".", "-")
 
     counters = defaultdict(lambda: 0)
     gauges = defaultdict(PercentileMetric)
@@ -444,43 +445,46 @@ class HaProxyLogster(LogsterParser):
         self.unparsed_lines = 0
 
         # initialize counters - always send a value
-        self.counters["{}.meta.parsed-lines.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
-        self.counters["{}.meta.unparsed-lines.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
-        self.counters["{}.meta.start-stop.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
+        self.counters["{}.meta.parsed-lines.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.meta.unparsed-lines.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.meta.start-stop.{}".format(self.prefix, self.nodename)] = 0
 
-        self.counters["{}.stats.cur-conns.{}".format(self.prefix, NODENAME.replace(".", "-"))] = int(ha_info['CurrConns'])
-        self.counters["{}.stats.tasks.{}".format(self.prefix, NODENAME.replace(".", "-"))] = int(ha_info['Tasks'])
-        self.counters["{}.stats.run-queue.{}".format(self.prefix, NODENAME.replace(".", "-"))] = int(ha_info['Run_queue'])
+        self.counters["{}.stats.cur-conns.{}".format(self.prefix, self.nodename)] = int(ha_info['CurrConns'])
+        self.counters["{}.stats.tasks.{}".format(self.prefix, self.nodename)] = int(ha_info['Tasks'])
+        self.counters["{}.stats.run-queue.{}".format(self.prefix, self.nodename)] = int(ha_info['Run_queue'])
 
-        self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
-        self.counters["{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
-        self.counters["{}.stats.browser.ua.os.windows.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
-        self.counters["{}.stats.browser.ua.os.ios.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
-        self.counters["{}.stats.browser.ua.os.android.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
-        self.counters["{}.stats.browser.ua.os.mac-os-x.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
-        self.counters["{}.stats.browser.ua.os.linux.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
-        self.counters["{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
-        self.counters["{}.stats.browser.ua.os.other.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
+        self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.stats.browser.ua.os.windows.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.stats.browser.ua.os.ios.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.stats.browser.ua.os.android.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.stats.browser.ua.os.mac-os-x.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.stats.browser.ua.os.linux.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.stats.browser.ua.os.other.{}".format(self.prefix, self.nodename)] = 0
+
+        self.counters["{}.response.status.crawlers.4xx.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.response.status.crawlers.5xx.{}".format(self.prefix, self.nodename)] = 0
 
         for lang in ['OTHER']+LANGUAGES:
-            self.counters["{}.stats.browser.language.{}.{}".format(self.prefix, lang.lower(), NODENAME.replace(".", "-"))] = 0
+            self.counters["{}.stats.browser.language.{}.{}".format(self.prefix, lang.lower(), self.nodename)] = 0
 
         # for each known backend - initialize counters
         for backend in map(lambda x: "backend-"+x['backend'], filter(lambda y: y['srvname'] == 'BACKEND', ha_stats)) + ["all-backends"]:
-            suffix = "{}.{}".format(NODENAME.replace(".", "-"), backend.replace(".", "-"))
+            suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
             for method in ['BADREQ','OTHER']+REQUEST_METHODS:
                 self.counters["{}.request.method.{}.{}".format(self.prefix, method.lower(), suffix)] = 0
             for status_code in [str(x) for x in STATUS_CODES] + ['BADREQ','OTHER']:
                 self.counters["{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix)] = 0
             self.counters["{}.meta.up-down.{}".format(self.prefix, suffix)] = 0
         for haproxy in filter(lambda y: y['srvname'] == 'BACKEND', ha_stats):
-            suffix = "{}.{}".format(NODENAME.replace(".", "-"), "backend-"+haproxy['backend'].replace(".", "-"))
+            suffix = "{}.{}".format(self.nodename, "backend-"+haproxy['backend'].replace(".", "-"))
             self.counters["{}.stats.backend.session-rate.{}".format(self.prefix, suffix)] = haproxy['rate']
             self.counters["{}.stats.backend.error-response.{}".format(self.prefix, suffix)] = haproxy['eresp']
             self.counters["{}.stats.backend.client-aborts.{}".format(self.prefix, suffix)] = haproxy['cliaborts']
             self.counters["{}.stats.backend.server-aborts.{}".format(self.prefix, suffix)] = haproxy['srvaborts']
         for haproxy in filter(lambda y: y['srvname'] == 'FRONTEND', ha_stats):
-            suffix = "{}.{}".format(NODENAME.replace(".", "-"), "frontend-"+haproxy['backend'].replace(".", "-"))
+            suffix = "{}.{}".format(self.nodename, "frontend-"+haproxy['backend'].replace(".", "-"))
             self.counters["{}.stats.frontend.session-rate.{}".format(self.prefix, suffix)] = haproxy['rate']
 
     def parse_line(self, line):
@@ -503,41 +507,50 @@ class HaProxyLogster(LogsterParser):
 
             method = self.extract_method(__d['method'])
             status_code = self.extract_status_code(__d['status_code'])
-            self.increment("{}.meta.parsed-lines.{}".format(self.prefix, NODENAME.replace(".", "-")))
+            self.increment("{}.meta.parsed-lines.{}".format(self.prefix, self.nodename))
 
             if al:
                 if al in LANGUAGES:
-                    self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, al.lower(), NODENAME.replace(".", "-")))
+                    self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, al.lower(), self.nodename))
                 else:
-                    self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, 'other', NODENAME.replace(".", "-")))
+                    self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, 'other', self.nodename))
 
             if ua:
+                # Spider
                 if ua['device']['family'] == 'Spider':
-                    self.increment("{}.stats.browser.ua.crawlers.{}".format(self.prefix, NODENAME.replace(".", "-")))
+                    self.increment("{}.stats.browser.ua.crawlers.{}".format(self.prefix, self.nodename))
+                    try:
+                        sc = int(status_code)
+                        if sc >= 400 and sc <= 499:
+                            self.increment("{}.response.status.crawlers.4xx.{}".format(self.prefix, self.nodename))
+                        elif sc >= 500 and sc <= 599:
+                            self.increment("{}.response.status.crawlers.5xx.{}".format(self.prefix, self.nodename))
+                    except:
+                        pass
                 else:
                     # OS Family, i.e. Windows 7, Windows 2000, iOS, Android, Mac OS X, Windows Phone, Windows Mobile
                     os_family=ua['os']['family']
                     os_familyname=os_family.split(' ')[0]
                     if os_familyname == 'Windows':
                         if os_family in ['Windows Phone', 'Windows Mobile']:
-                            self.increment("{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, NODENAME.replace(".", "-")))
+                            self.increment("{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, self.nodename))
                         else:
-                            self.increment("{}.stats.browser.ua.os.windows.{}".format(self.prefix, NODENAME.replace(".", "-")))
+                            self.increment("{}.stats.browser.ua.os.windows.{}".format(self.prefix, self.nodename))
                     elif os_family == 'iOS':
-                        self.increment("{}.stats.browser.ua.os.ios.{}".format(self.prefix, NODENAME.replace(".", "-")))
+                        self.increment("{}.stats.browser.ua.os.ios.{}".format(self.prefix, self.nodename))
                     elif os_family == 'Android':
-                        self.increment("{}.stats.browser.ua.os.android.{}".format(self.prefix, NODENAME.replace(".", "-")))
+                        self.increment("{}.stats.browser.ua.os.android.{}".format(self.prefix, self.nodename))
                     elif os_family in ['Mac OS X', 'Mac OS']:
-                        self.increment("{}.stats.browser.ua.os.mac-os-x.{}".format(self.prefix, NODENAME.replace(".", "-")))
+                        self.increment("{}.stats.browser.ua.os.mac-os-x.{}".format(self.prefix, self.nodename))
                     elif os_family in LINUX_VARIANTS:
-                        self.increment("{}.stats.browser.ua.os.linux.{}".format(self.prefix, NODENAME.replace(".", "-")))
+                        self.increment("{}.stats.browser.ua.os.linux.{}".format(self.prefix, self.nodename))
                     elif os_familyname == 'BlackBerry':
-                        self.increment("{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, NODENAME.replace(".", "-")))
+                        self.increment("{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, self.nodename))
                     else:
-                        self.increment("{}.stats.browser.ua.os.other.{}".format(self.prefix, NODENAME.replace(".", "-")))
+                        self.increment("{}.stats.browser.ua.os.other.{}".format(self.prefix, self.nodename))
 
             for backend in ["backend-" + __d['backend_name'], "all-backends"]:
-                suffix = "{}.{}".format(NODENAME.replace(".", "-"), backend.replace(".", "-"))
+                suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
 
                 self.increment("{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix))
                 self.increment("{}.request.method.{}.{}".format(self.prefix, method.lower(), suffix))
@@ -550,21 +563,21 @@ class HaProxyLogster(LogsterParser):
             if __m:
                 __d = __m.groupdict()
                 for backend in ["backend-" + __d['backend_name'], "all-backends"]:
-                    suffix = "{}.{}".format(NODENAME.replace(".", "-"), backend.replace(".", "-"))
+                    suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
                     if __d['updown'] == 'DOWN' or __d['updown'] == 'UP':
                         self.increment("{}.meta.up-down.{}".format(self.prefix, suffix))
                     else:
                         print >> sys.stderr, 'Failed to parse line: %s' % line
-                        self.increment("{}.meta.unparsed-lines.{}".format(self.prefix, NODENAME.replace(".", "-")))
+                        self.increment("{}.meta.unparsed-lines.{}".format(self.prefix, self.nodename))
             else:
                 __m = self.startstop_pattern.match(line)
                 if __m:
                     __d = __m.groupdict()
-                    self.counters["{}.meta.start-stop.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 1
+                    self.counters["{}.meta.start-stop.{}".format(self.prefix, self.nodename)] = 1
                 else:
                     #raise LogsterParsingException, "Failed to parse line: %s" % line
                     print >> sys.stderr, 'Failed to parse line: %s' % line
-                    self.increment("{}.meta.unparsed-lines.{}".format(self.prefix, NODENAME.replace(".", "-")))
+                    self.increment("{}.meta.unparsed-lines.{}".format(self.prefix, self.nodename))
 
     def increment(self, name):
         '''increment'''

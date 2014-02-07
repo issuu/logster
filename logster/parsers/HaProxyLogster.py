@@ -502,8 +502,12 @@ class HaProxyLogster(LogsterParser):
                     for i in range(len(crhs)):
                         __d['crh_'+self.headers[i].lower()] = crhs[i]
 
-                    ua = user_agent_parser.Parse(__d['crh_user-agent'])
-                    al = getPreferredLocale(__d['crh_accept-language'])
+                    # We cannot be sure that header is included
+                    try:
+                        ua = user_agent_parser.Parse(__d['crh_user-agent'])
+                        al = getPreferredLocale(__d['crh_accept-language'])
+                    except:
+                        pass
 
             method = self.extract_method(__d['method'])
             status_code = self.extract_status_code(__d['status_code'])

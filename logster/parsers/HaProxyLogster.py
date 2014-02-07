@@ -34,6 +34,8 @@ STATUS_CODES = [200,204,206,301,302,304,400,401,403,404,405,408,410,416,500,502,
 # Most common
 LANGUAGES = ['en','es','pt','zh','de','it','fr','ru','da','ar']
 
+LINUX_VARIANTS = ['Linux', 'Ubuntu', 'Debian', 'Fedora', 'Gentoo', 'Red Hat', 'SUSE']
+
 # haproxy.<host>.<backend>.request.method
 # haproxy.<host>.<backend>.response.code.<status>
 #
@@ -451,6 +453,14 @@ class HaProxyLogster(LogsterParser):
         self.counters["{}.stats.run-queue.{}".format(self.prefix, NODENAME.replace(".", "-"))] = int(ha_info['Run_queue'])
 
         self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
+        self.counters["{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
+        self.counters["{}.stats.browser.ua.os.windows.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
+        self.counters["{}.stats.browser.ua.os.ios.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
+        self.counters["{}.stats.browser.ua.os.android.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
+        self.counters["{}.stats.browser.ua.os.mac-os-x.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
+        self.counters["{}.stats.browser.ua.os.linux.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
+        self.counters["{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
+        self.counters["{}.stats.browser.ua.os.other.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
 
         for lang in ['OTHER']+LANGUAGES:
             self.counters["{}.stats.browser.language.{}.{}".format(self.prefix, lang.lower(), NODENAME.replace(".", "-"))] = 0
@@ -504,7 +514,28 @@ class HaProxyLogster(LogsterParser):
             if ua:
                 if ua['device']['family'] == 'Spider':
                     self.increment("{}.stats.browser.ua.crawlers.{}".format(self.prefix, NODENAME.replace(".", "-")))
-                
+                else:
+                    # OS Family, i.e. Windows 7, Windows 2000, iOS, Android, Mac OS X, Windows Phone, Windows Mobile
+                    os_family=ua['os']['family']
+                    os_familyname=os_family.split(' ')[0]
+                    if os_familyname == 'Windows':
+                        if os_family in ['Windows Phone', 'Windows Mobile']:
+                            self.increment("{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, NODENAME.replace(".", "-")))
+                        else:
+                            self.increment("{}.stats.browser.ua.os.windows.{}".format(self.prefix, NODENAME.replace(".", "-")))
+                    elif os_family == 'iOS':
+                        self.increment("{}.stats.browser.ua.os.ios.{}".format(self.prefix, NODENAME.replace(".", "-")))
+                    elif os_family == 'Android':
+                        self.increment("{}.stats.browser.ua.os.android.{}".format(self.prefix, NODENAME.replace(".", "-")))
+                    elif os_family in ['Mac OS X', 'Mac OS']:
+                        self.increment("{}.stats.browser.ua.os.mac-os-x.{}".format(self.prefix, NODENAME.replace(".", "-")))
+                    elif os_family in LINUX_VARIANTS:
+                        self.increment("{}.stats.browser.ua.os.linux.{}".format(self.prefix, NODENAME.replace(".", "-")))
+                    elif os_familyname == 'BlackBerry':
+                        self.increment("{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, NODENAME.replace(".", "-")))
+                    else:
+                        self.increment("{}.stats.browser.ua.os.other.{}".format(self.prefix, NODENAME.replace(".", "-")))
+
             for backend in ["backend-" + __d['backend_name'], "all-backends"]:
                 suffix = "{}.{}".format(NODENAME.replace(".", "-"), backend.replace(".", "-"))
 

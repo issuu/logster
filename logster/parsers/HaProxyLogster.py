@@ -322,7 +322,7 @@ class HaProxyLogster(LogsterParser):
 
         self.headers = None
         if opts.headers:
-            self.headers = opts.headers.split(',')
+            self.headers = [x.lower() for x in opts.headers.split(',')]
  
         # Get/parse running haproxy config (frontends, backends, servers)
         # Plus info stat - session rate ....
@@ -453,21 +453,23 @@ class HaProxyLogster(LogsterParser):
         self.counters["{}.stats.tasks.{}".format(self.prefix, self.nodename)] = int(ha_info['Tasks'])
         self.counters["{}.stats.run-queue.{}".format(self.prefix, self.nodename)] = int(ha_info['Run_queue'])
 
-        self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, self.nodename)] = 0
-        self.counters["{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, self.nodename)] = 0
-        self.counters["{}.stats.browser.ua.os.windows.{}".format(self.prefix, self.nodename)] = 0
-        self.counters["{}.stats.browser.ua.os.ios.{}".format(self.prefix, self.nodename)] = 0
-        self.counters["{}.stats.browser.ua.os.android.{}".format(self.prefix, self.nodename)] = 0
-        self.counters["{}.stats.browser.ua.os.mac-os-x.{}".format(self.prefix, self.nodename)] = 0
-        self.counters["{}.stats.browser.ua.os.linux.{}".format(self.prefix, self.nodename)] = 0
-        self.counters["{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, self.nodename)] = 0
-        self.counters["{}.stats.browser.ua.os.other.{}".format(self.prefix, self.nodename)] = 0
+        if 'user-agent' in self.headers:
+            self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.stats.browser.ua.os.windows.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.stats.browser.ua.os.ios.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.stats.browser.ua.os.android.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.stats.browser.ua.os.mac-os-x.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.stats.browser.ua.os.linux.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.stats.browser.ua.os.other.{}".format(self.prefix, self.nodename)] = 0
 
-        self.counters["{}.response.status.crawlers.4xx.{}".format(self.prefix, self.nodename)] = 0
-        self.counters["{}.response.status.crawlers.5xx.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.response.status.crawlers.4xx.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.response.status.crawlers.5xx.{}".format(self.prefix, self.nodename)] = 0
 
-        for lang in ['OTHER']+LANGUAGES:
-            self.counters["{}.stats.browser.language.{}.{}".format(self.prefix, lang.lower(), self.nodename)] = 0
+        if 'accept-language' in self.headers:
+            for lang in ['OTHER']+LANGUAGES:
+                self.counters["{}.stats.browser.language.{}.{}".format(self.prefix, lang.lower(), self.nodename)] = 0
 
         # for each known backend - initialize counters
         for backend in map(lambda x: "backend-"+x['backend'], filter(lambda y: y['srvname'] == 'BACKEND', ha_stats)) + ["all-backends"]:
@@ -500,7 +502,7 @@ class HaProxyLogster(LogsterParser):
                 crhs = __d['captured_request_headers'].split('|')
                 if len(crhs) == len(self.headers):
                     for i in range(len(crhs)):
-                        __d['crh_'+self.headers[i].lower()] = crhs[i]
+                        __d['crh_'+self.headers[i]] = crhs[i]
 
                     # We cannot be sure that header is included
                     try:

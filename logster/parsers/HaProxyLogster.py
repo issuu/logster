@@ -450,8 +450,10 @@ class HaProxyLogster(LogsterParser):
         self.counters["{}.stats.tasks.{}".format(self.prefix, NODENAME.replace(".", "-"))] = int(ha_info['Tasks'])
         self.counters["{}.stats.run-queue.{}".format(self.prefix, NODENAME.replace(".", "-"))] = int(ha_info['Run_queue'])
 
+        self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, NODENAME.replace(".", "-"))] = 0
+
         for lang in ['OTHER']+LANGUAGES:
-            self.counters["{}.stats.language.{}.{}".format(self.prefix, lang.lower(), NODENAME.replace(".", "-"))] = 0
+            self.counters["{}.stats.browser.language.{}.{}".format(self.prefix, lang.lower(), NODENAME.replace(".", "-"))] = 0
 
         # for each known backend - initialize counters
         for backend in map(lambda x: "backend-"+x['backend'], filter(lambda y: y['srvname'] == 'BACKEND', ha_stats)) + ["all-backends"]:
@@ -488,7 +490,6 @@ class HaProxyLogster(LogsterParser):
 
                     ua = user_agent_parser.Parse(__d['crh_user-agent'])
                     al = getPreferredLocale(__d['crh_accept-language'])
-                    #print >> sys.stderr, ua
 
             method = self.extract_method(__d['method'])
             status_code = self.extract_status_code(__d['status_code'])
@@ -496,10 +497,14 @@ class HaProxyLogster(LogsterParser):
 
             if al:
                 if al in LANGUAGES:
-                    self.increment("{}.stats.language.{}.{}".format(self.prefix, al.lower(), NODENAME.replace(".", "-")))
+                    self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, al.lower(), NODENAME.replace(".", "-")))
                 else:
-                    self.increment("{}.stats.language.{}.{}".format(self.prefix, 'other', NODENAME.replace(".", "-")))
+                    self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, 'other', NODENAME.replace(".", "-")))
 
+            if ua:
+                if ua['device']['family'] == 'Spider':
+                    self.increment("{}.stats.browser.ua.crawlers.{}".format(self.prefix, NODENAME.replace(".", "-")))
+                
             for backend in ["backend-" + __d['backend_name'], "all-backends"]:
                 suffix = "{}.{}".format(NODENAME.replace(".", "-"), backend.replace(".", "-"))
 

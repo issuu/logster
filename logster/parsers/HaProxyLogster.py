@@ -506,7 +506,7 @@ class HaProxyLogster(LogsterParser):
 
                     # We cannot be sure that header is included
                     try:
-                        ua = user_agent_parser.Parse(__d['crh_user-agent'])
+                        ua = user_agent_parser.Parse(__d['crh_user-agent'].replace('User-Agent: ','',1))
                         al = getPreferredLocale(__d['crh_accept-language'])
                     except:
                         pass

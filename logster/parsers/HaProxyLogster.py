@@ -12,6 +12,7 @@ import numpy
 import optparse
 from collections import defaultdict
 from ua_parser import user_agent_parser
+from IPy import IP
 
 # unbuffered
 #sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
@@ -570,9 +571,15 @@ class HaProxyLogster(LogsterParser):
 
             if not is_spider:
                 try:
-                    self.ip_counter[__d['client_ip']] += 1
+                    ip = IP(__d['client_ip'])
+                    if ip.iptype() != 'PRIVATE':
+                        try:
+                            self.ip_counter[__d['client_ip']] += 1
+                        except:
+                            self.ip_counter[__d['client_ip']] = 1
                 except:
-                    self.ip_counter[__d['client_ip']] = 1
+                    # Bad ip - wtf !
+                    pass
 
             for backend in ["backend-" + __d['backend_name'], "all-backends"]:
                 suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))

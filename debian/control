@@ -16,6 +16,8 @@ Architecture: all
 Depends:
     logtail,
     python-pkg-resources,
+    python-numpy,
+    python-ipy,
     ${python:Depends},
     ${misc:Depends}
 Provides:

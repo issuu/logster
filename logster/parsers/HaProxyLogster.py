@@ -510,18 +510,19 @@ class HaProxyLogster(LogsterParser):
 
             ua = None
             al = None
+            ff = None
             if self.headers and __d['captured_request_headers']:
                 crhs = __d['captured_request_headers'].split('|')
                 if len(crhs) == len(self.headers):
                     for i in range(len(crhs)):
                         __d['crh_'+self.headers[i]] = crhs[i]
 
-                    # We cannot be sure that header is included
-                    try:
+                    if 'crh_user-agent' in __d:
                         ua = user_agent_parser.Parse(__d['crh_user-agent'].replace('User-Agent: ','',1))
+                    if 'crh_accept-language' in __d:
                         al = getPreferredLocale(__d['crh_accept-language'])
-                    except:
-                        pass
+                    if 'crh_x-forwarded-for' in __d:
+                        ff = __d['crh_x-forwarded-for']
 
             method = self.extract_method(__d['method'])
             status_code = self.extract_status_code(__d['status_code'])
@@ -572,6 +573,8 @@ class HaProxyLogster(LogsterParser):
             if not is_spider:
                 try:
                     ip = IP(__d['client_ip'])
+                    if ip in IP('127.0.0.0/8') and ff:
+                        ip = IP(ff)
                     if ip.iptype() != 'PRIVATE':
                         try:
                             self.ip_counter[__d['client_ip']] += 1

@@ -8,6 +8,7 @@ import os
 import sys
 import re
 import math
+import socket
 import optparse
 from collections import defaultdict
 from ua_parser import user_agent_parser
@@ -317,12 +318,21 @@ class HaProxyLogster(LogsterParser):
                             help='HaProxy Unix Socket')
         optparser.add_option('--headers', '-x', dest='headers', default=None,
                             help='HaProxy Captured Request Headers in a comma separated list')
+        optparser.add_option('--crawlerhosts', '-c', dest='crawlerhosts', default=None,
+                            help='Comma separated list of known crawlerhosts, i.e. findthatfile.com')
 
         opts, args = optparser.parse_args(args=options)
 
         self.headers = None
         if opts.headers:
             self.headers = [x.lower() for x in opts.headers.split(',')]
+ 
+        self.crawlerips = []
+        if opts.crawlerhosts:
+            try:
+                self.crawlerips = [socket.gethostbyname(x) for x in opts.crawlerhosts.split(',')]
+            except:
+                pass
  
         # Get/parse running haproxy config (frontends, backends, servers)
         # Plus info stat - session rate ....
@@ -523,7 +533,7 @@ class HaProxyLogster(LogsterParser):
 
             if ua:
                 # Spider
-                if ua['device']['family'] == 'Spider':
+                if ua['device']['family'] == 'Spider' or __d['client_ip'] in self.crawlerips:
                     self.increment("{}.stats.browser.ua.crawlers.{}".format(self.prefix, self.nodename))
                     try:
                         sc = int(status_code)

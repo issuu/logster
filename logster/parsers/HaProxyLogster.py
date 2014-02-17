@@ -8,6 +8,7 @@ import os
 import sys
 import re
 import math
+import numpy
 import optparse
 from collections import defaultdict
 from ua_parser import user_agent_parser
@@ -248,6 +249,7 @@ class PercentileMetric(MetricObject):
 class HaProxyLogster(LogsterParser):
     '''HaProxyLogster'''
 
+    ip_counter = {}
     patterns = []
     log_def = []
     regexs = []
@@ -566,6 +568,12 @@ class HaProxyLogster(LogsterParser):
                 else:
                     self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, 'other', self.nodename))
 
+            if not is_spider:
+                try:
+                    self.ip_counter[__d['client_ip']] += 1
+                except:
+                    self.ip_counter[__d['client_ip']] = 1
+
             for backend in ["backend-" + __d['backend_name'], "all-backends"]:
                 suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
 
@@ -603,6 +611,8 @@ class HaProxyLogster(LogsterParser):
     def get_state(self, duration):
         '''get_state'''
         metrics = []
+
+        self.counters["{}.stats.ip-variance.{}".format(self.prefix, self.nodename)] = int(numpy.var(self.ip_counter.values()))
 
         for name, value in self.counters.items():
             metrics.append(MetricObject(name, value))

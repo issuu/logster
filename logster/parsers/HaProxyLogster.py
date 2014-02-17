@@ -524,15 +524,11 @@ class HaProxyLogster(LogsterParser):
             status_code = self.extract_status_code(__d['status_code'])
             self.increment("{}.meta.parsed-lines.{}".format(self.prefix, self.nodename))
 
-            if al:
-                if al in LANGUAGES:
-                    self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, al.lower(), self.nodename))
-                else:
-                    self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, 'other', self.nodename))
-
+            is_spider = False
             if ua:
                 # Spider
                 if ua['device']['family'] == 'Spider' or __d['client_ip'] in self.crawlerips:
+                    is_spider = True
                     self.increment("{}.stats.browser.ua.crawlers.{}".format(self.prefix, self.nodename))
                     try:
                         sc = int(status_code)
@@ -563,6 +559,12 @@ class HaProxyLogster(LogsterParser):
                         self.increment("{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, self.nodename))
                     else:
                         self.increment("{}.stats.browser.ua.os.other.{}".format(self.prefix, self.nodename))
+
+            if al and not is_spider:
+                if al in LANGUAGES:
+                    self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, al.lower(), self.nodename))
+                else:
+                    self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, 'other', self.nodename))
 
             for backend in ["backend-" + __d['backend_name'], "all-backends"]:
                 suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))

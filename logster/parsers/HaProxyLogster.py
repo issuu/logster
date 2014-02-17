@@ -8,7 +8,6 @@ import os
 import sys
 import re
 import math
-import socket
 import optparse
 from collections import defaultdict
 from ua_parser import user_agent_parser
@@ -44,7 +43,7 @@ LINUX_VARIANTS = ['Linux', 'Ubuntu', 'Debian', 'Fedora', 'Gentoo', 'Red Hat', 'S
 from logster.logster_helper import MetricObject, LogsterParser
 from logster.logster_helper import LogsterParsingException
 
-from socket import socket, AF_UNIX, SOCK_STREAM
+from socket import socket, gethostbyname, AF_UNIX, SOCK_STREAM
 
 HaP_OK = 1
 HaP_ERR = 2
@@ -314,7 +313,7 @@ class HaProxyLogster(LogsterParser):
             options = []
 
         optparser = optparse.OptionParser()
-        optparser.add_option('--socket', '-s', dest='socket', default=None,
+        optparser.add_option('--socket', '-s', dest='pxy_socket', default=None,
                             help='HaProxy Unix Socket')
         optparser.add_option('--headers', '-x', dest='headers', default=None,
                             help='HaProxy Captured Request Headers in a comma separated list')
@@ -330,17 +329,17 @@ class HaProxyLogster(LogsterParser):
         self.crawlerips = []
         if opts.crawlerhosts:
             try:
-                self.crawlerips = [socket.gethostbyname(x) for x in opts.crawlerhosts.split(',')]
+                self.crawlerips = [gethostbyname(x) for x in opts.crawlerhosts.split(',')]
             except:
                 pass
  
         # Get/parse running haproxy config (frontends, backends, servers)
         # Plus info stat - session rate ....
-        haproxy = HaPConn(opts.socket)
+        haproxy = HaPConn(opts.pxy_socket)
         cmd = showInfo
         ha_info = haproxy.sendCmd(cmd(), objectify=True)
         haproxy.close()
-        haproxy = HaPConn(opts.socket)
+        haproxy = HaPConn(opts.pxy_socket)
         cmd = listStats
         ha_stats = haproxy.sendCmd(cmd(), objectify=True)
         haproxy.close()

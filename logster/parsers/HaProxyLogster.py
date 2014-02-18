@@ -474,6 +474,9 @@ class HaProxyLogster(LogsterParser):
 
         if 'user-agent' in self.headers:
             self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.stats.browser.ua.crawlers.ips.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, self.nodename)] = 0
             self.counters["{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, self.nodename)] = 0
             self.counters["{}.stats.browser.ua.os.windows.{}".format(self.prefix, self.nodename)] = 0
             self.counters["{}.stats.browser.ua.os.ios.{}".format(self.prefix, self.nodename)] = 0
@@ -531,24 +534,27 @@ class HaProxyLogster(LogsterParser):
                     if 'crh_x-forwarded-for' in __d:
                         xff = __d['crh_x-forwarded-for']
 
+            try:
+                client_ip = IP(__d['client_ip'])
+                if client_ip in IP('127.0.0.0/8') and xff:
+                    client_ip = IP(xff)
+            except:
+                # This should in theory never happen
+                client_ip = IP('127.0.0.1')
+
             method = self.extract_method(__d['method'])
             status_code = self.extract_status_code(__d['status_code'])
             self.increment("{}.meta.parsed-lines.{}".format(self.prefix, self.nodename))
 
+            # Detect/Handle Spiders/Crawlers
             is_spider = False
-            if ua:
+
+            if client_ip.strNormal() in self.crawlerips:
+                is_spider = True
+            elif ua:
                 # Spider
-                if ua['device']['family'] == 'Spider' or __d['client_ip'] in self.crawlerips:
+                if ua['device']['family'] == 'Spider':
                     is_spider = True
-                    self.increment("{}.stats.browser.ua.crawlers.{}".format(self.prefix, self.nodename))
-                    try:
-                        sc = int(status_code)
-                        if sc >= 400 and sc <= 499:
-                            self.increment("{}.response.status.crawlers.4xx.{}".format(self.prefix, self.nodename))
-                        elif sc >= 500 and sc <= 599:
-                            self.increment("{}.response.status.crawlers.5xx.{}".format(self.prefix, self.nodename))
-                    except:
-                        pass
                 else:
                     # OS Family, i.e. Windows 7, Windows 2000, iOS, Android, Mac OS X, Windows Phone, Windows Mobile
                     os_family=ua['os']['family']
@@ -570,6 +576,26 @@ class HaProxyLogster(LogsterParser):
                         self.increment("{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, self.nodename))
                     else:
                         self.increment("{}.stats.browser.ua.os.other.{}".format(self.prefix, self.nodename))
+            elif ua is None and 'crh_user-agent' in __d and client_ip.iptype() != 'PRIVATE':
+                # Empty User-Agent string and none private network - mark it as a spider
+                is_spider = True
+
+            if is_spider:
+                self.increment("{}.stats.browser.ua.crawlers.{}".format(self.prefix, self.nodename))
+                if ua:
+                    self.increment("{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, self.nodename))
+                elif client_ip.strNormal() in self.crawlerips:
+                    self.increment("{}.stats.browser.ua.crawlers.ips.{}".format(self.prefix, self.nodename))
+                else:
+                    self.increment("{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, self.nodename))
+                try:
+                    sc = int(status_code)
+                    if sc >= 400 and sc <= 499:
+                        self.increment("{}.response.status.crawlers.4xx.{}".format(self.prefix, self.nodename))
+                    elif sc >= 500 and sc <= 599:
+                        self.increment("{}.response.status.crawlers.5xx.{}".format(self.prefix, self.nodename))
+                except:
+                    pass
 
             if al and not is_spider:
                 if al in LANGUAGES:
@@ -578,18 +604,11 @@ class HaProxyLogster(LogsterParser):
                     self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, 'other', self.nodename))
 
             if not is_spider:
-                try:
-                    ip = IP(__d['client_ip'])
-                    if ip in IP('127.0.0.0/8') and xff:
-                        ip = IP(xff)
-                    if ip.iptype() != 'PRIVATE':
-                        try:
-                            self.ip_counter[ip.ip] += 1
-                        except:
-                            self.ip_counter[ip.ip] = 1
-                except:
-                    # Bad ip - wtf !
-                    pass
+                if client_ip.iptype() != 'PRIVATE':
+                    try:
+                        self.ip_counter[client_ip.ip] += 1
+                    except:
+                        self.ip_counter[client_ip.ip] = 1
 
             for backend in ["backend-" + __d['backend_name'], "all-backends"]:
                 suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))

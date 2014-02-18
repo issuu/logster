@@ -528,11 +528,14 @@ class HaProxyLogster(LogsterParser):
                         __d['crh_'+self.headers[i]] = crhs[i]
 
                     if 'crh_user-agent' in __d:
-                        ua = user_agent_parser.Parse(__d['crh_user-agent'].replace('User-Agent: ','',1))
+                        if __d['crh_user-agent']:
+                            ua = user_agent_parser.Parse(__d['crh_user-agent'].replace('User-Agent: ','',1))
                     if 'crh_accept-language' in __d:
-                        al = getPreferredLocale(__d['crh_accept-language'])
+                        if __d['crh_accept-language']:
+                            al = getPreferredLocale(__d['crh_accept-language'])
                     if 'crh_x-forwarded-for' in __d:
-                        xff = __d['crh_x-forwarded-for']
+                        if __d['crh_x-forwarded-for']:
+                            xff = __d['crh_x-forwarded-for']
 
             try:
                 client_ip = IP(__d['client_ip'])

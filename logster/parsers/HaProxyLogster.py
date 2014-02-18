@@ -564,7 +564,7 @@ class HaProxyLogster(LogsterParser):
                 is_spider = True
             elif ua:
                 # Spider
-                if ua['device']['family'] == 'Spider':
+                if ua['device']['family'] == 'Spider' or (ua['device']['family'] == 'Other' and ' Ezooms/' in ua['string']):
                     is_spider = True
                 else:
                     # OS Family, i.e. Windows 7, Windows 2000, iOS, Android, Mac OS X, Windows Phone, Windows Mobile

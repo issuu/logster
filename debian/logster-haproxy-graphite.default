@@ -10,5 +10,5 @@ HAPROXY_SOCKET=/var/run/haproxy.socket
 # Optional - comma sep list
 # REQUEST_HEADERS=Via,X-Forwarded-For,DNT,Accept-Encoding,Referrer,User-Agent,X-Forwarded-Proto,X-Forwarded-Ip,X-Real-Ip,Host,Accept-Language,Referer
 
-# Optional - comma sep list
-# CRAWLERHOSTS=findthatfile.com
+# Optional - comma sep list, hostnames or ips
+# CRAWLERHOSTS=findthatfile.com,63.208.194.130

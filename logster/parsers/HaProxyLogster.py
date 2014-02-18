@@ -52,6 +52,16 @@ HaP_ERR = 2
 HaP_SOCK_ERR = 3
 HaP_BUFSIZE = 8192
 
+def resolveHost(host_or_ip):
+    try:
+        ip = IP(host_or_ip)
+        return ip.strNormal()
+    except:
+        try:
+            return gethostbyname(host_or_ip)
+        except:
+            return None
+
 def getPreferredLocale(acceptLanguage):
     languages = acceptLanguage.split(",")
     locale_q_pairs = []
@@ -321,7 +331,7 @@ class HaProxyLogster(LogsterParser):
         optparser.add_option('--headers', '-x', dest='headers', default=None,
                             help='HaProxy Captured Request Headers in a comma separated list')
         optparser.add_option('--crawlerhosts', '-c', dest='crawlerhosts', default=None,
-                            help='Comma separated list of known crawlerhosts, i.e. findthatfile.com')
+                            help='Comma separated list of known crawlerhost's/ip's, i.e. findthatfile.com,63.208.194.130')
 
         opts, args = optparser.parse_args(args=options)
 
@@ -331,10 +341,7 @@ class HaProxyLogster(LogsterParser):
  
         self.crawlerips = []
         if opts.crawlerhosts:
-            try:
-                self.crawlerips = [gethostbyname(x) for x in opts.crawlerhosts.split(',')]
-            except:
-                pass
+            self.crawlerips = [resolveHost(x) for x in opts.crawlerhosts.split(',')]
  
         # Get/parse running haproxy config (frontends, backends, servers)
         # Plus info stat - session rate ....
@@ -508,9 +515,9 @@ class HaProxyLogster(LogsterParser):
         if __m:
             __d = __m.groupdict()
 
-            ua = None
-            al = None
-            ff = None
+            ua  = None
+            al  = None
+            xff = None
             if self.headers and __d['captured_request_headers']:
                 crhs = __d['captured_request_headers'].split('|')
                 if len(crhs) == len(self.headers):
@@ -522,7 +529,7 @@ class HaProxyLogster(LogsterParser):
                     if 'crh_accept-language' in __d:
                         al = getPreferredLocale(__d['crh_accept-language'])
                     if 'crh_x-forwarded-for' in __d:
-                        ff = __d['crh_x-forwarded-for']
+                        xff = __d['crh_x-forwarded-for']
 
             method = self.extract_method(__d['method'])
             status_code = self.extract_status_code(__d['status_code'])
@@ -573,13 +580,13 @@ class HaProxyLogster(LogsterParser):
             if not is_spider:
                 try:
                     ip = IP(__d['client_ip'])
-                    if ip in IP('127.0.0.0/8') and ff:
-                        ip = IP(ff)
+                    if ip in IP('127.0.0.0/8') and xff:
+                        ip = IP(xff)
                     if ip.iptype() != 'PRIVATE':
                         try:
-                            self.ip_counter[__d['client_ip']] += 1
+                            self.ip_counter[ip.ip] += 1
                         except:
-                            self.ip_counter[__d['client_ip']] = 1
+                            self.ip_counter[ip.ip] = 1
                 except:
                     # Bad ip - wtf !
                     pass

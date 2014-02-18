@@ -472,6 +472,9 @@ class HaProxyLogster(LogsterParser):
         self.counters["{}.stats.tasks.{}".format(self.prefix, self.nodename)] = int(ha_info['Tasks'])
         self.counters["{}.stats.run-queue.{}".format(self.prefix, self.nodename)] = int(ha_info['Run_queue'])
 
+        self.counters["{}.request.internal.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.request.external.{}".format(self.prefix, self.nodename)] = 0
+
         if 'user-agent' in self.headers:
             self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, self.nodename)] = 0
             self.counters["{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, self.nodename)] = 0
@@ -548,6 +551,11 @@ class HaProxyLogster(LogsterParser):
             method = self.extract_method(__d['method'])
             status_code = self.extract_status_code(__d['status_code'])
             self.increment("{}.meta.parsed-lines.{}".format(self.prefix, self.nodename))
+
+            if client_ip.iptype() != 'PRIVATE':
+                self.increment("{}.request.external.{}".format(self.prefix, self.nodename))
+            else:
+                self.increment("{}.request.internal.{}".format(self.prefix, self.nodename))
 
             # Detect/Handle Spiders/Crawlers
             is_spider = False

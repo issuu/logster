@@ -331,7 +331,7 @@ class HaProxyLogster(LogsterParser):
         optparser.add_option('--headers', '-x', dest='headers', default=None,
                             help='HaProxy Captured Request Headers in a comma separated list')
         optparser.add_option('--crawlerhosts', '-c', dest='crawlerhosts', default=None,
-                            help='Comma separated list of known crawlerhost's/ip's, i.e. findthatfile.com,63.208.194.130')
+                            help="Comma separated list of known crawlerhost's/ip's, i.e. findthatfile.com,63.208.194.130")
 
         opts, args = optparser.parse_args(args=options)
 

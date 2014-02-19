@@ -38,6 +38,9 @@ LANGUAGES = ['en','es','pt','zh','de','it','fr','ru','da','ar']
 
 LINUX_VARIANTS = ['Linux', 'Ubuntu', 'Debian', 'Fedora', 'Gentoo', 'Red Hat', 'SUSE']
 
+# In case we cannot detect the User-Agent use this crud detection of crawlers
+BOT_PATTERN = re.compile('.*( Ezooms/|Crawler|Bot|Spider|(http://|\w+@)\w+(\.\w+)+)')
+
 # haproxy.<host>.<backend>.request.method
 # haproxy.<host>.<backend>.response.code.<status>
 #
@@ -564,7 +567,9 @@ class HaProxyLogster(LogsterParser):
                 is_spider = True
             elif ua:
                 # Spider
-                if ua['device']['family'] == 'Spider' or (ua['device']['family'] == 'Other' and ' Ezooms/' in ua['string']):
+                if ua['device']['family'] == 'Spider':
+                    is_spider = True
+                elif ua['device']['family'] == 'Other' and BOT_PATTERN.match(ua['string']):
                     is_spider = True
                 else:
                     # OS Family, i.e. Windows 7, Windows 2000, iOS, Android, Mac OS X, Windows Phone, Windows Mobile

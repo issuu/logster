@@ -486,7 +486,8 @@ class HaProxyLogster(LogsterParser):
         self.counters["{}.request.external.{}".format(self.prefix, self.nodename)] = 0
 
         if self.issuudocs:
-            self.counters["{}.request.issuudocs.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.issuudocs.crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.issuudocs.non-crawlers.{}".format(self.prefix, self.nodename)] = 0
 
         if 'user-agent' in self.headers:
             self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, self.nodename)] = 0
@@ -552,14 +553,6 @@ class HaProxyLogster(LogsterParser):
                     if 'crh_x-forwarded-for' in __d:
                         if __d['crh_x-forwarded-for']:
                             xff = __d['crh_x-forwarded-for'].split(',')[-1].strip()
-
-            if self.issuudocs:
-                try:
-                    u = urlparse(__d['path'])
-                    if ISSUUDOC_PATTERN.match(u.path):
-                        self.increment("{}.request.issuudocs.{}".format(self.prefix, self.nodename))
-                except:
-                    pass
 
             try:
                 client_ip = IP(__d['client_ip'])
@@ -643,6 +636,17 @@ class HaProxyLogster(LogsterParser):
                         self.ip_counter[client_ip.ip] += 1
                     except:
                         self.ip_counter[client_ip.ip] = 1
+
+            if self.issuudocs:
+                try:
+                    u = urlparse(__d['path'])
+                    if ISSUUDOC_PATTERN.match(u.path):
+                        if is_spider:
+                            self.increment("{}.request.issuudocs.crawlers.{}".format(self.prefix, self.nodename))
+                        else:
+                            self.increment("{}.request.issuudocs.non-crawlers.{}".format(self.prefix, self.nodename))
+                except:
+                    pass
 
             for backend in ["backend-" + __d['backend_name'], "all-backends"]:
                 suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))

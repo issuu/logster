@@ -12,6 +12,7 @@ import numpy
 import optparse
 from collections import defaultdict
 from ua_parser import user_agent_parser
+from urlparse import urlparse
 from IPy import IP
 
 # unbuffered
@@ -40,6 +41,9 @@ LINUX_VARIANTS = ['Linux', 'Ubuntu', 'Debian', 'Fedora', 'Gentoo', 'Red Hat', 'S
 
 # In case we cannot detect the User-Agent use this crud detection of crawlers
 BOT_PATTERN = re.compile('.*( Ezooms/|Crawler|Bot|Spider|(http://|\w+@)\w+(\.\w+)+)')
+
+# /<account>/docs/<document>
+ISSUUDOC_PATTERN = re.compile('/[^/]+/docs/.+')
 
 # haproxy.<host>.<backend>.request.method
 # haproxy.<host>.<backend>.response.code.<status>
@@ -335,9 +339,12 @@ class HaProxyLogster(LogsterParser):
                             help='HaProxy Captured Request Headers in a comma separated list')
         optparser.add_option('--crawlerhosts', '-c', dest='crawlerhosts', default=None,
                             help="Comma separated list of known crawlerhost's/ip's, i.e. findthatfile.com,63.208.194.130")
+        optparser.add_option('--issuudocs', '-i', dest='issuudocs', default=None,
+                            help='Special parsing the request to detect Issuu document path, i.e. /<account>/docs/<document>')
 
         opts, args = optparser.parse_args(args=options)
 
+        self.issuudocs = opts.issuudocs
         self.headers = None
         if opts.headers:
             self.headers = [x.lower() for x in opts.headers.split(',')]
@@ -478,6 +485,9 @@ class HaProxyLogster(LogsterParser):
         self.counters["{}.request.internal.{}".format(self.prefix, self.nodename)] = 0
         self.counters["{}.request.external.{}".format(self.prefix, self.nodename)] = 0
 
+        if self.issuudocs:
+            self.counters["{}.request.issuudocs.{}".format(self.prefix, self.nodename)] = 0
+
         if 'user-agent' in self.headers:
             self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, self.nodename)] = 0
             self.counters["{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, self.nodename)] = 0
@@ -542,6 +552,14 @@ class HaProxyLogster(LogsterParser):
                     if 'crh_x-forwarded-for' in __d:
                         if __d['crh_x-forwarded-for']:
                             xff = __d['crh_x-forwarded-for'].split(',')[-1].strip()
+
+            if self.issuudocs:
+                try:
+                    u = urlparse(__d['path'])
+                    if ISSUUDOC_PATTERN.match(u.path):
+                        self.increment("{}.request.issuudocs.{}".format(self.prefix, self.nodename))
+                except:
+                    pass
 
             try:
                 client_ip = IP(__d['client_ip'])

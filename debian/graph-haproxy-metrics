@@ -6,6 +6,7 @@ unset STATSD_HOST_PORT
 unset HAPROXY_SOCKET
 unset REQUEST_HEADERS
 unset CRAWLERHOSTS
+unset ISSUUDOCS
 
 test -f /etc/default/logster-haproxy-graphite && . /etc/default/logster-haproxy-graphite
 
@@ -25,19 +26,24 @@ if [ -n "${CRAWLERHOSTS}" ]; then
     CRAWLERHOSTS_OPTION=" --crawlerhosts ${CRAWLERHOSTS}"
 fi
 
+unset ISSUUDOCS_OPTION
+if [ -n "${ISSUUDOCS}" ]; then
+    ISSUUDOCS_OPTION=" --issuudocs"
+fi
+
 LOGDIR=/var/log/logster/
 test -d ${LOGDIR} || mkdir -p ${LOGDIR}
 
 if [ -n "${STATSD_HOST_PORT}" ]; then
     logster --output statsd \
         --statsd-host ${STATSD_HOST_PORT} \
-        --parser-options "--socket ${HAPROXY_SOCKET}${CRAWLERHOSTS_OPTION}${REQUEST_HEADERS_OPTION}" \
+        --parser-options "--socket ${HAPROXY_SOCKET}${CRAWLERHOSTS_OPTION}${REQUEST_HEADERS_OPTION}${ISSUUDOCS_OPTION}" \
         HaProxyLogster \
         /var/log/haproxy.log
 else
     logster --output graphite \
         --graphite-host ${GRAPHITE_HOST_PORT} \
-        --parser-options "--socket ${HAPROXY_SOCKET}${CRAWLERHOSTS_OPTION}${REQUEST_HEADERS_OPTION}" \
+        --parser-options "--socket ${HAPROXY_SOCKET}${CRAWLERHOSTS_OPTION}${REQUEST_HEADERS_OPTION}${ISSUUDOCS_OPTION}" \
         HaProxyLogster \
         /var/log/haproxy.log
 fi

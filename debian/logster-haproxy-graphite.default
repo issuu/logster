@@ -12,3 +12,7 @@ HAPROXY_SOCKET=/var/run/haproxy.socket
 
 # Optional - comma sep list, hostnames or ips
 # CRAWLERHOSTS=findthatfile.com,63.208.194.130
+
+# Optional - enable request path parsing of Issuu Document Path, /<account>/docs/<docname>
+#   Only relevant on HaProxies that serves these requests.
+# ISSUUDOCS=true

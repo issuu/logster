@@ -339,7 +339,7 @@ class HaProxyLogster(LogsterParser):
                             help='HaProxy Captured Request Headers in a comma separated list')
         optparser.add_option('--crawlerhosts', '-c', dest='crawlerhosts', default=None,
                             help="Comma separated list of known crawlerhost's/ip's, i.e. findthatfile.com,63.208.194.130")
-        optparser.add_option('--issuudocs', '-i', dest='issuudocs', default=None,
+        optparser.add_option('--issuudocs', '-i', dest='issuudocs', action="store_true", default=False,
                             help='Special parsing the request to detect Issuu document path, i.e. /<account>/docs/<document>')
 
         opts, args = optparser.parse_args(args=options)

@@ -353,6 +353,10 @@ class HaProxyLogster(LogsterParser):
         if opts.crawlerhosts:
             self.crawlerips = [resolveHost(x) for x in opts.crawlerhosts.split(',')]
  
+        if opts.pxy_socket is None:
+            print >> sys.stderr, 'Missing --socket option'
+            raise Exception("Missing --socket option")
+            
         # Get/parse running haproxy config (frontends, backends, servers)
         # Plus info stat - session rate ....
         haproxy = HaPConn(opts.pxy_socket)
@@ -489,26 +493,27 @@ class HaProxyLogster(LogsterParser):
             self.counters["{}.request.issuudocs.crawlers.{}".format(self.prefix, self.nodename)] = 0
             self.counters["{}.request.issuudocs.non-crawlers.{}".format(self.prefix, self.nodename)] = 0
 
-        if 'user-agent' in self.headers:
-            self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, self.nodename)] = 0
-            self.counters["{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, self.nodename)] = 0
-            self.counters["{}.stats.browser.ua.crawlers.ips.{}".format(self.prefix, self.nodename)] = 0
-            self.counters["{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, self.nodename)] = 0
-            self.counters["{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, self.nodename)] = 0
-            self.counters["{}.stats.browser.ua.os.windows.{}".format(self.prefix, self.nodename)] = 0
-            self.counters["{}.stats.browser.ua.os.ios.{}".format(self.prefix, self.nodename)] = 0
-            self.counters["{}.stats.browser.ua.os.android.{}".format(self.prefix, self.nodename)] = 0
-            self.counters["{}.stats.browser.ua.os.mac-os-x.{}".format(self.prefix, self.nodename)] = 0
-            self.counters["{}.stats.browser.ua.os.linux.{}".format(self.prefix, self.nodename)] = 0
-            self.counters["{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, self.nodename)] = 0
-            self.counters["{}.stats.browser.ua.os.other.{}".format(self.prefix, self.nodename)] = 0
+        if self.headers:
+            if 'user-agent' in self.headers:
+                self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.ua.crawlers.ips.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.ua.os.windows.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.ua.os.ios.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.ua.os.android.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.ua.os.mac-os-x.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.ua.os.linux.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.ua.os.other.{}".format(self.prefix, self.nodename)] = 0
 
-            self.counters["{}.response.status.crawlers.4xx.{}".format(self.prefix, self.nodename)] = 0
-            self.counters["{}.response.status.crawlers.5xx.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.response.status.crawlers.4xx.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.response.status.crawlers.5xx.{}".format(self.prefix, self.nodename)] = 0
 
-        if 'accept-language' in self.headers:
-            for lang in ['OTHER']+LANGUAGES:
-                self.counters["{}.stats.browser.language.{}.{}".format(self.prefix, lang.lower(), self.nodename)] = 0
+            if 'accept-language' in self.headers:
+                for lang in ['OTHER']+LANGUAGES:
+                    self.counters["{}.stats.browser.language.{}.{}".format(self.prefix, lang.lower(), self.nodename)] = 0
 
         # for each known backend - initialize counters
         for backend in map(lambda x: "backend-"+x['backend'], filter(lambda y: y['srvname'] == 'BACKEND', ha_stats)) + ["all-backends"]:

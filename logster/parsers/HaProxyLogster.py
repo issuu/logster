@@ -691,7 +691,8 @@ class HaProxyLogster(LogsterParser):
         '''get_state'''
         metrics = []
 
-        self.counters["{}.stats.ip-variance.{}".format(self.prefix, self.nodename)] = int(numpy.var(self.ip_counter.values()))
+        if len(self.ip_counter) > 0:
+            self.counters["{}.stats.ip-variance.{}".format(self.prefix, self.nodename)] = int(numpy.var(self.ip_counter.values()))
 
         for name, value in self.counters.items():
             metrics.append(MetricObject(name, value))

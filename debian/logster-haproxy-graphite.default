@@ -16,3 +16,6 @@ HAPROXY_SOCKET=/var/run/haproxy.socket
 # Optional - enable request path parsing of Issuu Document Path, /<account>/docs/<docname>
 #   Only relevant on HaProxies that serves these requests.
 # ISSUUDOCS=true
+
+# Optional - Use X-Forwarded-For for the client ip
+# USE_XFF_AS_CLIENTIP=true

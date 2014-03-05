@@ -341,10 +341,13 @@ class HaProxyLogster(LogsterParser):
                             help="Comma separated list of known crawlerhost's/ip's, i.e. findthatfile.com,63.208.194.130")
         optparser.add_option('--issuudocs', '-i', dest='issuudocs', action="store_true", default=False,
                             help='Special parsing the request to detect Issuu document path, i.e. /<account>/docs/<document>')
+        optparser.add_option('--xffip', '-f', dest='usexffip', action="store_true", default=False,
+                            help='Use X-Forwarded-For value for the client-ip (useful if behind another proxy like ELB)')
 
         opts, args = optparser.parse_args(args=options)
 
         self.issuudocs = opts.issuudocs
+        self.usexffip = opts.usexffip
         self.headers = None
         if opts.headers:
             self.headers = [x.lower() for x in opts.headers.split(',')]
@@ -560,9 +563,12 @@ class HaProxyLogster(LogsterParser):
                             xff = __d['crh_x-forwarded-for'].split(',')[-1].strip()
 
             try:
-                client_ip = IP(__d['client_ip'])
-                if client_ip in IP('127.0.0.0/8') and xff:
+                if xff and self.usexffip:
                     client_ip = IP(xff)
+                else:
+                    client_ip = IP(__d['client_ip'])
+                    if client_ip in IP('127.0.0.0/8') and xff:
+                        client_ip = IP(xff)
             except:
                 # This should in theory never happen
                 client_ip = IP('127.0.0.1')

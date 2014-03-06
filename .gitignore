@@ -2,7 +2,6 @@
 *.log
 *.state
 *.egg-info
-*.venv
 build
 dist
 debian/files

@@ -21,5 +21,5 @@ setup(
         'bin/logster'
     ],
     license='GPL3',
-    install_requires=['ua-parser']
+    install_requires=['ua-parser','numpy','ipy']
 )

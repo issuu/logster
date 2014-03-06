@@ -15,9 +15,7 @@ Package: logster
 Architecture: all
 Depends:
     logtail,
-    python-pkg-resources,
-    python-numpy,
-    python-ipy,
+    pypy,
     ${python:Depends},
     ${misc:Depends}
 Provides:

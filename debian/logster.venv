@@ -1,1 +1,1 @@
-python apps/logster pypy
+. apps/logster pypy

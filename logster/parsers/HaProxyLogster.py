@@ -40,7 +40,7 @@ LANGUAGES = ['en','es','pt','zh','de','it','fr','ru','da','ar']
 LINUX_VARIANTS = ['Linux', 'Ubuntu', 'Debian', 'Fedora', 'Gentoo', 'Red Hat', 'SUSE']
 
 # In case we cannot detect the User-Agent use this crud detection of crawlers
-BOT_PATTERN = re.compile('.*( Ezooms/|WinHttp\.WinHttpRequest|Crawler|Bot|Spider|(http://|\w+@)\w+(\.\w+)+)')
+BOT_PATTERN = re.compile('.*( Ezooms/|WinHttp\.WinHttpRequest|Crawler|Bot|Spider|PHP/|(http://|\w+@)\w+(\.\w+)+)')
 
 # /<account>/docs/<document>
 ISSUUDOC_PATTERN = re.compile('/[^/]+/docs/.+')

@@ -513,6 +513,7 @@ class HaProxyLogster(LogsterParser):
 
                 self.counters["{}.response.status.crawlers.4xx.{}".format(self.prefix, self.nodename)] = 0
                 self.counters["{}.response.status.crawlers.5xx.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.response.status.crawlers.tarpitted.{}".format(self.prefix, self.nodename)] = 0
 
             if 'accept-language' in self.headers:
                 for lang in ['OTHER']+LANGUAGES:
@@ -523,7 +524,7 @@ class HaProxyLogster(LogsterParser):
             suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
             for method in ['BADREQ','OTHER']+REQUEST_METHODS:
                 self.counters["{}.request.method.{}.{}".format(self.prefix, method.lower(), suffix)] = 0
-            for status_code in [str(x) for x in STATUS_CODES] + ['BADREQ','OTHER']:
+            for status_code in [str(x) for x in STATUS_CODES] + ['BADREQ','OTHER', 'TARPITTED']:
                 self.counters["{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix)] = 0
             self.counters["{}.meta.up-down.{}".format(self.prefix, suffix)] = 0
         for haproxy in filter(lambda y: y['srvname'] == 'BACKEND', ha_stats):

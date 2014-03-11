@@ -575,6 +575,8 @@ class HaProxyLogster(LogsterParser):
 
             method = self.extract_method(__d['method'])
             status_code = self.extract_status_code(__d['status_code'])
+            tarpitted = __d['term_event']=='P' and __d['term_session']=='T'
+
             self.increment("{}.meta.parsed-lines.{}".format(self.prefix, self.nodename))
 
             if client_ip.iptype() != 'PRIVATE':
@@ -631,7 +633,10 @@ class HaProxyLogster(LogsterParser):
                     if sc >= 400 and sc <= 499:
                         self.increment("{}.response.status.crawlers.4xx.{}".format(self.prefix, self.nodename))
                     elif sc >= 500 and sc <= 599:
-                        self.increment("{}.response.status.crawlers.5xx.{}".format(self.prefix, self.nodename))
+                        if sc == 500 and tarpitted:
+                            self.increment("{}.response.status.crawlers.tarpitted.{}".format(self.prefix, self.nodename))
+                        else:
+                            self.increment("{}.response.status.crawlers.5xx.{}".format(self.prefix, self.nodename))
                 except:
                     pass
 
@@ -662,7 +667,10 @@ class HaProxyLogster(LogsterParser):
             for backend in ["backend-" + __d['backend_name'], "all-backends"]:
                 suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
 
-                self.increment("{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix))
+                if status_code == '500' and tarpitted:
+                    self.increment("{}.response.status.{}.{}".format(self.prefix, 'tarpitted', suffix))
+                else:
+                    self.increment("{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix))
                 self.increment("{}.request.method.{}.{}".format(self.prefix, method.lower(), suffix))
 
                 self.gauges["{}.bytesread-pct.{}.{}".format(self.prefix, "{}", suffix)].add(__d['bytes_read'])

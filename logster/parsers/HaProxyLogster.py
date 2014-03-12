@@ -491,6 +491,7 @@ class HaProxyLogster(LogsterParser):
 
         self.counters["{}.request.internal.{}".format(self.prefix, self.nodename)] = 0
         self.counters["{}.request.external.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.request.tarpit.{}".format(self.prefix, self.nodename)] = 0
 
         if self.issuudocs:
             self.counters["{}.request.issuudocs.crawlers.{}".format(self.prefix, self.nodename)] = 0
@@ -513,7 +514,6 @@ class HaProxyLogster(LogsterParser):
 
                 self.counters["{}.response.status.crawlers.4xx.{}".format(self.prefix, self.nodename)] = 0
                 self.counters["{}.response.status.crawlers.5xx.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.response.status.crawlers.tarpitted.{}".format(self.prefix, self.nodename)] = 0
 
             if 'accept-language' in self.headers:
                 for lang in ['OTHER']+LANGUAGES:
@@ -524,7 +524,7 @@ class HaProxyLogster(LogsterParser):
             suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
             for method in ['BADREQ','OTHER']+REQUEST_METHODS:
                 self.counters["{}.request.method.{}.{}".format(self.prefix, method.lower(), suffix)] = 0
-            for status_code in [str(x) for x in STATUS_CODES] + ['BADREQ','OTHER', 'TARPITTED']:
+            for status_code in [str(x) for x in STATUS_CODES] + ['BADREQ','OTHER']:
                 self.counters["{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix)] = 0
             self.counters["{}.meta.up-down.{}".format(self.prefix, suffix)] = 0
         for haproxy in filter(lambda y: y['srvname'] == 'BACKEND', ha_stats):
@@ -543,6 +543,15 @@ class HaProxyLogster(LogsterParser):
         __m = self.log_line_pattern.match(line)
         if __m:
             __d = __m.groupdict()
+
+            method = self.extract_method(__d['method'])
+            status_code = self.extract_status_code(__d['status_code'])
+            tarpit = __d['term_event']=='P' and __d['term_session']=='T'
+
+            if tarpit:
+                # Do not process any further iff tarpit
+                self.increment("{}.request.tarpit.{}".format(self.prefix, self.nodename))
+                return
 
             ua  = None
             al  = None
@@ -573,10 +582,6 @@ class HaProxyLogster(LogsterParser):
             except:
                 # This should in theory never happen
                 client_ip = IP('127.0.0.1')
-
-            method = self.extract_method(__d['method'])
-            status_code = self.extract_status_code(__d['status_code'])
-            tarpitted = __d['term_event']=='P' and __d['term_session']=='T'
 
             self.increment("{}.meta.parsed-lines.{}".format(self.prefix, self.nodename))
 
@@ -634,10 +639,7 @@ class HaProxyLogster(LogsterParser):
                     if sc >= 400 and sc <= 499:
                         self.increment("{}.response.status.crawlers.4xx.{}".format(self.prefix, self.nodename))
                     elif sc >= 500 and sc <= 599:
-                        if sc == 500 and tarpitted:
-                            self.increment("{}.response.status.crawlers.tarpitted.{}".format(self.prefix, self.nodename))
-                        else:
-                            self.increment("{}.response.status.crawlers.5xx.{}".format(self.prefix, self.nodename))
+                        self.increment("{}.response.status.crawlers.5xx.{}".format(self.prefix, self.nodename))
                 except:
                     pass
 
@@ -668,10 +670,7 @@ class HaProxyLogster(LogsterParser):
             for backend in ["backend-" + __d['backend_name'], "all-backends"]:
                 suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
 
-                if status_code == '500' and tarpitted:
-                    self.increment("{}.response.status.{}.{}".format(self.prefix, 'tarpitted', suffix))
-                else:
-                    self.increment("{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix))
+                self.increment("{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix))
                 self.increment("{}.request.method.{}.{}".format(self.prefix, method.lower(), suffix))
 
                 self.gauges["{}.bytesread-pct.{}.{}".format(self.prefix, "{}", suffix)].add(__d['bytes_read'])

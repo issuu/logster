@@ -503,6 +503,10 @@ class HaProxyLogster(LogsterParser):
                 self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, self.nodename)] = 0
                 self.counters["{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, self.nodename)] = 0
                 self.counters["{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, self.nodename)] = 0
                 self.counters["{}.stats.browser.ua.crawlers.ips.{}".format(self.prefix, self.nodename)] = 0
                 self.counters["{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, self.nodename)] = 0
                 self.counters["{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, self.nodename)] = 0
@@ -638,8 +642,16 @@ class HaProxyLogster(LogsterParser):
                 self.increment("{}.stats.browser.ua.crawlers.{}".format(self.prefix, self.nodename))
                 if ua:
                     self.increment("{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, self.nodename))
-                    if ua['user_agent']['family'] == 'Googlebot':
+                    if ua['user_agent']['family'] == 'Googlebot' or 'Googlebot' in ua['string']:
                         self.increment("{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, self.nodename))
+                    elif 'bingbot' in ua['string']:
+                        self.increment("{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, self.nodename))
+                    elif 'Yahoo! Slurp' in ua['string']:
+                        self.increment("{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, self.nodename))
+                    elif 'Baiduspider' in ua['string']:
+                        self.increment("{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, self.nodename))
+                    elif 'YandexBot' in ua['string']:
+                        self.increment("{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, self.nodename))
                 elif client_ip.strNormal() in self.crawlerips:
                     self.increment("{}.stats.browser.ua.crawlers.ips.{}".format(self.prefix, self.nodename))
                 else:

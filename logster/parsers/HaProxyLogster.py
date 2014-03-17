@@ -492,6 +492,7 @@ class HaProxyLogster(LogsterParser):
         self.counters["{}.request.internal.{}".format(self.prefix, self.nodename)] = 0
         self.counters["{}.request.external.{}".format(self.prefix, self.nodename)] = 0
         self.counters["{}.request.tarpit.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.request.block.{}".format(self.prefix, self.nodename)] = 0
 
         if self.issuudocs:
             self.counters["{}.request.issuudocs.crawlers.{}".format(self.prefix, self.nodename)] = 0
@@ -547,10 +548,16 @@ class HaProxyLogster(LogsterParser):
             method = self.extract_method(__d['method'])
             status_code = self.extract_status_code(__d['status_code'])
             tarpit = __d['term_event']=='P' and __d['term_session']=='T'
+            block  = __d['term_event']=='P' and __d['term_session']=='R'
 
             if tarpit:
                 # Do not process any further iff tarpit
                 self.increment("{}.request.tarpit.{}".format(self.prefix, self.nodename))
+                return
+
+            if block:
+                # Do not process any further iff block
+                self.increment("{}.request.block.{}".format(self.prefix, self.nodename))
                 return
 
             ua  = None

@@ -463,7 +463,7 @@ class HaProxyLogster(LogsterParser):
         self.add_pattern('reason', r'[^,]+', ', ', 'reason: ')
 
         # skip the rest ...
-        self.add_pattern('skipped', r'.*')
+        self.add_pattern('skipped', r'.*','')
         self.updown_pattern = self.build_pattern()
 
         #
@@ -474,7 +474,7 @@ class HaProxyLogster(LogsterParser):
         self.add_pattern('log_time', r'\S+( |  )\d+ \d+:\d+:\d+')
         self.add_pattern('hostname', r'\S+')
         self.add_pattern('process_id', r'\S+', ': ')
-        self.add_pattern('startstop', r'(Proxy \S+ started\.|Pausing proxy \S+\.|Stopping (backend|proxy) \S+ in \d+ \S+\.|Proxy \S+ stopped \([^)]+\)\.)')
+        self.add_pattern('startstop', r'(Proxy \S+ started\.|Pausing proxy \S+\.|Stopping (backend|proxy) \S+ in \d+ \S+\.|Proxy \S+ stopped \([^)]+\)\.)','')
         self.startstop_pattern = self.build_pattern()
 
         self.parsed_lines = 0

@@ -41,6 +41,7 @@ LINUX_VARIANTS = ['Linux', 'Ubuntu', 'Debian', 'Fedora', 'Gentoo', 'Red Hat', 'S
 
 # In case we cannot detect the User-Agent use this crud detection of crawlers
 BOT_PATTERN = re.compile('.*( Ezooms/|WinHttp\.WinHttpRequest|Crawler|Bot|Spider|AndroidDownloadManager|GoogleImageProxy|URL2File/|Apache-HttpClient/|PHP/|<\?php |(http://|\w+@)\w+(\.\w+)+)')
+IMGPROXY_PATTERN = re.compile('.*\(via ggpht.com GoogleImageProxy\)')
 
 # /<account>/docs/<document>
 ISSUUDOC_PATTERN = re.compile('/[^/]+/docs/.+')
@@ -605,6 +606,7 @@ class HaProxyLogster(LogsterParser):
 
             # Detect/Handle Spiders/Crawlers
             is_spider = False
+            is_img_proxy = False
 
             if client_ip.strNormal() in self.crawlerips:
                 is_spider = True
@@ -614,6 +616,8 @@ class HaProxyLogster(LogsterParser):
                     is_spider = True
                 elif ua['device']['family'] == 'Other' and BOT_PATTERN.match(ua['string']):
                     is_spider = True
+                elif ua['device']['family'] == 'Other' and IMGPROXY_PATTERN.match(ua['string']):
+                    is_img_proxy = True
                 else:
                     # OS Family, i.e. Windows 7, Windows 2000, iOS, Android, Mac OS X, Windows Phone, Windows Mobile
                     os_family=ua['os']['family']
@@ -653,8 +657,6 @@ class HaProxyLogster(LogsterParser):
                         self.increment("{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, self.nodename))
                     elif 'YandexBot' in ua['string']:
                         self.increment("{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, self.nodename))
-                    elif 'GoogleImageProxy' in ua['string']:
-                        self.increment("{}.stats.browser.ua.crawlers.googleimageproxy.{}".format(self.prefix, self.nodename))
                 elif client_ip.strNormal() in self.crawlerips:
                     self.increment("{}.stats.browser.ua.crawlers.ips.{}".format(self.prefix, self.nodename))
                 else:
@@ -668,13 +670,19 @@ class HaProxyLogster(LogsterParser):
                 except:
                     pass
 
-            if al and not is_spider:
+            if is_img_proxy:
+                self.increment("{}.stats.browser.ua.imgproxy.{}".format(self.prefix, self.nodename))
+                if ua:
+                    if 'GoogleImageProxy' in ua['string']:
+                        self.increment("{}.stats.browser.ua.imgproxy.google.{}".format(self.prefix, self.nodename))
+
+            if al and not is_spider and not is_img_proxy:
                 if al in LANGUAGES:
                     self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, al.lower(), self.nodename))
                 else:
                     self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, 'other', self.nodename))
 
-            if not is_spider:
+            if not is_spider and not is_img_proxy:
                 if client_ip.iptype() != 'PRIVATE':
                     try:
                         self.ip_counter[client_ip.ip] += 1

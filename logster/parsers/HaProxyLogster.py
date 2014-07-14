@@ -685,13 +685,17 @@ class HaProxyLogster(LogsterParser):
                     self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, 'other', self.nodename))
 
             if not is_spider and not is_img_proxy:
-                if client_ip.iptype() != 'PRIVATE' and __d['srvname'] == 'BACKEND':
+                if client_ip.iptype() != 'PRIVATE':
                     try:
                         self.ip_counter['backend-'+__d['backend_name']][client_ip.ip] += 1
                         self.ip_counter['all-backends'][client_ip.ip] += 1
                     except:
-                        self.ip_counter['backend-'+__d['backend_name']][client_ip.ip] = 1
-                        self.ip_counter['all-backends'][client_ip.ip] = 1
+                        try:
+                            self.ip_counter['backend-'+__d['backend_name']][client_ip.ip] = 1
+                            self.ip_counter['all-backends'][client_ip.ip] = 1
+                        except KeyError:
+                            # assume it is a frontend listing
+                            pass
 
             if self.issuudocs:
                 try:

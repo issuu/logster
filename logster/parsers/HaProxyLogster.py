@@ -687,10 +687,10 @@ class HaProxyLogster(LogsterParser):
             if not is_spider and not is_img_proxy:
                 if client_ip.iptype() != 'PRIVATE':
                     try:
-                        self.ip_counter[__d['backend_name']][client_ip.ip] += 1
+                        self.ip_counter['backend-'+__d['backend_name']][client_ip.ip] += 1
                         self.ip_counter['all-backends'][client_ip.ip] += 1
                     except:
-                        self.ip_counter[__d['backend_name']][client_ip.ip] = 1
+                        self.ip_counter['backend-'+__d['backend_name']][client_ip.ip] = 1
                         self.ip_counter['all-backends'][client_ip.ip] = 1
 
             if self.issuudocs:
@@ -743,7 +743,7 @@ class HaProxyLogster(LogsterParser):
         metrics = []
 
         for backend in self.ip_counter:
-            suffix = "{}.{}".format(self.nodename, "backend-"+backend.replace(".", "-"))
+            suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
             ips = self.ip_counter[backend]
             if len(ips) > 0:
                 self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = int(numpy.var(ips.values()))

@@ -541,6 +541,8 @@ class HaProxyLogster(LogsterParser):
             self.counters["{}.stats.backend.error-response.{}".format(self.prefix, suffix)] = haproxy['eresp']
             self.counters["{}.stats.backend.client-aborts.{}".format(self.prefix, suffix)] = haproxy['cliaborts']
             self.counters["{}.stats.backend.server-aborts.{}".format(self.prefix, suffix)] = haproxy['srvaborts']
+            self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = 0
+            self.ip_counter[haproxy['backend']] = {}
         for haproxy in filter(lambda y: y['srvname'] == 'FRONTEND', ha_stats):
             suffix = "{}.{}".format(self.nodename, "frontend-"+haproxy['backend'].replace(".", "-"))
             self.counters["{}.stats.frontend.session-rate.{}".format(self.prefix, suffix)] = haproxy['rate']
@@ -685,9 +687,9 @@ class HaProxyLogster(LogsterParser):
             if not is_spider and not is_img_proxy:
                 if client_ip.iptype() != 'PRIVATE':
                     try:
-                        self.ip_counter[client_ip.ip] += 1
+                        self.ip_counter[__d['backend_name']][client_ip.ip] += 1
                     except:
-                        self.ip_counter[client_ip.ip] = 1
+                        self.ip_counter[__d['backend_name']][client_ip.ip] = 1
 
             if self.issuudocs:
                 try:
@@ -738,8 +740,11 @@ class HaProxyLogster(LogsterParser):
         '''get_state'''
         metrics = []
 
-        if len(self.ip_counter) > 0:
-            self.counters["{}.stats.ip-variance.{}".format(self.prefix, self.nodename)] = int(numpy.var(self.ip_counter.values()))
+        for backend in self.ip_counter:
+            suffix = "{}.{}".format(self.nodename, "backend-"+backend.replace(".", "-"))
+            ips = self.ip_counter[backend]
+            if len(ips) > 0:
+                self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = int(numpy.var(ips.values()))
 
         for name, value in self.counters.items():
             metrics.append(MetricObject(name, value))

@@ -497,7 +497,11 @@ class HaProxyLogster(LogsterParser):
 
         if self.issuudocs:
             self.counters["{}.request.issuudocs.crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.issuudocs.crawlers.4xx.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.issuudocs.crawlers.5xx.{}".format(self.prefix, self.nodename)] = 0
             self.counters["{}.request.issuudocs.non-crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.issuudocs.non-crawlers.4xx.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.issuudocs.non-crawlers.5xx.{}".format(self.prefix, self.nodename)] = 0
 
         if self.headers:
             if 'user-agent' in self.headers:
@@ -700,10 +704,19 @@ class HaProxyLogster(LogsterParser):
                 try:
                     u = urlparse(__d['path'])
                     if ISSUUDOC_PATTERN.match(u.path):
+                        sc = int(status_code)
                         if is_spider:
                             self.increment("{}.request.issuudocs.crawlers.{}".format(self.prefix, self.nodename))
+                            if sc >= 400 and sc <= 499:
+                                self.increment("{}.request.issuudocs.crawlers.4xx.{}".format(self.prefix, self.nodename))
+                            elif sc >= 500 and sc <= 599:
+                                self.increment("{}.request.issuudocs.crawlers.5xx.{}".format(self.prefix, self.nodename))
                         else:
                             self.increment("{}.request.issuudocs.non-crawlers.{}".format(self.prefix, self.nodename))
+                            if sc >= 400 and sc <= 499:
+                                self.increment("{}.request.issuudocs.non-crawlers.4xx.{}".format(self.prefix, self.nodename))
+                            elif sc >= 500 and sc <= 599:
+                                self.increment("{}.request.issuudocs.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
                 except:
                     pass
 

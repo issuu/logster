@@ -509,7 +509,6 @@ class HaProxyLogster(LogsterParser):
                 self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, self.nodename)] = 0
                 self.counters["{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, self.nodename)] = 0
                 self.counters["{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.crawlers.googleimageproxy.{}".format(self.prefix, self.nodename)] = 0
                 self.counters["{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, self.nodename)] = 0
                 self.counters["{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, self.nodename)] = 0
                 self.counters["{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, self.nodename)] = 0

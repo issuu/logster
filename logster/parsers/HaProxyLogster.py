@@ -40,8 +40,9 @@ LANGUAGES = ['en','es','pt','zh','de','it','fr','ru','da','ar']
 LINUX_VARIANTS = ['Linux', 'Ubuntu', 'Debian', 'Fedora', 'Gentoo', 'Red Hat', 'SUSE']
 
 # In case we cannot detect the User-Agent use this crud detection of crawlers
-BOT_PATTERN = re.compile('.*( Ezooms/|WinHttp\.WinHttpRequest|heritrix/|Crawler|Bot|Spider|AndroidDownloadManager|URL2File/|Sentry/|Apache-HttpClient/|PHP/|Wget/|<\?php |(http://|\w+@)\w+(\.\w+)+)')
+BOT_PATTERN = re.compile('.*( Ezooms/|WinHttp\.WinHttpRequest|heritrix/|Siteimprove.com|Crawler|Bot|Spider|AndroidDownloadManager|URL2File/|Sentry/|Apache-HttpClient/|PHP/|Wget/|<\?php |(http://|\w+@)\w+(\.\w+)+)')
 IMGPROXY_PATTERN = re.compile('.*\(via ggpht.com GoogleImageProxy\)')
+PREVIEW_PATTERN = re.compile('.*Google Web Preview\)')
 
 # /<account>/docs/<document>
 ISSUUDOC_PATTERN = re.compile('/[^/]+/docs/.+')
@@ -523,6 +524,10 @@ class HaProxyLogster(LogsterParser):
                 self.counters["{}.stats.browser.ua.os.linux.{}".format(self.prefix, self.nodename)] = 0
                 self.counters["{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, self.nodename)] = 0
                 self.counters["{}.stats.browser.ua.os.other.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.ua.imgproxy.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.ua.preview.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.ua.imgproxy.google.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.ua.preview.google.{}".format(self.prefix, self.nodename)] = 0
 
                 self.counters["{}.response.status.crawlers.4xx.{}".format(self.prefix, self.nodename)] = 0
                 self.counters["{}.response.status.crawlers.5xx.{}".format(self.prefix, self.nodename)] = 0
@@ -613,6 +618,7 @@ class HaProxyLogster(LogsterParser):
             # Detect/Handle Spiders/Crawlers
             is_spider = False
             is_img_proxy = False
+            is_preview_browser = False
 
             if client_ip.strNormal() in self.crawlerips:
                 is_spider = True
@@ -624,6 +630,8 @@ class HaProxyLogster(LogsterParser):
                     is_spider = True
                 elif ua['device']['family'] == 'Other' and IMGPROXY_PATTERN.match(ua['string']):
                     is_img_proxy = True
+                elif ua['device']['family'] == 'Other' and PREVIEW_PATTERN.match(ua['string']):
+                    is_preview_browser = True
                 else:
                     # OS Family, i.e. Windows 7, Windows 2000, iOS, Android, Mac OS X, Windows Phone, Windows Mobile
                     os_family=ua['os']['family']
@@ -682,13 +690,19 @@ class HaProxyLogster(LogsterParser):
                     if 'GoogleImageProxy' in ua['string']:
                         self.increment("{}.stats.browser.ua.imgproxy.google.{}".format(self.prefix, self.nodename))
 
-            if al and not is_spider and not is_img_proxy:
+            if is_preview_browser:
+                self.increment("{}.stats.browser.ua.preview.{}".format(self.prefix, self.nodename))
+                if ua:
+                    if 'Google' in ua['string']:
+                        self.increment("{}.stats.browser.ua.preview.google.{}".format(self.prefix, self.nodename))
+
+            if al and not is_spider and not is_img_proxy and not is_preview_browser:
                 if al in LANGUAGES:
                     self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, al.lower(), self.nodename))
                 else:
                     self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, 'other', self.nodename))
 
-            if not is_spider and not is_img_proxy:
+            if not is_spider and not is_img_proxy not is_preview_browser:
                 if client_ip.iptype() != 'PRIVATE':
                     if __d['server_name'] != '<NOSRV>':
                         try:

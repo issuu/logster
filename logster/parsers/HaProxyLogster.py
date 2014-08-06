@@ -702,7 +702,7 @@ class HaProxyLogster(LogsterParser):
                 else:
                     self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, 'other', self.nodename))
 
-            if not is_spider and not is_img_proxy not is_preview_browser:
+            if not is_spider and not is_img_proxy and not is_preview_browser:
                 if client_ip.iptype() != 'PRIVATE':
                     if __d['server_name'] != '<NOSRV>':
                         try:

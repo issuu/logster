@@ -40,12 +40,8 @@ fi
 LOGDIR=/var/log/logster/
 test -d ${LOGDIR} || mkdir -p ${LOGDIR}
 
-if [ -e /var/run/logtail-logster.parsers.HaProxyLogster.HaProxyLogster-var-log-haproxy.log.lock ]; then
-    rm -f /var/run/logtail-logster.parsers.HaProxyLogster.HaProxyLogster-var-log-haproxy.log.lock || :
-    rm -f /var/run/logtail-logster.parsers.HaProxyLogster.HaProxyLogster-var-log-haproxy.log.state || :
-    $(SUDO) pkill -f "perl.*logtail.*haproxy.log"
-    sleep 1
-fi
+# Check if another is already running
+[ -e /var/run/logtail-logster.parsers.HaProxyLogster.HaProxyLogster-var-log-haproxy.log.lock ] && exit 0
 
 if [ -n "${STATSD_HOST_PORT}" ]; then
     logster --output statsd \

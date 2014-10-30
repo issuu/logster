@@ -535,6 +535,11 @@ class HaProxyLogster(LogsterParser):
                 for lang in ['OTHER']+LANGUAGES:
                     self.counters["{}.stats.browser.language.{}.{}".format(self.prefix, lang.lower(), self.nodename)] = 0
 
+            if 'dnt' in self.headers:
+                self.counters["{}.stats.browser.dnt.true.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.dnt.false.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.dnt.other.{}".format(self.prefix, self.nodename)] = 0
+
         # for each known backend - initialize counters
         for backend in map(lambda x: "backend-"+x['backend'], filter(lambda y: y['srvname'] == 'BACKEND', ha_stats)) + ["all-backends"]:
             suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
@@ -579,6 +584,7 @@ class HaProxyLogster(LogsterParser):
 
             ua  = None
             al  = None
+            dnt = None
             xff = None
             if self.headers and __d['captured_request_headers']:
                 crhs = __d['captured_request_headers'].split('|')
@@ -595,6 +601,9 @@ class HaProxyLogster(LogsterParser):
                     if 'crh_x-forwarded-for' in __d:
                         if __d['crh_x-forwarded-for']:
                             xff = __d['crh_x-forwarded-for'].split(',')[-1].strip()
+                    if 'crh_dnt' in __d:
+                        if __d['crh_dnt']:
+                            dnt = __d['crh_dnt']
 
             try:
                 if xff and self.usexffip:
@@ -700,6 +709,14 @@ class HaProxyLogster(LogsterParser):
                     self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, al.lower(), self.nodename))
                 else:
                     self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, 'other', self.nodename))
+
+            if dnt and not is_spider and not is_img_proxy and not is_preview_browser:
+                if dnt in ["1","TRUE","True","true"]:
+                    self.increment("{}.stats.browser.dnt.true.{}".format(self.prefix, self.nodename))
+                elif dnt in ["0","FALSE","False","false"]:
+                    self.increment("{}.stats.browser.dnt.false.{}".format(self.prefix, self.nodename))
+                else:
+                    self.increment("{}.stats.browser.dnt.other.{}".format(self.prefix, self.nodename))
 
             if not is_spider and not is_img_proxy and not is_preview_browser:
                 if client_ip.iptype() != 'PRIVATE':

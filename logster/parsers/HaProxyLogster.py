@@ -539,6 +539,8 @@ class HaProxyLogster(LogsterParser):
                 self.counters["{}.stats.browser.dnt.true.{}".format(self.prefix, self.nodename)] = 0
                 self.counters["{}.stats.browser.dnt.false.{}".format(self.prefix, self.nodename)] = 0
                 self.counters["{}.stats.browser.dnt.other.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.dnt.crawler.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.dnt.unset.{}".format(self.prefix, self.nodename)] = 0
 
         # for each known backend - initialize counters
         for backend in map(lambda x: "backend-"+x['backend'], filter(lambda y: y['srvname'] == 'BACKEND', ha_stats)) + ["all-backends"]:
@@ -710,13 +712,18 @@ class HaProxyLogster(LogsterParser):
                 else:
                     self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, 'other', self.nodename))
 
-            if dnt and not is_spider and not is_img_proxy and not is_preview_browser:
-                if dnt in ["1","TRUE","True","true"]:
-                    self.increment("{}.stats.browser.dnt.true.{}".format(self.prefix, self.nodename))
-                elif dnt in ["0","FALSE","False","false"]:
-                    self.increment("{}.stats.browser.dnt.false.{}".format(self.prefix, self.nodename))
+            if dnt:
+                if not is_spider and not is_img_proxy and not is_preview_browser:
+                    if dnt in ["1","TRUE","True","true"]:
+                        self.increment("{}.stats.browser.dnt.true.{}".format(self.prefix, self.nodename))
+                    elif dnt in ["0","FALSE","False","false"]:
+                        self.increment("{}.stats.browser.dnt.false.{}".format(self.prefix, self.nodename))
+                    else:
+                        self.increment("{}.stats.browser.dnt.other.{}".format(self.prefix, self.nodename))
                 else:
-                    self.increment("{}.stats.browser.dnt.other.{}".format(self.prefix, self.nodename))
+                    self.increment("{}.stats.browser.dnt.crawler.{}".format(self.prefix, self.nodename))
+            elif 'dnt' in self.headers:
+                self.increment("{}.stats.browser.dnt.unset.{}".format(self.prefix, self.nodename))
 
             if not is_spider and not is_img_proxy and not is_preview_browser:
                 if client_ip.iptype() != 'PRIVATE':

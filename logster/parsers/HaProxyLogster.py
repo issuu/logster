@@ -722,7 +722,7 @@ class HaProxyLogster(LogsterParser):
                         self.increment("{}.stats.browser.dnt.other.{}".format(self.prefix, self.nodename))
                 else:
                     self.increment("{}.stats.browser.dnt.crawler.{}".format(self.prefix, self.nodename))
-            elif 'dnt' in self.headers:
+            elif self.headers and 'dnt' in self.headers:
                 self.increment("{}.stats.browser.dnt.unset.{}".format(self.prefix, self.nodename))
 
             if not is_spider and not is_img_proxy and not is_preview_browser:

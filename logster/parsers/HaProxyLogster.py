@@ -554,13 +554,17 @@ class HaProxyLogster(LogsterParser):
             self.ip_counter[backend] = {}
         for haproxy in filter(lambda y: y['srvname'] == 'BACKEND', ha_stats):
             suffix = "{}.{}".format(self.nodename, "backend-"+haproxy['backend'].replace(".", "-"))
+            self.counters["{}.stats.backend.queue.{}".format(self.prefix, suffix)] = haproxy['qcur']
             self.counters["{}.stats.backend.session-rate.{}".format(self.prefix, suffix)] = haproxy['rate']
+            self.counters["{}.stats.backend.sessions.{}".format(self.prefix, suffix)] = haproxy['scur']
             self.counters["{}.stats.backend.error-response.{}".format(self.prefix, suffix)] = haproxy['eresp']
             self.counters["{}.stats.backend.client-aborts.{}".format(self.prefix, suffix)] = haproxy['cliaborts']
             self.counters["{}.stats.backend.server-aborts.{}".format(self.prefix, suffix)] = haproxy['srvaborts']
         for haproxy in filter(lambda y: y['srvname'] == 'FRONTEND', ha_stats):
             suffix = "{}.{}".format(self.nodename, "frontend-"+haproxy['backend'].replace(".", "-"))
+            self.counters["{}.stats.frontend.queue.{}".format(self.prefix, suffix)] = haproxy['qcur']
             self.counters["{}.stats.frontend.session-rate.{}".format(self.prefix, suffix)] = haproxy['rate']
+            self.counters["{}.stats.frontend.sessions.{}".format(self.prefix, suffix)] = haproxy['scur']
 
     def parse_line(self, line):
         '''parse_line'''

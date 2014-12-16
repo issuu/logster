@@ -1,5 +1,8 @@
 #!/bin/bash
 
+LOCKFILE=/var/run/logtail-logster.parsers.HaProxyLogster.HaProxyLogster-var-log-haproxy.log.lock
+STATEFILE=/var/run/logtail-logster.parsers.HaProxyLogster.HaProxyLogster-var-log-haproxy.log.state
+
 # pull this from the default file
 unset GRAPHITE_HOST_PORT
 unset STATSD_HOST_PORT
@@ -41,7 +44,20 @@ LOGDIR=/var/log/logster/
 test -d ${LOGDIR} || mkdir -p ${LOGDIR}
 
 # Check if another is already running
-[ -e /var/run/logtail-logster.parsers.HaProxyLogster.HaProxyLogster-var-log-haproxy.log.lock ] && exit 0
+if [ -e "${LOCKFILE}" ]; then
+    A=$(stat --format=%Y ${LOCKFILE})
+    B=$(date +%s)
+    D=$(expr $B - $A)
+    if [ $D -gt 200 ]; then
+        pkill -f 'perl.*logtail2'; sleep 20
+        pkill -f 'python.*logster'; sleep 10
+        [ -e "${STATEFILE}" ] && rm -f ${STATEFILE}
+        [ -e "${LOCKFILE}"  ] && rm -f ${LOCKFILE}
+        exit 0
+    else
+        exit 0
+    fi
+fi
 
 if [ -n "${STATSD_HOST_PORT}" ]; then
     logster --output statsd \

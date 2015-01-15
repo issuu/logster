@@ -40,7 +40,7 @@ LANGUAGES = ['en','es','pt','zh','de','it','fr','ru','da','ar']
 LINUX_VARIANTS = ['Linux', 'Ubuntu', 'Debian', 'Fedora', 'Gentoo', 'Red Hat', 'SUSE']
 
 # In case we cannot detect the User-Agent use this crud detection of crawlers
-BOT_PATTERN = re.compile('.*( Ezooms/|WinHttp\.WinHttpRequest|heritrix/|Python-urllib/|Siteimprove.com|Crawler|Bot|Spider|AndroidDownloadManager|URL2File/|Sentry/|Apache-HttpClient/|PHP/|Wget/|<\?php |(http://|\w+@)\w+(\.\w+)+)')
+BOT_PATTERN = re.compile('.*( Ezooms/|WinHttp\.WinHttpRequest|heritrix/|Java/|Python-urllib/|Siteimprove.com|Crawler|Bot|Spider|AndroidDownloadManager|URL2File/|Sentry/|Apache-HttpClient/|PHP/|Wget/|<\?php |(http://|\w+@)\w+(\.\w+)+)')
 IMGPROXY_PATTERN = re.compile('.*\(via ggpht.com GoogleImageProxy\)')
 PREVIEW_PATTERN = re.compile('.*Google Web Preview\)')
 

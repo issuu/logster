@@ -75,14 +75,14 @@ class MetricLogster(LogsterParser):
         if count_match:
             countbits = count_match.groupdict()
             count_name = countbits['count_name']
-            if not self.counts.has_key(count_name):
+            if count_name not in self.counts:
                 self.counts[count_name] = 0.0
             self.counts[count_name] += float(countbits['count_value']);
 
         time_match = self.time_reg.match(line)
         if time_match:
             time_name = time_match.groupdict()['time_name']
-            if not self.times.has_key(time_name):
+            if time_name not in self.times:
                 unit = time_match.groupdict()['time_unit']
                 self.times[time_name] = {'unit': unit, 'values': []};
             self.times[time_name]['values'].append(float(time_match.groupdict()['time_value']))
@@ -90,6 +90,7 @@ class MetricLogster(LogsterParser):
     def get_state(self, duration):
         '''Run any necessary calculations on the data collected from the logs
         and return a list of metric objects.'''
+        duration = float(duration)
         metrics = []
         if duration > 0:
             metrics += [MetricObject(counter, self.counts[counter]/duration) for counter in self.counts]

@@ -78,7 +78,7 @@ class SquidLogster(LogsterParser):
                 else:
                     self.http_5xx += 1
 
-                if self.squid_codes.has_key(squid_code):
+                if squid_code in self.squid_codes:
                     self.squid_codes[squid_code] += 1
                 else:
                     self.squid_codes['OTHER'] += 1
@@ -86,16 +86,16 @@ class SquidLogster(LogsterParser):
                 self.size_transferred += size
 
             else:
-                raise LogsterParsingException, "regmatch failed to match"
+                raise LogsterParsingException("regmatch failed to match")
 
-        except Exception, e:
-            raise LogsterParsingException, "regmatch or contents failed with %s" % e
+        except Exception as e:
+            raise LogsterParsingException("regmatch or contents failed with %s" % e)
 
 
     def get_state(self, duration):
         '''Run any necessary calculations on the data collected from the logs
         and return a list of metric objects.'''
-        self.duration = duration
+        self.duration = float(duration)
 
         # Return a list of metrics objects
         return_array = [

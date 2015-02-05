@@ -52,16 +52,16 @@ class ErrorLogLogster(LogsterParser):
                     self.other += 1
 
             else:
-                raise LogsterParsingException, "regmatch failed to match"
+                raise LogsterParsingException("regmatch failed to match")
 
-        except Exception, e:
-            raise LogsterParsingException, "regmatch or contents failed with %s" % e
+        except Exception as e:
+            raise LogsterParsingException("regmatch or contents failed with %s" % e)
 
 
     def get_state(self, duration):
         '''Run any necessary calculations on the data collected from the logs
         and return a list of metric objects.'''
-        self.duration = duration / 10
+        self.duration = duration / 10.0
 
         # Return a list of metrics objects
         return [

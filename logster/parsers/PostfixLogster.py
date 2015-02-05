@@ -58,14 +58,14 @@ class PostfixLogster(LogsterParser):
                elif (linebits['status'] == 'bounced'):
                   self.numBounced += 1
 
-        except Exception, e:
-            raise LogsterParsingException, "regmatch or contents failed with %s" % e
+        except Exception as e:
+            raise LogsterParsingException("regmatch or contents failed with %s" % e)
 
 
     def get_state(self, duration):
         '''Run any necessary calculations on the data collected from the logs
         and return a list of metric objects.'''
-        self.duration = duration
+        self.duration = float(duration)
         totalTxns = self.numSent + self.numBounced + self.numDeferred
         pctDeferred = 0.0
         pctSent = 0.0
@@ -76,9 +76,9 @@ class PostfixLogster(LogsterParser):
 
         #mind divide by zero situations 
         if (totalTxns > 0):
-           pctDeferred = (self.numDeferred / totalTxns) * 100
-           pctSent = (self.numSent / totalTxns) * 100
-           pctBounced = (self.numBounced / totalTxns ) * 100
+           pctDeferred = (float(self.numDeferred) / totalTxns) * 100
+           pctSent = (float(self.numSent) / totalTxns) * 100
+           pctBounced = (float(self.numBounced) / totalTxns ) * 100
 
         if (self.numSent > 0):
            avgDelay = self.totalDelay / self.numSent

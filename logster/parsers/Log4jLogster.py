@@ -77,16 +77,16 @@ class Log4jLogster(LogsterParser):
                     setattr(self, log_level, current_val+1)
                     
             else:
-                raise LogsterParsingException, "regmatch failed to match"
+                raise LogsterParsingException("regmatch failed to match")
                 
-        except Exception, e:
-            raise LogsterParsingException, "regmatch or contents failed with %s" % e
+        except Exception as e:
+            raise LogsterParsingException("regmatch or contents failed with %s" % e)
             
             
     def get_state(self, duration):
         '''Run any necessary calculations on the data collected from the logs
         and return a list of metric objects.'''
-        self.duration = duration
+        self.duration = float(duration)
         
         metrics = [MetricObject(level, (getattr(self, level) / self.duration)) for level in self.levels]
         return metrics

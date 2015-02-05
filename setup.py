@@ -18,7 +18,7 @@ setup(
         'logster/tailers'
     ],
     install_requires = [
-        'pygtail>=0.5.1',
+        #'pygtail>=0.5.1',
         'ua-parser'
     ],
     zip_safe=False,

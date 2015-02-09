@@ -8,7 +8,6 @@ import os
 import sys
 import re
 import math
-import numpy
 import optparse
 from collections import defaultdict
 from ua_parser import user_agent_parser
@@ -803,7 +802,9 @@ class HaProxyLogster(LogsterParser):
             suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
             ips = self.ip_counter[backend]
             if len(ips) > 0:
-                self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = int(numpy.var(ips.values()))
+                sample = ips.values()
+                variance = reduce(lambda x,y: x+y, map(lambda xi: (xi-(float(reduce(lambda x,y : x+y, sample)) / len(sample)))**2, sample))/ len(sample)
+                self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = int(variance)
 
         for name, value in self.counters.items():
             metrics.append(MetricObject(name, value))

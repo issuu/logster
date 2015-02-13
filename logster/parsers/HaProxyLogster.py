@@ -800,16 +800,16 @@ class HaProxyLogster(LogsterParser):
 
         for backend in self.ip_counter:
             suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
-            ips = self.ip_counter[backend]
-            if len(ips) > 0:
-                sample = ips.values()
-                variance = 0
-                if len(sample) > 0:
-                    try:
+            variance = 0
+            try:
+                ips = self.ip_counter[backend]
+                if len(ips) > 0:
+                    sample = ips.values()
+                    if len(sample) > 0:
                         variance = reduce(lambda x,y: x+y, map(lambda xi: (xi-(float(reduce(lambda x,y : x+y, sample)) / len(sample)))**2, sample))/ len(sample)
-                    except:
-                        pass
-                self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = int(variance)
+            except:
+                pass
+            self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = int(variance)
 
         for name, value in self.counters.items():
             metrics.append(MetricObject(name, value))

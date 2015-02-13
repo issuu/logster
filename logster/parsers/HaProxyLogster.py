@@ -71,25 +71,25 @@ def resolveHost(host_or_ip):
             return None
 
 def getPreferredLocale(acceptLanguage):
-    languages = acceptLanguage.split(",")
-    locale_q_pairs = []
+    try:
+        languages = acceptLanguage.split(",")
+        locale_q_pairs = []
     
-    for language in languages:
-        if language.split(";")[0] == language:
-            # no q => q = 1
-            locale_q_pairs.append((language.strip(), "1"))
-        else:
-            try:
-                locale = language.split(";")[0].strip()
-                q = language.split(";")[1].split("=")[1]
-                locale_q_pairs.append((locale, q))
-            except:
-                pass
+        for language in languages:
+            if language.split(";")[0] == language:
+                # no q => q = 1
+                locale_q_pairs.append((language.strip(), "1"))
+            else:
+                    locale = language.split(";")[0].strip()
+                    q = language.split(";")[1].split("=")[1]
+                    locale_q_pairs.append((locale, q))
 
-    if len(locale_q_pairs) > 0:
-        (l,q) = locale_q_pairs[0]
-        # Disregard subtag
-        return l.split('_')[0].split('-')[0].lower()
+        if len(locale_q_pairs) > 0:
+            (l,q) = locale_q_pairs[0]
+            # Disregard subtag
+            return l.split('_')[0].split('-')[0].lower()
+    except:
+        pass
     return None
 
 class HaPConn(object):

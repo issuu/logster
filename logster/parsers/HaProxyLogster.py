@@ -803,7 +803,9 @@ class HaProxyLogster(LogsterParser):
             ips = self.ip_counter[backend]
             if len(ips) > 0:
                 sample = ips.values()
-                variance = reduce(lambda x,y: x+y, map(lambda xi: (xi-(float(reduce(lambda x,y : x+y, sample)) / len(sample)))**2, sample))/ len(sample)
+                variance = 0
+                if len(sample) > 0:
+                    variance = reduce(lambda x,y: x+y, map(lambda xi: (xi-(float(reduce(lambda x,y : x+y, sample)) / len(sample)))**2, sample))/ len(sample)
                 self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = int(variance)
 
         for name, value in self.counters.items():

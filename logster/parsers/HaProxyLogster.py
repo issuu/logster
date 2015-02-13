@@ -599,13 +599,19 @@ class HaProxyLogster(LogsterParser):
 
                     if 'crh_user-agent' in __d:
                         if __d['crh_user-agent']:
-                            ua = user_agent_parser.Parse(__d['crh_user-agent'].replace('User-Agent: ','',1))
+                            try:
+                                ua = user_agent_parser.Parse(__d['crh_user-agent'].replace('User-Agent: ','',1))
+                            except:
+                                pass
                     if 'crh_accept-language' in __d:
                         if __d['crh_accept-language']:
                             al = getPreferredLocale(__d['crh_accept-language'])
                     if 'crh_x-forwarded-for' in __d:
                         if __d['crh_x-forwarded-for']:
-                            xff = __d['crh_x-forwarded-for'].split(',')[-1].strip()
+                            try:
+                                xff = __d['crh_x-forwarded-for'].split(',')[-1].strip()
+                            except:
+                                pass
                     if 'crh_dnt' in __d:
                         if __d['crh_dnt']:
                             dnt = __d['crh_dnt']
@@ -636,36 +642,39 @@ class HaProxyLogster(LogsterParser):
             if client_ip.strNormal() in self.crawlerips:
                 is_spider = True
             elif ua:
-                # Spider
-                if ua['device']['family'] == 'Spider':
-                    is_spider = True
-                elif ua['device']['family'] == 'Other' and BOT_PATTERN.match(ua['string']):
-                    is_spider = True
-                elif ua['device']['family'] == 'Other' and IMGPROXY_PATTERN.match(ua['string']):
-                    is_img_proxy = True
-                elif ua['device']['family'] == 'Other' and PREVIEW_PATTERN.match(ua['string']):
-                    is_preview_browser = True
-                else:
-                    # OS Family, i.e. Windows 7, Windows 2000, iOS, Android, Mac OS X, Windows Phone, Windows Mobile
-                    os_family=ua['os']['family']
-                    os_familyname=os_family.split(' ')[0]
-                    if os_familyname == 'Windows':
-                        if os_family in ['Windows Phone', 'Windows Mobile']:
-                            self.increment("{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, self.nodename))
-                        else:
-                            self.increment("{}.stats.browser.ua.os.windows.{}".format(self.prefix, self.nodename))
-                    elif os_family == 'iOS':
-                        self.increment("{}.stats.browser.ua.os.ios.{}".format(self.prefix, self.nodename))
-                    elif os_family == 'Android':
-                        self.increment("{}.stats.browser.ua.os.android.{}".format(self.prefix, self.nodename))
-                    elif os_family in ['Mac OS X', 'Mac OS']:
-                        self.increment("{}.stats.browser.ua.os.mac-os-x.{}".format(self.prefix, self.nodename))
-                    elif os_family in LINUX_VARIANTS:
-                        self.increment("{}.stats.browser.ua.os.linux.{}".format(self.prefix, self.nodename))
-                    elif os_familyname == 'BlackBerry':
-                        self.increment("{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, self.nodename))
+                try:
+                    # Spider
+                    if ua['device']['family'] == 'Spider':
+                        is_spider = True
+                    elif ua['device']['family'] == 'Other' and BOT_PATTERN.match(ua['string']):
+                        is_spider = True
+                    elif ua['device']['family'] == 'Other' and IMGPROXY_PATTERN.match(ua['string']):
+                        is_img_proxy = True
+                    elif ua['device']['family'] == 'Other' and PREVIEW_PATTERN.match(ua['string']):
+                        is_preview_browser = True
                     else:
-                        self.increment("{}.stats.browser.ua.os.other.{}".format(self.prefix, self.nodename))
+                        # OS Family, i.e. Windows 7, Windows 2000, iOS, Android, Mac OS X, Windows Phone, Windows Mobile
+                        os_family=ua['os']['family']
+                        os_familyname=os_family.split(' ')[0]
+                        if os_familyname == 'Windows':
+                            if os_family in ['Windows Phone', 'Windows Mobile']:
+                                self.increment("{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, self.nodename))
+                            else:
+                                self.increment("{}.stats.browser.ua.os.windows.{}".format(self.prefix, self.nodename))
+                        elif os_family == 'iOS':
+                            self.increment("{}.stats.browser.ua.os.ios.{}".format(self.prefix, self.nodename))
+                        elif os_family == 'Android':
+                            self.increment("{}.stats.browser.ua.os.android.{}".format(self.prefix, self.nodename))
+                        elif os_family in ['Mac OS X', 'Mac OS']:
+                            self.increment("{}.stats.browser.ua.os.mac-os-x.{}".format(self.prefix, self.nodename))
+                        elif os_family in LINUX_VARIANTS:
+                            self.increment("{}.stats.browser.ua.os.linux.{}".format(self.prefix, self.nodename))
+                        elif os_familyname == 'BlackBerry':
+                            self.increment("{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, self.nodename))
+                        else:
+                            self.increment("{}.stats.browser.ua.os.other.{}".format(self.prefix, self.nodename))
+                except:
+                    self.increment("{}.stats.browser.ua.os.other.{}".format(self.prefix, self.nodename))
             elif ua is None and 'crh_user-agent' in __d and client_ip.iptype() != 'PRIVATE':
                 # Empty User-Agent string and none private network - mark it as a spider
                 is_spider = True
@@ -674,16 +683,19 @@ class HaProxyLogster(LogsterParser):
                 self.increment("{}.stats.browser.ua.crawlers.{}".format(self.prefix, self.nodename))
                 if ua:
                     self.increment("{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, self.nodename))
-                    if ua['user_agent']['family'] == 'Googlebot' or 'Googlebot' in ua['string']:
-                        self.increment("{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, self.nodename))
-                    elif 'bingbot' in ua['string']:
-                        self.increment("{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, self.nodename))
-                    elif 'Yahoo! Slurp' in ua['string']:
-                        self.increment("{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, self.nodename))
-                    elif 'Baiduspider' in ua['string']:
-                        self.increment("{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, self.nodename))
-                    elif 'YandexBot' in ua['string']:
-                        self.increment("{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, self.nodename))
+                    try:
+                        if ua['user_agent']['family'] == 'Googlebot' or 'Googlebot' in ua['string']:
+                            self.increment("{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, self.nodename))
+                        elif 'bingbot' in ua['string']:
+                            self.increment("{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, self.nodename))
+                        elif 'Yahoo! Slurp' in ua['string']:
+                            self.increment("{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, self.nodename))
+                        elif 'Baiduspider' in ua['string']:
+                            self.increment("{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, self.nodename))
+                        elif 'YandexBot' in ua['string']:
+                            self.increment("{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, self.nodename))
+                    except:
+                        pass
                 elif client_ip.strNormal() in self.crawlerips:
                     self.increment("{}.stats.browser.ua.crawlers.ips.{}".format(self.prefix, self.nodename))
                 else:
@@ -700,14 +712,20 @@ class HaProxyLogster(LogsterParser):
             if is_img_proxy:
                 self.increment("{}.stats.browser.ua.imgproxy.{}".format(self.prefix, self.nodename))
                 if ua:
-                    if 'GoogleImageProxy' in ua['string']:
-                        self.increment("{}.stats.browser.ua.imgproxy.google.{}".format(self.prefix, self.nodename))
+                    try:
+                        if 'GoogleImageProxy' in ua['string']:
+                            self.increment("{}.stats.browser.ua.imgproxy.google.{}".format(self.prefix, self.nodename))
+                    except:
+                        pass
 
             if is_preview_browser:
                 self.increment("{}.stats.browser.ua.preview.{}".format(self.prefix, self.nodename))
                 if ua:
-                    if 'Google' in ua['string']:
-                        self.increment("{}.stats.browser.ua.preview.google.{}".format(self.prefix, self.nodename))
+                    try:
+                        if 'Google' in ua['string']:
+                            self.increment("{}.stats.browser.ua.preview.google.{}".format(self.prefix, self.nodename))
+                    except:
+                        pass
 
             if al and not is_spider and not is_img_proxy and not is_preview_browser:
                 if al in LANGUAGES:

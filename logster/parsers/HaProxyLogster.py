@@ -478,6 +478,19 @@ class HaProxyLogster(LogsterParser):
         self.add_pattern('startstop', r'(Proxy \S+ started\.|Pausing proxy \S+\.|Stopping (backend|proxy) \S+ in \d+ \S+\.|Proxy \S+ stopped \([^)]+\)\.)','')
         self.startstop_pattern = self.build_pattern()
 
+        #
+        # no server available
+        #
+        self.reset_pattern()
+        # start/stop/pause haproxy
+        self.add_pattern('log_time', r'\S+( |  )\d+ \d+:\d+:\d+')
+        self.add_pattern('hostname', r'\S+')
+        self.add_pattern('process_id', r'\S+', ': ')
+        self.add_pattern('backend_name', r'\S+', ' ', 'backend ')
+        # skip the rest ...
+        self.add_pattern('skipped', r'.*','', 'has no server available!')
+        self.noserver_pattern = self.build_pattern()
+
         self.parsed_lines = 0
         self.unparsed_lines = 0
 
@@ -547,8 +560,10 @@ class HaProxyLogster(LogsterParser):
             for method in ['BADREQ','OTHER']+REQUEST_METHODS:
                 self.counters["{}.request.method.{}.{}".format(self.prefix, method.lower(), suffix)] = 0
             for status_code in [str(x) for x in STATUS_CODES] + ['BADREQ','OTHER']:
+                self.counters["{}.response.clientabort.status.{}.{}".format(self.prefix, status_code.lower(), suffix)] = 0
                 self.counters["{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix)] = 0
             self.counters["{}.meta.up-down.{}".format(self.prefix, suffix)] = 0
+            self.counters["{}.meta.noserver.{}".format(self.prefix, suffix)] = 0
             self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = 0
             self.ip_counter[backend] = {}
         for haproxy in filter(lambda y: y['srvname'] == 'BACKEND', ha_stats):
@@ -574,8 +589,10 @@ class HaProxyLogster(LogsterParser):
 
             method = self.extract_method(__d['method'])
             status_code = self.extract_status_code(__d['status_code'])
-            tarpit = __d['term_event']=='P' and __d['term_session']=='T'
-            block  = __d['term_event']=='P' and __d['term_session']=='R'
+            tarpit   = __d['term_event']=='P' and __d['term_session']=='T'
+            block    = __d['term_event']=='P' and __d['term_session']=='R'
+            # annoying chinese sites causing 503s because of client aborts
+            cc_event = __d['term_event']=='C' and __d['term_session']=='C'
 
             if tarpit:
                 # Do not process any further iff tarpit
@@ -778,10 +795,14 @@ class HaProxyLogster(LogsterParser):
                 except:
                     pass
 
+            sc = int(status_code)
             for backend in ["backend-" + __d['backend_name'], "all-backends"]:
                 suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
 
-                self.increment("{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix))
+                if cc_event:
+                    self.increment("{}.response.clientabort.status.{}.{}".format(self.prefix, status_code.lower(), suffix))
+                else:
+                    self.increment("{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix))
                 self.increment("{}.request.method.{}.{}".format(self.prefix, method.lower(), suffix))
 
                 self.gauges["{}.bytesread-pct.{}.{}".format(self.prefix, "{}", suffix)].add(__d['bytes_read'])
@@ -804,9 +825,15 @@ class HaProxyLogster(LogsterParser):
                     __d = __m.groupdict()
                     self.counters["{}.meta.start-stop.{}".format(self.prefix, self.nodename)] = 1
                 else:
-                    #raise LogsterParsingException, "Failed to parse line: %s" % line
-                    print >> sys.stderr, 'Failed to parse line: %s' % line
-                    self.increment("{}.meta.unparsed-lines.{}".format(self.prefix, self.nodename))
+                    __m = self.noserver_pattern.match(line)
+                    if __m:
+                        __d = __m.groupdict()
+                        suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
+                        self.counters["{}.meta.noserver.{}".format(self.prefix, suffix)] = 1
+                    else:
+                        #raise LogsterParsingException, "Failed to parse line: %s" % line
+                        print >> sys.stderr, 'Failed to parse line: %s' % line
+                        self.increment("{}.meta.unparsed-lines.{}".format(self.prefix, self.nodename))
 
     def increment(self, name):
         '''increment'''

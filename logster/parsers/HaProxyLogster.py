@@ -795,7 +795,6 @@ class HaProxyLogster(LogsterParser):
                 except:
                     pass
 
-            sc = int(status_code)
             for backend in ["backend-" + __d['backend_name'], "all-backends"]:
                 suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
 

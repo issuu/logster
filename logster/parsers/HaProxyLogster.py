@@ -44,7 +44,15 @@ IMGPROXY_PATTERN = re.compile('.*\(via ggpht.com GoogleImageProxy\)')
 PREVIEW_PATTERN = re.compile('.*Google Web Preview\)')
 
 # /<account>/docs/<document>
-ISSUUDOC_PATTERN = re.compile('/[^/]+/docs/.+')
+ISSUUDOC_PATTERN = re.compile('/[^/]+/docs($|/.+)')
+ISSUUSTACKS_PATTERN = re.compile('/[^/]+/stacks($|/.+)')
+ISSUUFOLLOWERS_PATTERN = re.compile('/[^/]+/followers($|/.+)')
+ISSUUCALL_PATTERN = re.compile('(/|/api/)(call|res)/(?P<subcall>[^/]+)/.+')
+ISSUUQUERY_PATTERN = re.compile('/query(\?|/).+')
+ISSUUSEARCH_PATTERN = re.compile('/search(\?|/).+')
+ISSUUPUBLISH_PATTERN = re.compile('/publish($|\?.+|/.+)')
+ISSUUEXPLORE_PATTERN = re.compile('/explore(\?|/).+')
+ISSUUMULTIPART_PATTERN = re.compile('/multipart(\?|/).+')
 
 # haproxy.<host>.<backend>.request.method
 # haproxy.<host>.<backend>.response.code.<status>
@@ -509,12 +517,30 @@ class HaProxyLogster(LogsterParser):
         self.counters["{}.request.block.{}".format(self.prefix, self.nodename)] = 0
 
         if self.issuudocs:
-            self.counters["{}.request.issuudocs.crawlers.{}".format(self.prefix, self.nodename)] = 0
-            self.counters["{}.request.issuudocs.crawlers.4xx.{}".format(self.prefix, self.nodename)] = 0
-            self.counters["{}.request.issuudocs.crawlers.5xx.{}".format(self.prefix, self.nodename)] = 0
-            self.counters["{}.request.issuudocs.non-crawlers.{}".format(self.prefix, self.nodename)] = 0
-            self.counters["{}.request.issuudocs.non-crawlers.4xx.{}".format(self.prefix, self.nodename)] = 0
-            self.counters["{}.request.issuudocs.non-crawlers.5xx.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.docs.crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.docs.crawlers.4xx.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.docs.crawlers.5xx.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.docs.non-crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.docs.non-crawlers.4xx.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.docs.non-crawlers.5xx.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.root.crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.root.non-crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.stacks.crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.stacks.non-crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.followers.crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.followers.non-crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.search.crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.search.non-crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.publish.crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.publish.non-crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.explore.crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.explore.non-crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.api-query.crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.api-query.non-crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.api-call.crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.api-call.non-crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.multipart.crawlers.{}".format(self.prefix, self.nodename)] = 0
+            self.counters["{}.request.url.multipart.non-crawlers.{}".format(self.prefix, self.nodename)] = 0
 
         if self.headers:
             if 'user-agent' in self.headers:
@@ -781,17 +807,102 @@ class HaProxyLogster(LogsterParser):
                     if ISSUUDOC_PATTERN.match(u.path):
                         sc = int(status_code)
                         if is_spider:
-                            self.increment("{}.request.issuudocs.crawlers.{}".format(self.prefix, self.nodename))
+                            self.increment("{}.request.url.docs.crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
-                                self.increment("{}.request.issuudocs.crawlers.4xx.{}".format(self.prefix, self.nodename))
+                                self.increment("{}.request.url.docs.crawlers.4xx.{}".format(self.prefix, self.nodename))
                             elif sc >= 500 and sc <= 599:
-                                self.increment("{}.request.issuudocs.crawlers.5xx.{}".format(self.prefix, self.nodename))
+                                self.increment("{}.request.url.docs.crawlers.5xx.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.docs.crawlers.time.{}".format(self.prefix, self.nodename)].add(__d['Tt'])
+                            self.gauges["{}.request.url.docs.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
                         else:
-                            self.increment("{}.request.issuudocs.non-crawlers.{}".format(self.prefix, self.nodename))
+                            self.increment("{}.request.url.docs.non-crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
-                                self.increment("{}.request.issuudocs.non-crawlers.4xx.{}".format(self.prefix, self.nodename))
+                                self.increment("{}.request.url.docs.non-crawlers.4xx.{}".format(self.prefix, self.nodename))
                             elif sc >= 500 and sc <= 599:
-                                self.increment("{}.request.issuudocs.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
+                                self.increment("{}.request.url.docs.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.docs.non-crawlers.time.{}".format(self.prefix, self.nodename)].add(__d['Tt'])
+                            self.gauges["{}.request.url.docs.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                    elif ISSUUSTACKS_PATTERN.match(u.path):
+                        if is_spider:
+                            self.increment("{}.request.url.stacks.crawlers.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.stacks.crawlers.time.{}".format(self.prefix, self.nodename)].add(__d['Tt'])
+                            self.gauges["{}.request.url.stacks.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                        else:
+                            self.increment("{}.request.url.stacks.non-crawlers.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.stacks.non-crawlers.time.{}".format(self.prefix, self.nodename)].add(__d['Tt'])
+                            self.gauges["{}.request.url.stacks.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                    elif ISSUUFOLLOWERS_PATTERN.match(u.path):
+                        if is_spider:
+                            self.increment("{}.request.url.followers.crawlers.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.followers.crawlers.time.{}".format(self.prefix, self.nodename)].add(__d['Tt'])
+                            self.gauges["{}.request.url.followers.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                        else:
+                            self.increment("{}.request.url.followers.non-crawlers.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.followers.non-crawlers.time.{}".format(self.prefix, self.nodename)].add(__d['Tt'])
+                            self.gauges["{}.request.url.followers.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                    elif ISSUUQUERY_PATTERN.match(u.path):
+                        if is_spider:
+                            self.increment("{}.request.url.api-query.crawlers.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.api-query.crawlers.time.{}".format(self.prefix, self.nodename)].add(__d['Tt'])
+                            self.gauges["{}.request.url.api-query.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                        else:
+                            self.increment("{}.request.url.api-query.non-crawlers.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.api-query.non-crawlers.time.{}".format(self.prefix, self.nodename)].add(__d['Tt'])
+                            self.gauges["{}.request.url.api-query.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                    elif ISSUUSEARCH_PATTERN.match(u.path):
+                        if is_spider:
+                            self.increment("{}.request.url.search.crawlers.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.search.crawlers.time.{}".format(self.prefix, self.nodename)].add(__d['Tt'])
+                            self.gauges["{}.request.url.search.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                        else:
+                            self.increment("{}.request.url.search.non-crawlers.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.search.non-crawlers.time.{}".format(self.prefix, self.nodename)].add(__d['Tt'])
+                            self.gauges["{}.request.url.search.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                    elif ISSUUPUBLISH_PATTERN.match(u.path):
+                        if is_spider:
+                            self.increment("{}.request.url.publish.crawlers.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.publish.crawlers.time.{}".format(self.prefix, self.nodename)].add(__d['Tt'])
+                            self.gauges["{}.request.url.publish.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                        else:
+                            self.increment("{}.request.url.publish.non-crawlers.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.publish.non-crawlers.time.{}".format(self.prefix, self.nodename)].add(__d['Tt'])
+                            self.gauges["{}.request.url.publish.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                    elif ISSUUEXPLORE_PATTERN.match(u.path):
+                        if is_spider:
+                            self.increment("{}.request.url.explore.crawlers.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.explore.crawlers.time.{}".format(self.prefix, self.nodename)].add(__d['Tt'])
+                            self.gauges["{}.request.url.explore.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                        else:
+                            self.increment("{}.request.url.explore.non-crawlers.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.explore.non-crawlers.time.{}".format(self.prefix, self.nodename)].add(__d['Tt'])
+                            self.gauges["{}.request.url.explore.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                    elif ISSUUMULTIPART_PATTERN.match(u.path):
+                        if is_spider:
+                            self.increment("{}.request.url.multipart.crawlers.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.multipart.crawlers.time.{}".format(self.prefix, self.nodename)].add(__d['Tt'])
+                            self.gauges["{}.request.url.multipart.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                        else:
+                            self.increment("{}.request.url.multipart.non-crawlers.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.multipart.non-crawlers.time.{}".format(self.prefix, self.nodename)].add(__d['Tt'])
+                            self.gauges["{}.request.url.multipart.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                    elif u.path == "/":
+                        if is_spider:
+                            self.increment("{}.request.url.root.crawlers.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.root.crawlers.time.{}".format(self.prefix, self.nodename)].add(__d['Tt'])
+                            self.gauges["{}.request.url.root.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                        else:
+                            self.increment("{}.request.url.root.non-crawlers.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.root.non-crawlers.time.{}".format(self.prefix, self.nodename)].add(__d['Tt'])
+                            self.gauges["{}.request.url.root.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                    else:
+                        m = ISSUUCALL_PATTERN.match(u.path)
+                        if m:
+                            if is_spider:
+                                self.gauges["{}.request.url.api-call.crawlers.time.{}".format(self.prefix, self.nodename)].add(__d['Tt'])
+                                self.gauges["{}.request.url.api-call.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            else:
+                                self.gauges["{}.request.url.api-call.non-crawlers.time.{}".format(self.prefix, self.nodename)].add(__d['Tt'])
+                                self.gauges["{}.request.url.api-call.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
                 except:
                     pass
 

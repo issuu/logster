@@ -518,7 +518,7 @@ class HaProxyLogster(LogsterParser):
         self.counters["{}.request.block.{}".format(self.prefix, self.nodename)] = 0
 
         if self.issuudocs:
-            for u in ["root","home","docs","stacks","followers","search","publish","explore","api-query","multipart"]:
+            for u in ["root","docs","stacks","followers","search","publish","explore","api-query","multipart"]:
                 self.counters["{}.request.url.{}.crawlers.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.crawlers.4xx.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.crawlers.5xx.{}".format(self.prefix, u, self.nodename)] = 0

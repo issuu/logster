@@ -943,12 +943,14 @@ class HaProxyLogster(LogsterParser):
                         m = ISSUUCALL_PATTERN.match(u.path)
                         if m:
                             if is_spider:
+                                self.increment("{}.request.url.api-call.{}.crawlers.{}".format(self.prefix, m.groupdict()['subcall'], self.nodename))
                                 if sc >= 400 and sc <= 499:
                                     self.increment("{}.request.url.api-call.{}.crawlers.4xx.{}".format(self.prefix, m.groupdict()['subcall'], self.nodename))
                                 elif sc >= 500 and sc <= 599:
                                     self.increment("{}.request.url.api-call.{}.crawlers.5xx.{}".format(self.prefix, m.groupdict()['subcall'], self.nodename))
                                 self.gauges["{}.request.url.api-call.{}.crawlers.time-pct.{}.{}".format(self.prefix, m.groupdict()['subcall'], "{}", self.nodename)].add(__d['Tt'])
                             else:
+                                self.increment("{}.request.url.api-call.{}.non-crawlers.{}".format(self.prefix, m.groupdict()['subcall'], self.nodename))
                                 if sc >= 400 and sc <= 499:
                                     self.increment("{}.request.url.api-call.{}.non-crawlers.4xx.{}".format(self.prefix, m.groupdict()['subcall'], self.nodename))
                                 elif sc >= 500 and sc <= 599:
@@ -958,12 +960,14 @@ class HaProxyLogster(LogsterParser):
                             m = ISSUUHOME_PATTERN.match(u.path)
                             if m:
                                 if is_spider:
+                                    self.increment("{}.request.url.home.{}.crawlers.{}".format(self.prefix, m.groupdict()['subhome'], self.nodename))
                                     if sc >= 400 and sc <= 499:
                                         self.increment("{}.request.url.home.{}.crawlers.4xx.{}".format(self.prefix, m.groupdict()['subhome'], self.nodename))
                                     elif sc >= 500 and sc <= 599:
                                         self.increment("{}.request.url.home.{}.crawlers.5xx.{}".format(self.prefix, m.groupdict()['subhome'], self.nodename))
                                     self.gauges["{}.request.url.home.{}.crawlers.time-pct.{}.{}".format(self.prefix, m.groupdict()['subhome'], "{}", self.nodename)].add(__d['Tt'])
                                 else:
+                                    self.increment("{}.request.url.home.{}.non-crawlers.{}".format(self.prefix, m.groupdict()['subhome'], self.nodename))
                                     if sc >= 400 and sc <= 499:
                                         self.increment("{}.request.url.home.{}.non-crawlers.4xx.{}".format(self.prefix, m.groupdict()['subhome'], self.nodename))
                                     elif sc >= 500 and sc <= 599:

@@ -786,7 +786,8 @@ class HaProxyLogster(LogsterParser):
                     except:
                         self.ip_counter['all-backends'][client_ip.ip] = 1
 
-            if self.issuudocs and sc > 0:
+            # skip redirects
+            if self.issuudocs and sc > 0 and not (sc >= 300 and sc <= 399):
                 try:
                     __iu = urlparse(__d['path'])
                     if ISSUUDOC_PATTERN.match(__iu.path):

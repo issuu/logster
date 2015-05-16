@@ -49,7 +49,7 @@ ISSUUSTACKS_PATTERN = re.compile('/[^/]+/stacks($|/.+)')
 ISSUUFOLLOWERS_PATTERN = re.compile('/[^/]+/followers($|/.+)')
 ISSUUCALL_PATTERN = re.compile('(/|/api/)(call|res)/(?P<subcall>[^/]+)/.+')
 ISSUUHOME_PATTERN = re.compile('/home/(?P<subhome>[^/$]+)')
-ISSUUQUERY_PATTERN = re.compile('/query($|/.+)')
+ISSUUQUERY_PATTERN = re.compile('(/|/api/)query($|/.+)')
 ISSUUSEARCH_PATTERN = re.compile('/search($|/.+)')
 ISSUUPUBLISH_PATTERN = re.compile('/publish($|/.+)')
 ISSUUEXPLORE_PATTERN = re.compile('/explore($|/.+)')
@@ -614,6 +614,11 @@ class HaProxyLogster(LogsterParser):
                 self.increment("{}.request.block.{}".format(self.prefix, self.nodename))
                 return
 
+            try:
+                sc = int(status_code)
+            except:
+                sc = -1
+
             ua  = None
             al  = None
             dnt = None
@@ -727,14 +732,10 @@ class HaProxyLogster(LogsterParser):
                     self.increment("{}.stats.browser.ua.crawlers.ips.{}".format(self.prefix, self.nodename))
                 else:
                     self.increment("{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, self.nodename))
-                try:
-                    sc = int(status_code)
-                    if sc >= 400 and sc <= 499:
-                        self.increment("{}.response.status.crawlers.4xx.{}".format(self.prefix, self.nodename))
-                    elif sc >= 500 and sc <= 599:
-                        self.increment("{}.response.status.crawlers.5xx.{}".format(self.prefix, self.nodename))
-                except:
-                    pass
+                if sc >= 400 and sc <= 499:
+                    self.increment("{}.response.status.crawlers.4xx.{}".format(self.prefix, self.nodename))
+                elif sc >= 500 and sc <= 599:
+                    self.increment("{}.response.status.crawlers.5xx.{}".format(self.prefix, self.nodename))
 
             if is_img_proxy:
                 self.increment("{}.stats.browser.ua.imgproxy.{}".format(self.prefix, self.nodename))
@@ -785,11 +786,10 @@ class HaProxyLogster(LogsterParser):
                     except:
                         self.ip_counter['all-backends'][client_ip.ip] = 1
 
-            if self.issuudocs:
+            if self.issuudocs and sc > 0:
                 try:
-                    u = urlparse(__d['path'])
-                    sc = int(status_code)
-                    if ISSUUDOC_PATTERN.match(u.path):
+                    __iu = urlparse(__d['path'])
+                    if ISSUUDOC_PATTERN.match(__iu.path):
                         if is_spider:
                             self.increment("{}.request.url.docs.crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
@@ -804,7 +804,7 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.docs.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.docs.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
-                    elif ISSUUSTACKS_PATTERN.match(u.path):
+                    elif ISSUUSTACKS_PATTERN.match(__iu.path):
                         if is_spider:
                             self.increment("{}.request.url.stacks.crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
@@ -819,7 +819,7 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.stacks.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.stacks.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
-                    elif ISSUUFOLLOWERS_PATTERN.match(u.path):
+                    elif ISSUUFOLLOWERS_PATTERN.match(__iu.path):
                         if is_spider:
                             self.increment("{}.request.url.followers.crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
@@ -834,7 +834,7 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.followers.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.followers.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
-                    elif ISSUUQUERY_PATTERN.match(u.path):
+                    elif ISSUUQUERY_PATTERN.match(__iu.path):
                         if is_spider:
                             self.increment("{}.request.url.api-query.crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
@@ -849,7 +849,7 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.api-query.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.api-query.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
-                    elif ISSUUSEARCH_PATTERN.match(u.path):
+                    elif ISSUUSEARCH_PATTERN.match(__iu.path):
                         if is_spider:
                             self.increment("{}.request.url.search.crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
@@ -864,7 +864,7 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.search.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.search.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
-                    elif ISSUUPUBLISH_PATTERN.match(u.path):
+                    elif ISSUUPUBLISH_PATTERN.match(__iu.path):
                         if is_spider:
                             self.increment("{}.request.url.publish.crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
@@ -879,7 +879,7 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.publish.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.publish.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
-                    elif ISSUUEXPLORE_PATTERN.match(u.path):
+                    elif ISSUUEXPLORE_PATTERN.match(__iu.path):
                         if is_spider:
                             self.increment("{}.request.url.explore.crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
@@ -894,7 +894,7 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.explore.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.explore.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
-                    elif ISSUUMULTIPART_PATTERN.match(u.path):
+                    elif ISSUUMULTIPART_PATTERN.match(__iu.path):
                         if is_spider:
                             self.increment("{}.request.url.multipart.crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
@@ -909,7 +909,7 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.multipart.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.multipart.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
-                    elif u.path == "/":
+                    elif __iu.path == "/":
                         if is_spider:
                             self.increment("{}.request.url.root.crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
@@ -924,7 +924,7 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.root.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.root.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
-                    elif u.path == "/home":
+                    elif __iu.path == "/home":
                         if is_spider:
                             self.increment("{}.request.url.home.root.crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
@@ -940,39 +940,43 @@ class HaProxyLogster(LogsterParser):
                                 self.increment("{}.request.url.home.root.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.home.root.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
                     else:
-                        m = ISSUUCALL_PATTERN.match(u.path)
-                        if m:
-                            if is_spider:
-                                self.increment("{}.request.url.api-call.{}.crawlers.{}".format(self.prefix, m.groupdict()['subcall'], self.nodename))
-                                if sc >= 400 and sc <= 499:
-                                    self.increment("{}.request.url.api-call.{}.crawlers.4xx.{}".format(self.prefix, m.groupdict()['subcall'], self.nodename))
-                                elif sc >= 500 and sc <= 599:
-                                    self.increment("{}.request.url.api-call.{}.crawlers.5xx.{}".format(self.prefix, m.groupdict()['subcall'], self.nodename))
-                                self.gauges["{}.request.url.api-call.{}.crawlers.time-pct.{}.{}".format(self.prefix, m.groupdict()['subcall'], "{}", self.nodename)].add(__d['Tt'])
-                            else:
-                                self.increment("{}.request.url.api-call.{}.non-crawlers.{}".format(self.prefix, m.groupdict()['subcall'], self.nodename))
-                                if sc >= 400 and sc <= 499:
-                                    self.increment("{}.request.url.api-call.{}.non-crawlers.4xx.{}".format(self.prefix, m.groupdict()['subcall'], self.nodename))
-                                elif sc >= 500 and sc <= 599:
-                                    self.increment("{}.request.url.api-call.{}.non-crawlers.5xx.{}".format(self.prefix, m.groupdict()['subcall'], self.nodename))
-                                self.gauges["{}.request.url.api-call.{}.non-crawlers.time-pct.{}.{}".format(self.prefix, m.groupdict()['subcall'], "{}", self.nodename)].add(__d['Tt'])
-                        else:
-                            m = ISSUUHOME_PATTERN.match(u.path)
-                            if m:
+                        __im = ISSUUCALL_PATTERN.match(__iu.path)
+                        if __im:
+                            __ip = __im.groupdict()['subcall']
+                            if __ip:
                                 if is_spider:
-                                    self.increment("{}.request.url.home.{}.crawlers.{}".format(self.prefix, m.groupdict()['subhome'], self.nodename))
+                                    self.increment("{}.request.url.api-call.{}.crawlers.{}".format(self.prefix, __ip, self.nodename))
                                     if sc >= 400 and sc <= 499:
-                                        self.increment("{}.request.url.home.{}.crawlers.4xx.{}".format(self.prefix, m.groupdict()['subhome'], self.nodename))
+                                        self.increment("{}.request.url.api-call.{}.crawlers.4xx.{}".format(self.prefix, __ip, self.nodename))
                                     elif sc >= 500 and sc <= 599:
-                                        self.increment("{}.request.url.home.{}.crawlers.5xx.{}".format(self.prefix, m.groupdict()['subhome'], self.nodename))
-                                    self.gauges["{}.request.url.home.{}.crawlers.time-pct.{}.{}".format(self.prefix, m.groupdict()['subhome'], "{}", self.nodename)].add(__d['Tt'])
+                                        self.increment("{}.request.url.api-call.{}.crawlers.5xx.{}".format(self.prefix, __ip, self.nodename))
+                                    self.gauges["{}.request.url.api-call.{}.crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
                                 else:
-                                    self.increment("{}.request.url.home.{}.non-crawlers.{}".format(self.prefix, m.groupdict()['subhome'], self.nodename))
+                                    self.increment("{}.request.url.api-call.{}.non-crawlers.{}".format(self.prefix, __ip, self.nodename))
                                     if sc >= 400 and sc <= 499:
-                                        self.increment("{}.request.url.home.{}.non-crawlers.4xx.{}".format(self.prefix, m.groupdict()['subhome'], self.nodename))
+                                        self.increment("{}.request.url.api-call.{}.non-crawlers.4xx.{}".format(self.prefix, __ip, self.nodename))
                                     elif sc >= 500 and sc <= 599:
-                                        self.increment("{}.request.url.home.{}.non-crawlers.5xx.{}".format(self.prefix, m.groupdict()['subhome'], self.nodename))
-                                    self.gauges["{}.request.url.home.{}.non-crawlers.time-pct.{}.{}".format(self.prefix, m.groupdict()['subhome'], "{}", self.nodename)].add(__d['Tt'])
+                                        self.increment("{}.request.url.api-call.{}.non-crawlers.5xx.{}".format(self.prefix, __ip, self.nodename))
+                                    self.gauges["{}.request.url.api-call.{}.non-crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
+                        else:
+                            __im = ISSUUHOME_PATTERN.match(__iu.path)
+                            if __im:
+                                __ip = __im.groupdict()['subhome']
+                                if __ip:
+                                    if is_spider:
+                                        self.increment("{}.request.url.home.{}.crawlers.{}".format(self.prefix, __ip, self.nodename))
+                                        if sc >= 400 and sc <= 499:
+                                            self.increment("{}.request.url.home.{}.crawlers.4xx.{}".format(self.prefix, __ip, self.nodename))
+                                        elif sc >= 500 and sc <= 599:
+                                            self.increment("{}.request.url.home.{}.crawlers.5xx.{}".format(self.prefix, __ip, self.nodename))
+                                        self.gauges["{}.request.url.home.{}.crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
+                                    else:
+                                        self.increment("{}.request.url.home.{}.non-crawlers.{}".format(self.prefix, __ip, self.nodename))
+                                        if sc >= 400 and sc <= 499:
+                                            self.increment("{}.request.url.home.{}.non-crawlers.4xx.{}".format(self.prefix, __ip, self.nodename))
+                                        elif sc >= 500 and sc <= 599:
+                                            self.increment("{}.request.url.home.{}.non-crawlers.5xx.{}".format(self.prefix, __ip, self.nodename))
+                                        self.gauges["{}.request.url.home.{}.non-crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
                 except:
                     pass
 

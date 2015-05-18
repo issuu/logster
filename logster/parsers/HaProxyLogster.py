@@ -798,6 +798,8 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.docs.crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.docs.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.docs.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                         else:
                             self.increment("{}.request.url.docs.non-crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
@@ -805,6 +807,8 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.docs.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.docs.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.docs.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                     elif ISSUUSTACKS_PATTERN.match(__iu.path):
                         if is_spider:
                             self.increment("{}.request.url.stacks.crawlers.{}".format(self.prefix, self.nodename))
@@ -813,6 +817,8 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.stacks.crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.stacks.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.stacks.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                         else:
                             self.increment("{}.request.url.stacks.non-crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
@@ -820,6 +826,8 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.stacks.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.stacks.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.stacks.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                     elif ISSUUFOLLOWERS_PATTERN.match(__iu.path):
                         if is_spider:
                             self.increment("{}.request.url.followers.crawlers.{}".format(self.prefix, self.nodename))
@@ -828,6 +836,8 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.followers.crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.followers.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.followers.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                         else:
                             self.increment("{}.request.url.followers.non-crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
@@ -835,6 +845,8 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.followers.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.followers.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.followers.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                     elif ISSUUQUERY_PATTERN.match(__iu.path):
                         if is_spider:
                             self.increment("{}.request.url.api-query.crawlers.{}".format(self.prefix, self.nodename))
@@ -843,6 +855,8 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.api-query.crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.api-query.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.api-query.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                         else:
                             self.increment("{}.request.url.api-query.non-crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
@@ -850,6 +864,8 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.api-query.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.api-query.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.api-query.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                     elif ISSUUSEARCH_PATTERN.match(__iu.path):
                         if is_spider:
                             self.increment("{}.request.url.search.crawlers.{}".format(self.prefix, self.nodename))
@@ -858,6 +874,8 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.search.crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.search.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.search.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                         else:
                             self.increment("{}.request.url.search.non-crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
@@ -865,6 +883,8 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.search.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.search.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.search.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                     elif ISSUUPUBLISH_PATTERN.match(__iu.path):
                         if is_spider:
                             self.increment("{}.request.url.publish.crawlers.{}".format(self.prefix, self.nodename))
@@ -873,6 +893,8 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.publish.crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.publish.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.publish.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                         else:
                             self.increment("{}.request.url.publish.non-crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
@@ -880,6 +902,8 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.publish.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.publish.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.publish.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                     elif ISSUUEXPLORE_PATTERN.match(__iu.path):
                         if is_spider:
                             self.increment("{}.request.url.explore.crawlers.{}".format(self.prefix, self.nodename))
@@ -888,6 +912,8 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.explore.crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.explore.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.explore.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                         else:
                             self.increment("{}.request.url.explore.non-crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
@@ -895,6 +921,8 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.explore.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.explore.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.explore.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                     elif ISSUUMULTIPART_PATTERN.match(__iu.path):
                         if is_spider:
                             self.increment("{}.request.url.multipart.crawlers.{}".format(self.prefix, self.nodename))
@@ -903,6 +931,8 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.multipart.crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.multipart.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.multipart.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                         else:
                             self.increment("{}.request.url.multipart.non-crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
@@ -910,6 +940,8 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.multipart.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.multipart.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.multipart.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                     elif __iu.path == "/":
                         if is_spider:
                             self.increment("{}.request.url.root.crawlers.{}".format(self.prefix, self.nodename))
@@ -918,6 +950,8 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.root.crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.root.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.root.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                         else:
                             self.increment("{}.request.url.root.non-crawlers.{}".format(self.prefix, self.nodename))
                             if sc >= 400 and sc <= 499:
@@ -925,6 +959,8 @@ class HaProxyLogster(LogsterParser):
                             elif sc >= 500 and sc <= 599:
                                 self.increment("{}.request.url.root.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
                             self.gauges["{}.request.url.root.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.root.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                     else:
                         __im = ISSUUCALL_PATTERN.match(__iu.path)
                         if __im:
@@ -933,6 +969,8 @@ class HaProxyLogster(LogsterParser):
                                 if is_spider:
                                     self.increment("{}.request.url.api-call.crawlers.{}".format(self.prefix, self.nodename))
                                     self.gauges["{}.request.url.api-call.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                    if __d['Tr'] > 0:
+                                        self.gauges["{}.request.url.api-call.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                                     if sc >= 400 and sc <= 499:
                                         self.increment("{}.request.url.api-call.crawlers.4xx.{}".format(self.prefix, self.nodename))
                                     elif sc >= 500 and sc <= 599:
@@ -941,9 +979,13 @@ class HaProxyLogster(LogsterParser):
                                     if sc < 400 or sc > 499:
                                         self.increment("{}.request.url.api-call.{}.crawlers.{}".format(self.prefix, __ip, self.nodename))
                                         self.gauges["{}.request.url.api-call.{}.crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
+                                        if __d['Tr'] > 0:
+                                            self.gauges["{}.request.url.api-call.{}.crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
                                 else:
                                     self.increment("{}.request.url.api-call.non-crawlers.{}".format(self.prefix, self.nodename))
                                     self.gauges["{}.request.url.api-call.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                    if __d['Tr'] > 0:
+                                        self.gauges["{}.request.url.api-call.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                                     if sc >= 400 and sc <= 499:
                                         self.increment("{}.request.url.api-call.non-crawlers.4xx.{}".format(self.prefix, self.nodename))
                                     elif sc >= 500 and sc <= 599:
@@ -952,6 +994,8 @@ class HaProxyLogster(LogsterParser):
                                     if sc < 400 or sc > 499:
                                         self.increment("{}.request.url.api-call.{}.non-crawlers.{}".format(self.prefix, __ip, self.nodename))
                                         self.gauges["{}.request.url.api-call.{}.non-crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
+                                        if __d['Tr'] > 0:
+                                            self.gauges["{}.request.url.api-call.{}.non-crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
                         else:
                             __im = ISSUUHOME_PATTERN.match(__iu.path)
                             if __im or __iu.path == "/home":
@@ -963,6 +1007,8 @@ class HaProxyLogster(LogsterParser):
                                     if is_spider:
                                         self.increment("{}.request.url.home.crawlers.{}".format(self.prefix, self.nodename))
                                         self.gauges["{}.request.url.home.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                        if __d['Tr'] > 0:
+                                            self.gauges["{}.request.url.home.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                                         if sc >= 400 and sc <= 499:
                                             self.increment("{}.request.url.home.crawlers.4xx.{}".format(self.prefix, self.nodename))
                                         elif sc >= 500 and sc <= 599:
@@ -971,9 +1017,13 @@ class HaProxyLogster(LogsterParser):
                                         if sc < 400 or sc > 499:
                                             self.increment("{}.request.url.home.{}.crawlers.{}".format(self.prefix, __ip, self.nodename))
                                             self.gauges["{}.request.url.home.{}.crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
+                                            if __d['Tr'] > 0:
+                                                self.gauges["{}.request.url.home.{}.crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
                                     else:
                                         self.increment("{}.request.url.home.non-crawlers.{}".format(self.prefix, self.nodename))
                                         self.gauges["{}.request.url.home.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                        if __d['Tr'] > 0:
+                                            self.gauges["{}.request.url.home.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                                         if sc >= 400 and sc <= 499:
                                             self.increment("{}.request.url.home.non-crawlers.4xx.{}".format(self.prefix, self.nodename))
                                         elif sc >= 500 and sc <= 599:
@@ -982,6 +1032,8 @@ class HaProxyLogster(LogsterParser):
                                         if sc < 400 or sc > 499:
                                             self.increment("{}.request.url.home.{}.non-crawlers.{}".format(self.prefix, __ip, self.nodename))
                                             self.gauges["{}.request.url.home.{}.non-crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
+                                            if __d['Tr'] > 0:
+                                                self.gauges["{}.request.url.home.{}.non-crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
                 except:
                     pass
 
@@ -996,6 +1048,8 @@ class HaProxyLogster(LogsterParser):
 
                 self.gauges["{}.bytesread-pct.{}.{}".format(self.prefix, "{}", suffix)].add(__d['bytes_read'])
                 self.gauges["{}.request-time-pct.{}.{}".format(self.prefix, "{}", suffix)].add(__d['Tt'])
+                if __d['Tr'] > 0:
+                    self.gauges["{}.server-time-pct.{}.{}".format(self.prefix, "{}", suffix)].add(__d['Tr'])
 
         else:
             __m = self.updown_pattern.match(line)

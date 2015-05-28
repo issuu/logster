@@ -777,7 +777,7 @@ class HaProxyLogster(LogsterParser):
                 self.increment("{}.stats.browser.dnt.unset.{}".format(self.prefix, self.nodename))
 
             if not is_spider and not is_img_proxy and not is_preview_browser:
-                if client_ip.iptype() != 'PRIVATE' and __d['backend_name'] != 'backend-statistics':
+                if client_ip.iptype() != 'PRIVATE' and __d['backend_name'] != 'statistics':
                     if __d['server_name'] != '<NOSRV>':
                         try:
                             self.ip_counter['backend-'+__d['backend_name']][client_ip.ip] += 1

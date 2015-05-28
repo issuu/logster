@@ -1110,9 +1110,8 @@ class HaProxyLogster(LogsterParser):
                 else:
                     __m = self.noserver_pattern.match(line)
                     if __m:
-                        __d = __m.groupdict()
-                        suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
-                        self.counters["{}.meta.noserver.{}".format(self.prefix, suffix)] = 1
+                        #__d = __m.groupdict()
+                        self.counters["{}.meta.noserver.{}".format(self.prefix, self.nodename)] = 1
                     else:
                         #raise LogsterParsingException, "Failed to parse line: %s" % line
                         print >> sys.stderr, 'Failed to parse line: %s' % line

@@ -54,6 +54,8 @@ ISSUUSEARCH_PATTERN = re.compile('^/search($|/.+)')
 ISSUUPUBLISH_PATTERN = re.compile('^/publish($|/.+)')
 ISSUUEXPLORE_PATTERN = re.compile('^/explore($|/.+)')
 ISSUUMULTIPART_PATTERN = re.compile('^/multipart($|/.+)')
+ISSUUSIGNIN_PATTERN = re.compile('^/signin($|/.+)')
+ISSUUSIGNUP_PATTERN = re.compile('^/signup($|/.+)')
 
 # haproxy.<host>.<backend>.request.method
 # haproxy.<host>.<backend>.response.code.<status>
@@ -518,7 +520,7 @@ class HaProxyLogster(LogsterParser):
         self.counters["{}.request.block.{}".format(self.prefix, self.nodename)] = 0
 
         if self.issuudocs:
-            for u in ["root","docs","stacks","followers","search","publish","explore","api-query","multipart"]:
+            for u in ["root","docs","stacks","followers","search","publish","explore","api-query","multipart","signin","signup"]:
                 self.counters["{}.request.url.{}.crawlers.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.crawlers.4xx.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.crawlers.5xx.{}".format(self.prefix, u, self.nodename)] = 0
@@ -942,6 +944,44 @@ class HaProxyLogster(LogsterParser):
                             self.gauges["{}.request.url.multipart.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
                             if __d['Tr'] > 0:
                                 self.gauges["{}.request.url.multipart.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                    elif ISSUUSIGNIN_PATTERN.match(__iu.path):
+                        if is_spider:
+                            self.increment("{}.request.url.signin.crawlers.{}".format(self.prefix, self.nodename))
+                            if sc >= 400 and sc <= 499:
+                                self.increment("{}.request.url.signin.crawlers.4xx.{}".format(self.prefix, self.nodename))
+                            elif sc >= 500 and sc <= 599:
+                                self.increment("{}.request.url.signin.crawlers.5xx.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.signin.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.signin.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                        else:
+                            self.increment("{}.request.url.signin.non-crawlers.{}".format(self.prefix, self.nodename))
+                            if sc >= 400 and sc <= 499:
+                                self.increment("{}.request.url.signin.non-crawlers.4xx.{}".format(self.prefix, self.nodename))
+                            elif sc >= 500 and sc <= 599:
+                                self.increment("{}.request.url.signin.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.signin.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.signin.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                    elif ISSUUSIGNUP_PATTERN.match(__iu.path):
+                        if is_spider:
+                            self.increment("{}.request.url.signup.crawlers.{}".format(self.prefix, self.nodename))
+                            if sc >= 400 and sc <= 499:
+                                self.increment("{}.request.url.signup.crawlers.4xx.{}".format(self.prefix, self.nodename))
+                            elif sc >= 500 and sc <= 599:
+                                self.increment("{}.request.url.signup.crawlers.5xx.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.signup.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.signup.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                        else:
+                            self.increment("{}.request.url.signup.non-crawlers.{}".format(self.prefix, self.nodename))
+                            if sc >= 400 and sc <= 499:
+                                self.increment("{}.request.url.signup.non-crawlers.4xx.{}".format(self.prefix, self.nodename))
+                            elif sc >= 500 and sc <= 599:
+                                self.increment("{}.request.url.signup.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.signup.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.signup.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                     elif __iu.path == "/":
                         if is_spider:
                             self.increment("{}.request.url.root.crawlers.{}".format(self.prefix, self.nodename))

@@ -57,6 +57,7 @@ ISSUUMULTIPART_PATTERN = re.compile('^/multipart($|/.+)')
 ISSUUSIGNIN_PATTERN = re.compile('^/signin($|/.+)')
 ISSUUSIGNUP_PATTERN = re.compile('^/signup($|/.+)')
 ISSUUFBAPP_PATTERN = re.compile('^/_fbapp($|/.+)')
+ISSUUPIXEL_PATTERN = re.compile('^/v1/(?P<pixel>[^?]*)')
 
 # haproxy.<host>.<backend>.request.method
 # haproxy.<host>.<backend>.response.code.<status>
@@ -1264,6 +1265,56 @@ class HaProxyLogster(LogsterParser):
                                                 self.gauges["{}.request.url.home.{}.non-crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
                                                 if __d['Tr'] > 0:
                                                     self.gauges["{}.request.url.home.{}.non-crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
+                            else:
+                                __im = ISSUUPIXEL_PATTERN.match(__iu.path)
+                                if __im or __iu.path == "/v1":
+                                    if __iu.path == "/v1":
+                                        __ip = "root"
+                                    else:
+                                        __ip = __im.groupdict()['pixel']
+                                    if __ip:
+                                        if is_spider:
+                                            self.increment("{}.request.url.pixeltrack.crawlers.{}".format(self.prefix, self.nodename))
+                                            self.gauges["{}.request.url.pixeltrack.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                            if __d['Tr'] > 0:
+                                                self.gauges["{}.request.url.pixeltrack.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                                            if sc >= 300 and sc <= 399:
+                                                self.increment("{}.request.url.pixeltrack.crawlers.3xx.{}".format(self.prefix, self.nodename))
+                                                self.gauges["{}.request.url.pixeltrack.crawlers.3xx.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                                if __d['Tr'] > 0:
+                                                    self.gauges["{}.request.url.pixeltrack.crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                                            else:
+                                                if sc >= 400 and sc <= 499:
+                                                    self.increment("{}.request.url.pixeltrack.crawlers.4xx.{}".format(self.prefix, self.nodename))
+                                                elif sc >= 500 and sc <= 599:
+                                                    self.increment("{}.request.url.pixeltrack.{}.crawlers.5xx.{}".format(self.prefix, __ip, self.nodename))
+                                                    self.increment("{}.request.url.pixeltrack.crawlers.5xx.{}".format(self.prefix, self.nodename))
+                                                if sc < 400 or sc > 499:
+                                                    self.increment("{}.request.url.pixeltrack.{}.crawlers.{}".format(self.prefix, __ip, self.nodename))
+                                                    self.gauges["{}.request.url.pixeltrack.{}.crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
+                                                    if __d['Tr'] > 0:
+                                                        self.gauges["{}.request.url.pixeltrack.{}.crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
+                                        else:
+                                            self.increment("{}.request.url.pixeltrack.non-crawlers.{}".format(self.prefix, self.nodename))
+                                            self.gauges["{}.request.url.pixeltrack.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                            if __d['Tr'] > 0:
+                                                self.gauges["{}.request.url.pixeltrack.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                                            if sc >= 300 and sc <= 399:
+                                                self.increment("{}.request.url.pixeltrack.non-crawlers.3xx.{}".format(self.prefix, self.nodename))
+                                                self.gauges["{}.request.url.pixeltrack.non-crawlers.3xx.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                                if __d['Tr'] > 0:
+                                                    self.gauges["{}.request.url.pixeltrack.non-crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                                            else:
+                                                if sc >= 400 and sc <= 499:
+                                                    self.increment("{}.request.url.pixeltrack.non-crawlers.4xx.{}".format(self.prefix, self.nodename))
+                                                elif sc >= 500 and sc <= 599:
+                                                    self.increment("{}.request.url.pixeltrack.{}.non-crawlers.5xx.{}".format(self.prefix, __ip, self.nodename))
+                                                    self.increment("{}.request.url.pixeltrack.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
+                                                if sc < 400 or sc > 499:
+                                                    self.increment("{}.request.url.pixeltrack.{}.non-crawlers.{}".format(self.prefix, __ip, self.nodename))
+                                                    self.gauges["{}.request.url.pixeltrack.{}.non-crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
+                                                    if __d['Tr'] > 0:
+                                                        self.gauges["{}.request.url.pixeltrack.{}.non-crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
                 except:
                     pass
 

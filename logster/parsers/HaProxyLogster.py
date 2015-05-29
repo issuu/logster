@@ -56,6 +56,7 @@ ISSUUEXPLORE_PATTERN = re.compile('^/explore($|/.+)')
 ISSUUMULTIPART_PATTERN = re.compile('^/multipart($|/.+)')
 ISSUUSIGNIN_PATTERN = re.compile('^/signin($|/.+)')
 ISSUUSIGNUP_PATTERN = re.compile('^/signup($|/.+)')
+ISSUUFBAPP_PATTERN = re.compile('^/_fbapp($|/.+)')
 
 # haproxy.<host>.<backend>.request.method
 # haproxy.<host>.<backend>.response.code.<status>
@@ -520,7 +521,7 @@ class HaProxyLogster(LogsterParser):
         self.counters["{}.request.block.{}".format(self.prefix, self.nodename)] = 0
 
         if self.issuudocs:
-            for u in ["root","docs","stacks","followers","search","publish","explore","api-query","multipart","signin","signup"]:
+            for u in ["root","docs","stacks","followers","search","publish","explore","api-query","multipart","signin","signup","fbapp"]:
                 self.counters["{}.request.url.{}.crawlers.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.crawlers.4xx.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.crawlers.5xx.{}".format(self.prefix, u, self.nodename)] = 0
@@ -982,6 +983,25 @@ class HaProxyLogster(LogsterParser):
                             self.gauges["{}.request.url.signup.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
                             if __d['Tr'] > 0:
                                 self.gauges["{}.request.url.signup.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                    elif ISSUUFBAPP_PATTERN.match(__iu.path):
+                        if is_spider:
+                            self.increment("{}.request.url.fbapp.crawlers.{}".format(self.prefix, self.nodename))
+                            if sc >= 400 and sc <= 499:
+                                self.increment("{}.request.url.fbapp.crawlers.4xx.{}".format(self.prefix, self.nodename))
+                            elif sc >= 500 and sc <= 599:
+                                self.increment("{}.request.url.fbapp.crawlers.5xx.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.fbapp.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.fbapp.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                        else:
+                            self.increment("{}.request.url.fbapp.non-crawlers.{}".format(self.prefix, self.nodename))
+                            if sc >= 400 and sc <= 499:
+                                self.increment("{}.request.url.fbapp.non-crawlers.4xx.{}".format(self.prefix, self.nodename))
+                            elif sc >= 500 and sc <= 599:
+                                self.increment("{}.request.url.fbapp.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
+                            self.gauges["{}.request.url.fbapp.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                            if __d['Tr'] > 0:
+                                self.gauges["{}.request.url.fbapp.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                     elif __iu.path == "/":
                         if is_spider:
                             self.increment("{}.request.url.root.crawlers.{}".format(self.prefix, self.nodename))

@@ -1171,7 +1171,7 @@ class HaProxyLogster(LogsterParser):
                     else:
                         __im = ISSUUCALL_PATTERN.match(__iu.path)
                         if __im:
-                            __ip = __im.groupdict()['subcall']
+                            __ip = __im.groupdict()['subcall'].replace(".", "-")
                             if __ip:
                                 if is_spider:
                                     self.increment("{}.request.url.api-call.crawlers.{}".format(self.prefix, self.nodename))
@@ -1221,7 +1221,7 @@ class HaProxyLogster(LogsterParser):
                                 if __iu.path == "/home":
                                     __ip = "root"
                                 else:
-                                    __ip = __im.groupdict()['subhome']
+                                    __ip = __im.groupdict()['subhome'].replace(".", "-")
                                 if __ip:
                                     if is_spider:
                                         self.increment("{}.request.url.home.crawlers.{}".format(self.prefix, self.nodename))
@@ -1271,7 +1271,7 @@ class HaProxyLogster(LogsterParser):
                                     if __iu.path == "/v1":
                                         __ip = "root"
                                     else:
-                                        __ip = __im.groupdict()['pixel']
+                                        __ip = __im.groupdict()['pixel'].replace(".", "-")
                                     if __ip:
                                         if is_spider:
                                             self.increment("{}.request.url.pixeltrack.crawlers.{}".format(self.prefix, self.nodename))

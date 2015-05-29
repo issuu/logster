@@ -56,7 +56,7 @@ ISSUUEXPLORE_PATTERN = re.compile('^/explore($|/.+)')
 ISSUUMULTIPART_PATTERN = re.compile('^/multipart($|/.+)')
 ISSUUSIGNIN_PATTERN = re.compile('^/signin($|/.+)')
 ISSUUSIGNUP_PATTERN = re.compile('^/signup($|/.+)')
-ISSUUFBAPP_PATTERN = re.compile('^/_fbapp($|/.+)')
+ISSUUFBAPP_PATTERN = re.compile('^/\_fbapp($|/.+)')
 
 # haproxy.<host>.<backend>.request.method
 # haproxy.<host>.<backend>.response.code.<status>

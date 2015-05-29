@@ -796,6 +796,8 @@ class HaProxyLogster(LogsterParser):
             if self.issuudocs and sc > 0:
                 try:
                     __iu = urlparse(__d['path'])
+                    if __iu.path != "/":
+                        __iu.path = __iu.path.rstrip('/')
                     if ISSUUDOC_PATTERN.match(__iu.path):
                         if is_spider:
                             self.increment("{}.request.url.docs.crawlers.{}".format(self.prefix, self.nodename))
@@ -1171,7 +1173,7 @@ class HaProxyLogster(LogsterParser):
                     else:
                         __im = ISSUUCALL_PATTERN.match(__iu.path)
                         if __im:
-                            __ip = __im.groupdict()['subcall'].replace(".", "-")
+                            __ip = __im.groupdict()['subcall'].replace(".", "-").rstrip('/')
                             if __ip:
                                 if is_spider:
                                     self.increment("{}.request.url.api-call.crawlers.{}".format(self.prefix, self.nodename))
@@ -1221,7 +1223,7 @@ class HaProxyLogster(LogsterParser):
                                 if __iu.path == "/home":
                                     __ip = "root"
                                 else:
-                                    __ip = __im.groupdict()['subhome'].replace(".", "-")
+                                    __ip = __im.groupdict()['subhome'].replace(".", "-").rstrip('/')
                                 if __ip:
                                     if is_spider:
                                         self.increment("{}.request.url.home.crawlers.{}".format(self.prefix, self.nodename))
@@ -1271,7 +1273,7 @@ class HaProxyLogster(LogsterParser):
                                     if __iu.path == "/v1":
                                         __ip = "root"
                                     else:
-                                        __ip = __im.groupdict()['pixel'].replace(".", "-")
+                                        __ip = __im.groupdict()['pixel'].replace(".", "-").rstrip('/')
                                     if __ip:
                                         if is_spider:
                                             self.increment("{}.request.url.pixeltrack.crawlers.{}".format(self.prefix, self.nodename))

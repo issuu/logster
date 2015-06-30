@@ -59,6 +59,7 @@ ISSUUSIGNUP_PATTERN = re.compile('^/signup($|/.+)')
 ISSUUFBAPP_PATTERN = re.compile('^/_fbapp($|/.+)')
 ISSUUPIXEL_PATTERN = re.compile('^/v1/(?P<pixel>[^?]*)')
 ISSUUEMAILREJECTED_PATTERN = re.compile('^/emailrejected($|/.+)')
+ISSUUOPTOUT_PATTERN = re.compile('^/optout($|/.+)')
 
 # haproxy.<host>.<backend>.request.method
 # haproxy.<host>.<backend>.response.code.<status>
@@ -1075,6 +1076,37 @@ class HaProxyLogster(LogsterParser):
                                 self.gauges["{}.request.url.emailrejected.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
                                 if __d['Tr'] > 0:
                                     self.gauges["{}.request.url.emailrejected.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                    elif ISSUUOPTOUT_PATTERN.match(__iu.path):
+                        if is_spider:
+                            self.increment("{}.request.url.optout.crawlers.{}".format(self.prefix, self.nodename))
+                            if sc >= 300 and sc <= 399:
+                                self.increment("{}.request.url.optout.crawlers.3xx.{}".format(self.prefix, self.nodename))
+                                self.gauges["{}.request.url.optout.crawlers.3xx.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                if __d['Tr'] > 0:
+                                    self.gauges["{}.request.url.optout.crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                            else:
+                                if sc >= 400 and sc <= 499:
+                                    self.increment("{}.request.url.optout.crawlers.4xx.{}".format(self.prefix, self.nodename))
+                                elif sc >= 500 and sc <= 599:
+                                    self.increment("{}.request.url.optout.crawlers.5xx.{}".format(self.prefix, self.nodename))
+                                self.gauges["{}.request.url.optout.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                if __d['Tr'] > 0:
+                                    self.gauges["{}.request.url.optout.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                        else:
+                            self.increment("{}.request.url.optout.non-crawlers.{}".format(self.prefix, self.nodename))
+                            if sc >= 300 and sc <= 399:
+                                self.increment("{}.request.url.optout.non-crawlers.3xx.{}".format(self.prefix, self.nodename))
+                                self.gauges["{}.request.url.optout.non-crawlers.3xx.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                if __d['Tr'] > 0:
+                                    self.gauges["{}.request.url.optout.non-crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                            else:
+                                if sc >= 400 and sc <= 499:
+                                    self.increment("{}.request.url.optout.non-crawlers.4xx.{}".format(self.prefix, self.nodename))
+                                elif sc >= 500 and sc <= 599:
+                                    self.increment("{}.request.url.optout.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
+                                self.gauges["{}.request.url.optout.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                if __d['Tr'] > 0:
+                                    self.gauges["{}.request.url.optout.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                     elif ISSUUMULTIPART_PATTERN.match(__iu.path):
                         if is_spider:
                             self.increment("{}.request.url.multipart.crawlers.{}".format(self.prefix, self.nodename))

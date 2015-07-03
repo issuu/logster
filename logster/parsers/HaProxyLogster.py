@@ -536,30 +536,33 @@ class HaProxyLogster(LogsterParser):
 
         if self.headers:
             if 'user-agent' in self.headers:
-                self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.crawlers.ips.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.os.windows.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.os.ios.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.os.android.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.os.mac-os-x.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.os.linux.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.os.other.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.imgproxy.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.preview.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.imgproxy.google.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.ua.preview.google.{}".format(self.prefix, self.nodename)] = 0
+                # for each known backend - initialize counters
+                for backend in map(lambda x: "backend-"+x['backend'], filter(lambda y: y['srvname'] == 'BACKEND', ha_stats)) + ["all-backends"]:
+                    suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
+                    self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.ips.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.os.windows.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.os.ios.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.os.android.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.os.mac-os-x.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.os.linux.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.os.other.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.imgproxy.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.preview.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.imgproxy.google.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.preview.google.{}".format(self.prefix, suffix)] = 0
 
-                self.counters["{}.response.status.crawlers.4xx.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.response.status.crawlers.5xx.{}".format(self.prefix, self.nodename)] = 0
+                    self.counters["{}.response.status.crawlers.4xx.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.response.status.crawlers.5xx.{}".format(self.prefix, suffix)] = 0
 
             if 'accept-language' in self.headers:
                 for lang in ['OTHER']+LANGUAGES:
@@ -693,75 +696,86 @@ class HaProxyLogster(LogsterParser):
                     elif ua['device']['family'] == 'Other' and PREVIEW_PATTERN.match(ua['string']):
                         is_preview_browser = True
                     else:
-                        # OS Family, i.e. Windows 7, Windows 2000, iOS, Android, Mac OS X, Windows Phone, Windows Mobile
-                        os_family=ua['os']['family']
-                        os_familyname=os_family.split(' ')[0]
-                        if os_familyname == 'Windows':
-                            if os_family in ['Windows Phone', 'Windows Mobile']:
-                                self.increment("{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, self.nodename))
+                        for backend in ["backend-" + __d['backend_name'], "all-backends"]:
+                            suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
+                            # OS Family, i.e. Windows 7, Windows 2000, iOS, Android, Mac OS X, Windows Phone, Windows Mobile
+                            os_family=ua['os']['family']
+                            os_familyname=os_family.split(' ')[0]
+                            if os_familyname == 'Windows':
+                                if os_family in ['Windows Phone', 'Windows Mobile']:
+                                    self.increment("{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, suffix))
+                                else:
+                                    self.increment("{}.stats.browser.ua.os.windows.{}".format(self.prefix, suffix))
+                            elif os_family == 'iOS':
+                                self.increment("{}.stats.browser.ua.os.ios.{}".format(self.prefix, suffix))
+                            elif os_family == 'Android':
+                                self.increment("{}.stats.browser.ua.os.android.{}".format(self.prefix, suffix))
+                            elif os_family in ['Mac OS X', 'Mac OS']:
+                                self.increment("{}.stats.browser.ua.os.mac-os-x.{}".format(self.prefix, suffix))
+                            elif os_family in LINUX_VARIANTS:
+                                self.increment("{}.stats.browser.ua.os.linux.{}".format(self.prefix, suffix))
+                            elif os_familyname == 'BlackBerry':
+                                self.increment("{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, suffix))
                             else:
-                                self.increment("{}.stats.browser.ua.os.windows.{}".format(self.prefix, self.nodename))
-                        elif os_family == 'iOS':
-                            self.increment("{}.stats.browser.ua.os.ios.{}".format(self.prefix, self.nodename))
-                        elif os_family == 'Android':
-                            self.increment("{}.stats.browser.ua.os.android.{}".format(self.prefix, self.nodename))
-                        elif os_family in ['Mac OS X', 'Mac OS']:
-                            self.increment("{}.stats.browser.ua.os.mac-os-x.{}".format(self.prefix, self.nodename))
-                        elif os_family in LINUX_VARIANTS:
-                            self.increment("{}.stats.browser.ua.os.linux.{}".format(self.prefix, self.nodename))
-                        elif os_familyname == 'BlackBerry':
-                            self.increment("{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, self.nodename))
-                        else:
-                            self.increment("{}.stats.browser.ua.os.other.{}".format(self.prefix, self.nodename))
+                                self.increment("{}.stats.browser.ua.os.other.{}".format(self.prefix, suffix))
                 except:
-                    self.increment("{}.stats.browser.ua.os.other.{}".format(self.prefix, self.nodename))
+                    for backend in ["backend-" + __d['backend_name'], "all-backends"]:
+                        suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
+                        self.increment("{}.stats.browser.ua.os.other.{}".format(self.prefix, suffix))
             elif ua is None and 'crh_user-agent' in __d and client_ip.iptype() != 'PRIVATE':
                 # Empty User-Agent string and none private network - mark it as a spider
                 is_spider = True
 
             if is_spider:
-                self.increment("{}.stats.browser.ua.crawlers.{}".format(self.prefix, self.nodename))
-                if ua:
-                    self.increment("{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, self.nodename))
-                    try:
-                        if ua['user_agent']['family'] == 'Googlebot' or 'Googlebot' in ua['string']:
-                            self.increment("{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, self.nodename))
-                        elif 'bingbot' in ua['string']:
-                            self.increment("{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, self.nodename))
-                        elif 'Yahoo! Slurp' in ua['string']:
-                            self.increment("{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, self.nodename))
-                        elif 'Baiduspider' in ua['string']:
-                            self.increment("{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, self.nodename))
-                        elif 'YandexBot' in ua['string']:
-                            self.increment("{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, self.nodename))
-                    except:
-                        pass
-                elif client_ip.strNormal() in self.crawlerips:
-                    self.increment("{}.stats.browser.ua.crawlers.ips.{}".format(self.prefix, self.nodename))
-                else:
-                    self.increment("{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, self.nodename))
-                if sc >= 400 and sc <= 499:
-                    self.increment("{}.response.status.crawlers.4xx.{}".format(self.prefix, self.nodename))
-                elif sc >= 500 and sc <= 599:
-                    self.increment("{}.response.status.crawlers.5xx.{}".format(self.prefix, self.nodename))
+                for backend in ["backend-" + __d['backend_name'], "all-backends"]:
+                    suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
+
+                    self.increment("{}.stats.browser.ua.crawlers.{}".format(self.prefix, suffix))
+                    if ua:
+                        self.increment("{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, suffix))
+                        try:
+                            if ua['user_agent']['family'] == 'Googlebot' or 'Googlebot' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, suffix))
+                            elif 'bingbot' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, suffix))
+                            elif 'Yahoo! Slurp' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, suffix))
+                            elif 'Baiduspider' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, suffix))
+                            elif 'YandexBot' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, suffix))
+                        except:
+                            pass
+                    elif client_ip.strNormal() in self.crawlerips:
+                        self.increment("{}.stats.browser.ua.crawlers.ips.{}".format(self.prefix, suffix))
+                    else:
+                        self.increment("{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, suffix))
+                    if sc >= 400 and sc <= 499:
+                        self.increment("{}.response.status.crawlers.4xx.{}".format(self.prefix, suffix))
+                    elif sc >= 500 and sc <= 599:
+                        self.increment("{}.response.status.crawlers.5xx.{}".format(self.prefix, suffix))
 
             if is_img_proxy:
-                self.increment("{}.stats.browser.ua.imgproxy.{}".format(self.prefix, self.nodename))
-                if ua:
-                    try:
-                        if 'GoogleImageProxy' in ua['string']:
-                            self.increment("{}.stats.browser.ua.imgproxy.google.{}".format(self.prefix, self.nodename))
-                    except:
-                        pass
+                for backend in ["backend-" + __d['backend_name'], "all-backends"]:
+                    suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
+                    self.increment("{}.stats.browser.ua.imgproxy.{}".format(self.prefix, suffix))
+                    if ua:
+                        try:
+                            if 'GoogleImageProxy' in ua['string']:
+                                self.increment("{}.stats.browser.ua.imgproxy.google.{}".format(self.prefix, suffix))
+                        except:
+                            pass
 
             if is_preview_browser:
-                self.increment("{}.stats.browser.ua.preview.{}".format(self.prefix, self.nodename))
-                if ua:
-                    try:
-                        if 'Google' in ua['string']:
-                            self.increment("{}.stats.browser.ua.preview.google.{}".format(self.prefix, self.nodename))
-                    except:
-                        pass
+                for backend in ["backend-" + __d['backend_name'], "all-backends"]:
+                    suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
+                    self.increment("{}.stats.browser.ua.preview.{}".format(self.prefix, suffix))
+                    if ua:
+                        try:
+                            if 'Google' in ua['string']:
+                                self.increment("{}.stats.browser.ua.preview.google.{}".format(self.prefix, suffix))
+                        except:
+                            pass
 
             if al and not is_spider and not is_img_proxy and not is_preview_browser:
                 if al in LANGUAGES:

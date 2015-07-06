@@ -39,7 +39,7 @@ LANGUAGES = ['en','es','pt','zh','ja','de','it','fr','ru','da','ar']
 LINUX_VARIANTS = ['Linux', 'Ubuntu', 'Debian', 'Fedora', 'Gentoo', 'Red Hat', 'SUSE']
 
 # In case we cannot detect the User-Agent use this crud detection of crawlers
-BOT_PATTERN = re.compile('.*( Ezooms/|WinHttp\.WinHttpRequest|heritrix/|Java/|Python-urllib/|Siteimprove.com|Crawler|Bot|Spider|AndroidDownloadManager|URL2File/|Sentry/|Apache-HttpClient/|PHP/|Wget/|Mediapartners-Google|<\?php |(http://|\w+@)\w+(\.\w+)+)')
+BOT_PATTERN = re.compile('.*( Ezooms/|WinHttp\.WinHttpRequest|heritrix/|Java/|[Pp]ython|Siteimprove.com|Crawler|Bot|Spider|AndroidDownloadManager|URL2File/|Sentry/|Apache-HttpClient/|PHP[/ ]|Wget/|Mediapartners-Google|curl/|WordPress/|Twitter/|check_http/|<\?php |(http://|\w+@)\w+(\.\w+)+)')
 IMGPROXY_PATTERN = re.compile('.*\(via ggpht.com GoogleImageProxy\)')
 PREVIEW_PATTERN = re.compile('.*Google Web Preview\)')
 
@@ -740,7 +740,9 @@ class HaProxyLogster(LogsterParser):
                     if ua:
                         self.increment("{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, suffix))
                         try:
-                            if ua['user_agent']['family'] == 'Googlebot' or 'Google' in ua['string']:
+                            if 'Feedfetcher-Google' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.feedfetcher.{}".format(self.prefix, suffix))
+                            elif ua['user_agent']['family'] == 'Googlebot' or 'Google' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, suffix))
                             elif 'bingbot' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, suffix))
@@ -762,6 +764,12 @@ class HaProxyLogster(LogsterParser):
                                 self.increment("{}.stats.browser.ua.crawlers.pingdom.{}".format(self.prefix, suffix))
                             elif 'Amazon Route 53' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.route53.{}".format(self.prefix, suffix))
+                            elif 'curl' in ua['string'] or 'cURL' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.curl.{}".format(self.prefix, suffix))
+                            elif 'heritrix' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.heritrix.{}".format(self.prefix, suffix))
+                            elif 'opensiteexplorer' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.opensiteexplorer.{}".format(self.prefix, suffix))
                         except:
                             pass
                     elif client_ip.strNormal() in self.crawlerips:

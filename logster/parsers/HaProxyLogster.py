@@ -39,7 +39,7 @@ LANGUAGES = ['en','es','pt','zh','ja','de','it','fr','ru','da','ar']
 LINUX_VARIANTS = ['Linux', 'Ubuntu', 'Debian', 'Fedora', 'Gentoo', 'Red Hat', 'SUSE']
 
 # In case we cannot detect the User-Agent use this crud detection of crawlers
-BOT_PATTERN = re.compile('.*( Ezooms/|WinHttp\.WinHttpRequest|heritrix/|Java/|Python-urllib/|Siteimprove.com|Crawler|Bot|Spider|AndroidDownloadManager|URL2File/|Sentry/|Apache-HttpClient/|PHP/|Wget/|<\?php |(http://|\w+@)\w+(\.\w+)+)')
+BOT_PATTERN = re.compile('.*( Ezooms/|WinHttp\.WinHttpRequest|heritrix/|Java/|Python-urllib/|Siteimprove.com|Crawler|Bot|Spider|AndroidDownloadManager|URL2File/|Sentry/|Apache-HttpClient/|PHP/|Wget/|Mediapartners-Google|<\?php |(http://|\w+@)\w+(\.\w+)+)')
 IMGPROXY_PATTERN = re.compile('.*\(via ggpht.com GoogleImageProxy\)')
 PREVIEW_PATTERN = re.compile('.*Google Web Preview\)')
 
@@ -546,6 +546,12 @@ class HaProxyLogster(LogsterParser):
                     self.counters["{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.admantx.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.proximic.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.facebook.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.pinterest.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.pingdom.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.route53.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.ips.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, suffix)] = 0
@@ -734,7 +740,7 @@ class HaProxyLogster(LogsterParser):
                     if ua:
                         self.increment("{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, suffix))
                         try:
-                            if ua['user_agent']['family'] == 'Googlebot' or 'Googlebot' in ua['string']:
+                            if ua['user_agent']['family'] == 'Googlebot' or 'Google' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, suffix))
                             elif 'bingbot' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, suffix))
@@ -744,6 +750,18 @@ class HaProxyLogster(LogsterParser):
                                 self.increment("{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, suffix))
                             elif 'YandexBot' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, suffix))
+                            elif 'ADmantX' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.admantx.{}".format(self.prefix, suffix))
+                            elif 'proximic' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.proximic.{}".format(self.prefix, suffix))
+                            elif 'facebook' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.facebook.{}".format(self.prefix, suffix))
+                            elif 'pinterest' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.pinterest.{}".format(self.prefix, suffix))
+                            elif 'Pingdom' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.pingdom.{}".format(self.prefix, suffix))
+                            elif 'Amazon Route 53' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.route53.{}".format(self.prefix, suffix))
                         except:
                             pass
                     elif client_ip.strNormal() in self.crawlerips:

@@ -603,7 +603,6 @@ class HaProxyLogster(LogsterParser):
             self.counters["{}.stats.backend.server-aborts.{}".format(self.prefix, suffix)] = haproxy['srvaborts']
         for haproxy in filter(lambda y: y['srvname'] == 'FRONTEND', ha_stats):
             suffix = "{}.{}".format(self.nodename, "frontend-"+haproxy['backend'].replace(".", "-"))
-            self.counters["{}.stats.frontend.queue.{}".format(self.prefix, suffix)] = haproxy['qcur']
             self.counters["{}.stats.frontend.session-rate.{}".format(self.prefix, suffix)] = haproxy['rate']
             self.counters["{}.stats.frontend.sessions.{}".format(self.prefix, suffix)] = haproxy['scur']
 

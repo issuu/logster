@@ -557,6 +557,7 @@ class HaProxyLogster(LogsterParser):
                     self.counters["{}.stats.browser.ua.crawlers.opensiteexplorer.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.seznambot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.ia_archiver.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.siteimprove.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.ips.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, suffix)] = 0
@@ -778,6 +779,8 @@ class HaProxyLogster(LogsterParser):
                                 self.increment("{}.stats.browser.ua.crawlers.seznambot.{}".format(self.prefix, suffix))
                             elif 'ia_archiver' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.ia_archiver.{}".format(self.prefix, suffix))
+                            elif 'Siteimprove' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.siteimprove.{}".format(self.prefix, suffix))
                         except:
                             pass
                     elif client_ip.strNormal() in self.crawlerips:

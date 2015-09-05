@@ -393,7 +393,7 @@ class HaProxyLogster(LogsterParser):
         # - or
         #2015-08-31T14:27:15.868400+00:00 prod-web-proxy haproxy[3488]: INFO 10.141.243.144:39290
         self.add_pattern('log_time', r'(\S+( |  )\d+ \d+:\d+:\d+|\d+\-\d+\-\d+T\d+:\d+:\d+\.\d+\+\d+:\d+)')
-        self.add_pattern('hostname', r'\S+')
+        self.add_pattern('hostname', r'[\S+\.]+')
         self.add_pattern('process_id', r'\S+', ': ')
 
         # INFO

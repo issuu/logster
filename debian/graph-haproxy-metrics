@@ -43,33 +43,48 @@ fi
 LOGDIR=/var/log/logster/
 test -d ${LOGDIR} || mkdir -p ${LOGDIR}
 
+function do_work () {
+    if [ -n "${STATSD_HOST_PORT}" ]; then
+        timeout --kill-after=100 90 logster --output statsd \
+            --statsd-host ${STATSD_HOST_PORT} \
+            --parser-options "--socket ${HAPROXY_SOCKET}${CRAWLERHOSTS_OPTION}${REQUEST_HEADERS_OPTION}${ISSUUDOCS_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}" \
+            HaProxyLogster \
+            /var/log/haproxy.log
+    else
+        timeout --kill-after=100 90 logster --output graphite \
+            --graphite-host ${GRAPHITE_HOST_PORT} \
+            --parser-options "--socket ${HAPROXY_SOCKET}${CRAWLERHOSTS_OPTION}${REQUEST_HEADERS_OPTION}${ISSUUDOCS_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}" \
+            HaProxyLogster \
+            /var/log/haproxy.log
+    fi
+}
+
 # Check if another is already running
 if [ -e "${LOCKFILE}" ]; then
     A=$(stat --format=%Y ${LOCKFILE})
     B=$(date +%s)
     D=$(expr $B - $A)
     if [ $D -gt 200 ]; then
-        pkill -f 'perl.*logtail2'; sleep 20
-        pkill -f 'python.*logster'; sleep 10
+        pkill -9 -f 'perl.*logtail2'; sleep 20
+        pkill -9 -f 'python.*logster'; sleep 10
         [ -e "${STATEFILE}" ] && rm -f ${STATEFILE}
         [ -e "${LOCKFILE}"  ] && rm -f ${LOCKFILE}
-        exit 0
+        do_work ; sleep 5
     else
         exit 0
     fi
 fi
 
-if [ -n "${STATSD_HOST_PORT}" ]; then
-    logster --output statsd \
-        --statsd-host ${STATSD_HOST_PORT} \
-        --parser-options "--socket ${HAPROXY_SOCKET}${CRAWLERHOSTS_OPTION}${REQUEST_HEADERS_OPTION}${ISSUUDOCS_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}" \
-        HaProxyLogster \
-        /var/log/haproxy.log
-else
-    logster --output graphite \
-        --graphite-host ${GRAPHITE_HOST_PORT} \
-        --parser-options "--socket ${HAPROXY_SOCKET}${CRAWLERHOSTS_OPTION}${REQUEST_HEADERS_OPTION}${ISSUUDOCS_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}" \
-        HaProxyLogster \
-        /var/log/haproxy.log
+A=$(date +%s)
+do_work
+B=$(date +%s)
+D=$(expr $B - $A)
+if [ $D -ge 90 ]; then
+    [ -e "${STATEFILE}" ] && rm -f ${STATEFILE}
+    [ -e "${LOCKFILE}"  ] && rm -f ${LOCKFILE}
+fi
+if [ $D -ge 60 ]; then
+    # try to catch up
+    do_work
 fi
 

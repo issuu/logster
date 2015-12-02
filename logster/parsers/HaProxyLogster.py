@@ -61,6 +61,61 @@ ISSUUPIXEL_PATTERN = re.compile('^/v1/(?P<pixel>[^?]*)')
 ISSUUEMAILREJECTED_PATTERN = re.compile('^/emailrejected($|/.+)')
 ISSUUOPTOUT_PATTERN = re.compile('^/optout($|/.+)')
 
+magma_patterns = [
+  {'pattern':  re.compile('^/about($|/.+)'), 'metric': 'about' },
+
+  {'pattern':  re.compile('^/admins/dashboard($|/.+)'), 'metric': 'admins-dashboard' },
+  {'pattern':  re.compile('^/admins/sign_in($|/.+)'), 'metric': 'admins-signin' },
+  {'pattern':  re.compile('^/admins/sign_out($|/.+)'), 'metric': 'admins-signout' },
+  {'pattern':  re.compile('^/admins/users($|/$)'), 'metric': 'admins-users' },
+  {'pattern':  re.compile('^/admins/users/collaborators($|/.+)'), 'metric': 'admins-users-collaborators' },
+  {'pattern':  re.compile('^/admins/users/freebies($|/.+)'), 'metric': 'admins-users-freebies' },
+  {'pattern':  re.compile('^/admins/users/licensed($|/.+)'), 'metric': 'admins-users-licensed' },
+  {'pattern':  re.compile('^/admins/users/locked($|/.+)'), 'metric': 'admins-users-locked' },
+  {'pattern':  re.compile('^/admins/users/new($|/.+)'), 'metric': 'admins-users-new' },
+  {'pattern':  re.compile('^/admins/users/not_migrated($|/.+)'), 'metric': 'admins-users-notmigrated' },
+  {'pattern':  re.compile('^/admins/users/search($|/.+)'), 'metric': 'admins-users-search' },
+  {'pattern':  re.compile('^/admins/users/[^/]+/add_credit($|/.+)'), 'metric': 'admins-users-addcredit' },
+  {'pattern':  re.compile('^/admins/users/[^/]+/become($|/.+)'), 'metric': 'admins-users-become' },
+  {'pattern':  re.compile('^/admins/users/[^/]+/edit($|/.+)'), 'metric': 'admins-users-edit' },
+  {'pattern':  re.compile('^/admins/users/[^/]+/remove_credit($|/.+)'), 'metric': 'admins-users-removecredit' },
+
+  {'pattern':  re.compile('^/api/authentications$'), 'metric': 'api-authentications' },
+  {'pattern':  re.compile('^/api/authentications/new($|/.+)'), 'metric': 'api-authentications-new' },
+  {'pattern':  re.compile('^/api/crash_reports$'), 'metric': 'api-crashreports' },
+  {'pattern':  re.compile('^/api/issues$'), 'metric': 'api-issues' },
+  {'pattern':  re.compile('^/api/issues/[^/]+/editors($|/.+)'), 'metric': 'api-issues-editors' },
+  {'pattern':  re.compile('^/api/issues/[^/]+/notification($|/.+)'), 'metric': 'api-issues-notification' },
+  {'pattern':  re.compile('^/api/issues/[^/]+/articles($|/.+)'), 'metric': 'api-issues-articles' },
+  {'pattern':  re.compile('^/api/issues/[^/]+/pages\.xml($|\?.+)'), 'metric': 'api-issues-pagesxml' },
+  {'pattern':  re.compile('^/api/issues/[^/]+/pages/[^/]*$'), 'metric': 'api-issues-pages' },
+  {'pattern':  re.compile('^/api/issues/[^/]+/pages/[^/]+/content($|/.+)'), 'metric': 'api-issues-pages-content' },
+  {'pattern':  re.compile('^/api/issues\.xml($|\?.+)'), 'metric': 'api-issuesxml' },
+  {'pattern':  re.compile('^/api/s3_certificate($|\?.+)'), 'metric': 'api-s3certificate' },
+  {'pattern':  re.compile('^/api_issuu/call/licensing($|/.+)'), 'metric': 'api-issuu-licensing' },
+  {'pattern':  re.compile('^/api_issuu/query($|/.+)'), 'metric': 'api-issuu-query' },
+
+  {'pattern':  re.compile('^/assets($|/.+)'), 'metric': 'assets' },
+
+  {'pattern':  re.compile('^/delayed_job_admin($|/.+)'), 'metric': 'delayed-jobadmin' },
+
+  {'pattern':  re.compile('^/invitations/[^/]+/accept_with_existing_user($|/.+)'), 'metric': 'invitations-acceptwithexistinguser' },
+  {'pattern':  re.compile('^/invitations/[^/]+/accept_with_new_user($|/.+)'), 'metric': 'invitations-acceptwithnewuser' },
+
+  {'pattern':  re.compile('^/magmin($|/.+)'), 'metric': 'magmin' },
+  {'pattern':  re.compile('^/navigation_panel($|/.+)'), 'metric': 'navigationpanel' },
+
+  {'pattern':  re.compile('^/system_notifications($|/.+)'), 'metric': 'system-notifications' },
+
+  {'pattern':  re.compile('^/users/account($|/.+)'), 'metric': 'assets' },
+  {'pattern':  re.compile('^/users/migration/existing_account($|/.+)'), 'metric': 'users-migration-existingaccount' },
+  {'pattern':  re.compile('^/users/migration/new_account($|/.+)'), 'metric': 'users-migration-newaccount' },
+  {'pattern':  re.compile('^/users/migration($|/.+)'), 'metric': 'users-migration' },
+  {'pattern':  re.compile('^/users/password/new($|/.+)'), 'metric': 'users-password-new' },
+  {'pattern':  re.compile('^/users/sign_in($|/.+)'), 'metric': 'users-signin' },
+  {'pattern':  re.compile('^/users($|/.+)'), 'metric': 'users' }
+]
+
 # haproxy.<host>.<backend>.request.method
 # haproxy.<host>.<backend>.response.code.<status>
 #
@@ -292,6 +347,11 @@ class HaProxyLogster(LogsterParser):
     response_time = defaultdict(PercentileMetric)
     prefix = PREFIX
     nodename = NODENAME.replace(".", "-")
+    status_code = ''
+    sc = -1
+
+    tarpit = False
+    block  = False
 
     # Detect/Handle Spiders/Crawlers
     is_spider = False
@@ -304,43 +364,43 @@ class HaProxyLogster(LogsterParser):
     counters = defaultdict(lambda: 0)
     gauges = defaultdict(PercentileMetric)
 
-    def urlstat(r, status_code, metric_key):
-	if is_spider:
-	    if cc_event:
-		self.increment("{}.request.url.{}.crawlers.clientabort.status.{}.{}".format(self.prefix, metric_key, status_code.lower(), self.nodename))
-	    else:
-		self.increment("{}.request.url.{}.crawlers.{}".format(self.prefix, metric_key, self.nodename))
-		if sc >= 300 and sc <= 399:
-		    self.increment("{}.request.url.{}.crawlers.3xx.{}".format(self.prefix, metric_key, self.nodename))
-		    self.gauges["{}.request.url.{}.crawlers.3xx.time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tt'])
-		    if r['Tr'] > 0:
-			self.gauges["{}.request.url.{}.crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tr'])
-		else:
-		    if sc >= 400 and sc <= 499:
-			self.increment("{}.request.url.{}.crawlers.4xx.{}".format(self.prefix, metric_key, self.nodename))
-		    elif sc >= 500 and sc <= 599:
-			self.increment("{}.request.url.{}.crawlers.5xx.{}".format(self.prefix, metric_key, self.nodename))
-		    self.gauges["{}.request.url.{}.crawlers.time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tt'])
-		    if r['Tr'] > 0:
-			self.gauges["{}.request.url.{}.crawlers.server-time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tr'])
-	else:
-	    if cc_event:
-		self.increment("{}.request.url.{}.non-crawlers.clientabort.status.{}.{}".format(self.prefix, metric_key, status_code.lower(), self.nodename))
-	    else:
-		self.increment("{}.request.url.{}.non-crawlers.{}".format(self.prefix, metric_key, self.nodename))
-		if sc >= 300 and sc <= 399:
-		    self.increment("{}.request.url.{}.non-crawlers.3xx.{}".format(self.prefix, metric_key, self.nodename))
-		    self.gauges["{}.request.url.{}.non-crawlers.3xx.time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tt'])
-		    if r['Tr'] > 0:
-			self.gauges["{}.request.url.{}.non-crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tr'])
-		else:
-		    if sc >= 400 and sc <= 499:
-			self.increment("{}.request.url.{}.non-crawlers.4xx.{}".format(self.prefix, metric_key, self.nodename))
-		    elif sc >= 500 and sc <= 599:
-			self.increment("{}.request.url.{}.non-crawlers.5xx.{}".format(self.prefix, metric_key, self.nodename))
-		    self.gauges["{}.request.url.{}.non-crawlers.time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tt'])
-		    if r['Tr'] > 0:
-			self.gauges["{}.request.url.{}.non-crawlers.server-time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tr'])
+    def urlstat(self, r, metric_key):
+        if self.is_spider:
+            if self.cc_event:
+                self.increment("{}.request.url.{}.crawlers.clientabort.status.{}.{}".format(self.prefix, metric_key, self.status_code.lower(), self.nodename))
+            else:
+                self.increment("{}.request.url.{}.crawlers.{}".format(self.prefix, metric_key, self.nodename))
+                if self.sc >= 300 and self.sc <= 399:
+                    self.increment("{}.request.url.{}.crawlers.3xx.{}".format(self.prefix, metric_key, self.nodename))
+                    self.gauges["{}.request.url.{}.crawlers.3xx.time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tt'])
+                    if r['Tr'] > 0:
+                        self.gauges["{}.request.url.{}.crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tr'])
+                else:
+                    if self.sc >= 400 and self.sc <= 499:
+                        self.increment("{}.request.url.{}.crawlers.4xx.{}".format(self.prefix, metric_key, self.nodename))
+                    elif self.sc >= 500 and self.sc <= 599:
+                        self.increment("{}.request.url.{}.crawlers.5xx.{}".format(self.prefix, metric_key, self.nodename))
+                    self.gauges["{}.request.url.{}.crawlers.time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tt'])
+                    if r['Tr'] > 0:
+                        self.gauges["{}.request.url.{}.crawlers.server-time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tr'])
+        else:
+            if self.cc_event:
+                self.increment("{}.request.url.{}.non-crawlers.clientabort.status.{}.{}".format(self.prefix, metric_key, self.status_code.lower(), self.nodename))
+            else:
+                self.increment("{}.request.url.{}.non-crawlers.{}".format(self.prefix, metric_key, self.nodename))
+                if self.sc >= 300 and self.sc <= 399:
+                    self.increment("{}.request.url.{}.non-crawlers.3xx.{}".format(self.prefix, metric_key, self.nodename))
+                    self.gauges["{}.request.url.{}.non-crawlers.3xx.time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tt'])
+                    if r['Tr'] > 0:
+                        self.gauges["{}.request.url.{}.non-crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tr'])
+                else:
+                    if self.sc >= 400 and self.sc <= 499:
+                        self.increment("{}.request.url.{}.non-crawlers.4xx.{}".format(self.prefix, metric_key, self.nodename))
+                    elif self.sc >= 500 and self.sc <= 599:
+                        self.increment("{}.request.url.{}.non-crawlers.5xx.{}".format(self.prefix, metric_key, self.nodename))
+                    self.gauges["{}.request.url.{}.non-crawlers.time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tt'])
+                    if r['Tr'] > 0:
+                        self.gauges["{}.request.url.{}.non-crawlers.server-time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tr'])
 
     def build_pattern(self):
         '''build_pattern'''
@@ -675,27 +735,27 @@ class HaProxyLogster(LogsterParser):
         if __m:
             __d = __m.groupdict()
 
-            method      = self.extract_method(__d['method'])
-            status_code = self.extract_status_code(__d['status_code'])
-            tarpit      = __d['term_event']=='P' and __d['term_session']=='T'
-            block       = __d['term_event']=='P' and __d['term_session']=='R'
+            self.method      = self.extract_method(__d['method'])
+            self.status_code = self.extract_status_code(__d['status_code'])
+            self.tarpit      = __d['term_event']=='P' and __d['term_session']=='T'
+            self.block       = __d['term_event']=='P' and __d['term_session']=='R'
             # annoying chinese sites causing 503s because of client aborts
-            cc_event    = __d['term_event']=='C' and __d['term_session']=='C'
+            self.cc_event    = __d['term_event']=='C' and __d['term_session']=='C'
 
-            if tarpit:
+            if self.tarpit:
                 # Do not process any further iff tarpit
                 self.increment("{}.request.tarpit.{}".format(self.prefix, self.nodename))
                 return
 
-            if block:
+            if self.block:
                 # Do not process any further iff block
                 self.increment("{}.request.block.{}".format(self.prefix, self.nodename))
                 return
 
             try:
-                sc = int(status_code)
+                self.sc = int(self.status_code)
             except:
-                sc = -1
+                self.sc = -1
 
             ua  = None
             al  = None
@@ -745,23 +805,23 @@ class HaProxyLogster(LogsterParser):
                 self.increment("{}.request.internal.{}".format(self.prefix, self.nodename))
 
             # Detect/Handle Spiders/Crawlers
-            is_spider = False
-            is_img_proxy = False
-            is_preview_browser = False
+            self.is_spider = False
+            self.is_img_proxy = False
+            self.is_preview_browser = False
 
             if client_ip.strNormal() in self.crawlerips:
-                is_spider = True
+                self.is_spider = True
             elif ua:
                 try:
                     # Spider
                     if ua['device']['family'] == 'Spider':
-                        is_spider = True
+                        self.is_spider = True
                     elif ua['device']['family'] == 'Other' and BOT_PATTERN.match(ua['string']):
-                        is_spider = True
+                        self.is_spider = True
                     elif ua['device']['family'] == 'Other' and IMGPROXY_PATTERN.match(ua['string']):
-                        is_img_proxy = True
+                        self.is_img_proxy = True
                     elif ua['device']['family'] == 'Other' and PREVIEW_PATTERN.match(ua['string']):
-                        is_preview_browser = True
+                        self.is_preview_browser = True
                     else:
                         for backend in ["backend-" + __d['backend_name'], "all-backends"]:
                             suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
@@ -791,9 +851,9 @@ class HaProxyLogster(LogsterParser):
                         self.increment("{}.stats.browser.ua.os.other.{}".format(self.prefix, suffix))
             elif ua is None and 'crh_user-agent' in __d and client_ip.iptype() != 'PRIVATE':
                 # Empty User-Agent string and none private network - mark it as a spider
-                is_spider = True
+                self.is_spider = True
 
-            if is_spider:
+            if self.is_spider:
                 for backend in ["backend-" + __d['backend_name'], "all-backends"]:
                     suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
 
@@ -847,12 +907,12 @@ class HaProxyLogster(LogsterParser):
                         self.increment("{}.stats.browser.ua.crawlers.ips.{}".format(self.prefix, suffix))
                     else:
                         self.increment("{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, suffix))
-                    if sc >= 400 and sc <= 499:
+                    if self.sc >= 400 and self.sc <= 499:
                         self.increment("{}.response.status.crawlers.4xx.{}".format(self.prefix, suffix))
-                    elif sc >= 500 and sc <= 599:
+                    elif self.sc >= 500 and self.sc <= 599:
                         self.increment("{}.response.status.crawlers.5xx.{}".format(self.prefix, suffix))
 
-            if is_img_proxy:
+            if self.is_img_proxy:
                 for backend in ["backend-" + __d['backend_name'], "all-backends"]:
                     suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
                     self.increment("{}.stats.browser.ua.imgproxy.{}".format(self.prefix, suffix))
@@ -863,7 +923,7 @@ class HaProxyLogster(LogsterParser):
                         except:
                             pass
 
-            if is_preview_browser:
+            if self.is_preview_browser:
                 for backend in ["backend-" + __d['backend_name'], "all-backends"]:
                     suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
                     self.increment("{}.stats.browser.ua.preview.{}".format(self.prefix, suffix))
@@ -874,14 +934,14 @@ class HaProxyLogster(LogsterParser):
                         except:
                             pass
 
-            if al and not is_spider and not is_img_proxy and not is_preview_browser:
+            if al and not self.is_spider and not self.is_img_proxy and not self.is_preview_browser:
                 if al in LANGUAGES:
                     self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, al.lower(), self.nodename))
                 else:
                     self.increment("{}.stats.browser.language.{}.{}".format(self.prefix, 'other', self.nodename))
 
             if dnt:
-                if not is_spider and not is_img_proxy and not is_preview_browser:
+                if not self.is_spider and not self.is_img_proxy and not self.is_preview_browser:
                     if dnt in ["1","TRUE","True","true"]:
                         self.increment("{}.stats.browser.dnt.true.{}".format(self.prefix, self.nodename))
                     elif dnt in ["0","FALSE","False","false"]:
@@ -893,7 +953,7 @@ class HaProxyLogster(LogsterParser):
             elif self.headers and 'dnt' in self.headers:
                 self.increment("{}.stats.browser.dnt.unset.{}".format(self.prefix, self.nodename))
 
-            if not is_spider and not is_img_proxy and not is_preview_browser:
+            if not self.is_spider and not self.is_img_proxy and not self.is_preview_browser:
                 if client_ip.iptype() != 'PRIVATE' and __d['backend_name'] != 'statistics':
                     if __d['server_name'] != '<NOSRV>':
                         try:
@@ -905,199 +965,204 @@ class HaProxyLogster(LogsterParser):
                     except:
                         self.ip_counter['all-backends'][client_ip.ip] = 1
 
-            if self.magma and sc > 0:
-                pass
-
             # skip redirects ?
-            if self.issuu and sc > 0:
+            if (self.magma or self.issuu) and self.sc > 0:
                 try:
                     __iu = urlparse(__d['path'])
-                    if ISSUUDOC_PATTERN.match(__iu.path):
-                        urlstat(__d, status_code, "docs")
-                    elif ISSUUSTACKS_PATTERN.match(__iu.path):
-                        urlstat(__d, status_code, "stacks")
-                    elif ISSUUFOLLOWERS_PATTERN.match(__iu.path):
-                        urlstat(__d, status_code, "followers")
-                    elif ISSUUQUERY_PATTERN.match(__iu.path):
-                        urlstat(__d, status_code, "api-query")
-                    elif ISSUUSEARCH_PATTERN.match(__iu.path):
-                        urlstat(__d, status_code, "search")
-                    elif ISSUUPUBLISH_PATTERN.match(__iu.path):
-                        urlstat(__d, status_code, "publish")
-                    elif ISSUUEXPLORE_PATTERN.match(__iu.path):
-                        urlstat(__d, status_code, "explore")
-                    elif ISSUUEMAILREJECTED_PATTERN.match(__iu.path):
-                        urlstat(__d, status_code, "emailrejected")
-                    elif ISSUUOPTOUT_PATTERN.match(__iu.path):
-                        urlstat(__d, status_code, "optout")
-                    elif ISSUUMULTIPART_PATTERN.match(__iu.path):
-                        urlstat(__d, status_code, "multipart")
-                    elif ISSUUSIGNIN_PATTERN.match(__iu.path):
-                        urlstat(__d, status_code, "signin")
-                    elif ISSUUSIGNUP_PATTERN.match(__iu.path):
-                        urlstat(__d, status_code, "signup")
-                    elif ISSUUFBAPP_PATTERN.match(__iu.path):
-                        urlstat(__d, status_code, "fbapp")
-                    elif __iu.path == "/":
-                        urlstat(__d, status_code, "root")
-                    else:
-                        __im = ISSUUCALL_PATTERN.match(__iu.path)
-                        if __im:
-                            __ip = __im.groupdict()['subcall'].replace(".", "-")
-                            if __ip:
-                                if is_spider:
-                                    self.increment("{}.request.url.api-call.crawlers.{}".format(self.prefix, self.nodename))
-                                    self.gauges["{}.request.url.api-call.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
-                                    if __d['Tr'] > 0:
-                                        self.gauges["{}.request.url.api-call.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
-                                    if sc >= 300 and sc <= 399:
-                                        self.increment("{}.request.url.api-call.crawlers.3xx.{}".format(self.prefix, self.nodename))
-                                        self.gauges["{}.request.url.api-call.crawlers.3xx.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
-                                        if __d['Tr'] > 0:
-                                            self.gauges["{}.request.url.api-call.crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
-                                    else:
-                                        if sc >= 400 and sc <= 499:
-                                            self.increment("{}.request.url.api-call.crawlers.4xx.{}".format(self.prefix, self.nodename))
-                                        elif sc >= 500 and sc <= 599:
-                                            self.increment("{}.request.url.api-call.{}.crawlers.5xx.{}".format(self.prefix, __ip, self.nodename))
-                                            self.increment("{}.request.url.api-call.crawlers.5xx.{}".format(self.prefix, self.nodename))
-                                        if sc < 400 or sc > 499:
-                                            self.increment("{}.request.url.api-call.{}.crawlers.{}".format(self.prefix, __ip, self.nodename))
-                                            self.gauges["{}.request.url.api-call.{}.crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
-                                            if __d['Tr'] > 0:
-                                                self.gauges["{}.request.url.api-call.{}.crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
-                                else:
-                                    self.increment("{}.request.url.api-call.non-crawlers.{}".format(self.prefix, self.nodename))
-                                    self.gauges["{}.request.url.api-call.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
-                                    if __d['Tr'] > 0:
-                                        self.gauges["{}.request.url.api-call.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
-                                    if sc >= 300 and sc <= 399:
-                                        self.increment("{}.request.url.api-call.non-crawlers.3xx.{}".format(self.prefix, self.nodename))
-                                        self.gauges["{}.request.url.api-call.non-crawlers.3xx.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
-                                        if __d['Tr'] > 0:
-                                            self.gauges["{}.request.url.api-call.non-crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
-                                    else:
-                                        if sc >= 400 and sc <= 499:
-                                            self.increment("{}.request.url.api-call.non-crawlers.4xx.{}".format(self.prefix, self.nodename))
-                                        elif sc >= 500 and sc <= 599:
-                                            self.increment("{}.request.url.api-call.{}.non-crawlers.5xx.{}".format(self.prefix, __ip, self.nodename))
-                                            self.increment("{}.request.url.api-call.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
-                                        if sc < 400 or sc > 499:
-                                            self.increment("{}.request.url.api-call.{}.non-crawlers.{}".format(self.prefix, __ip, self.nodename))
-                                            self.gauges["{}.request.url.api-call.{}.non-crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
-                                            if __d['Tr'] > 0:
-                                                self.gauges["{}.request.url.api-call.{}.non-crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
+
+                    if self.magma:
+                        for __p in magma_patterns:
+                            if __p['pattern'].match(__iu.path):
+                                self.urlstat(__d, __p['metric'])
+                                break
+    
+                    if self.issuu:
+                        if ISSUUDOC_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "docs")
+                        elif ISSUUSTACKS_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "stacks")
+                        elif ISSUUFOLLOWERS_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "followers")
+                        elif ISSUUQUERY_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "api-query")
+                        elif ISSUUSEARCH_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "search")
+                        elif ISSUUPUBLISH_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "publish")
+                        elif ISSUUEXPLORE_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "explore")
+                        elif ISSUUEMAILREJECTED_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "emailrejected")
+                        elif ISSUUOPTOUT_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "optout")
+                        elif ISSUUMULTIPART_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "multipart")
+                        elif ISSUUSIGNIN_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "signin")
+                        elif ISSUUSIGNUP_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "signup")
+                        elif ISSUUFBAPP_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "fbapp")
+                        elif __iu.path == "/":
+                            self.urlstat(__d, "root")
                         else:
-                            __im = ISSUUHOME_PATTERN.match(__iu.path)
-                            if __im or __iu.path == "/home" or __iu.path == "/home/":
-                                if __iu.path == "/home" or __iu.path == "/home/":
-                                    __ip = "root"
-                                else:
-                                    __ip = __im.groupdict()['subhome'].replace(".", "-")
+                            __im = ISSUUCALL_PATTERN.match(__iu.path)
+                            if __im:
+                                __ip = __im.groupdict()['subcall'].replace(".", "-")
                                 if __ip:
                                     if is_spider:
-                                        self.increment("{}.request.url.home.crawlers.{}".format(self.prefix, self.nodename))
-                                        self.gauges["{}.request.url.home.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                        self.increment("{}.request.url.api-call.crawlers.{}".format(self.prefix, self.nodename))
+                                        self.gauges["{}.request.url.api-call.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
                                         if __d['Tr'] > 0:
-                                            self.gauges["{}.request.url.home.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
-                                        if sc >= 300 and sc <= 399:
-                                            self.increment("{}.request.url.home.crawlers.3xx.{}".format(self.prefix, self.nodename))
-                                            self.gauges["{}.request.url.home.crawlers.3xx.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                            self.gauges["{}.request.url.api-call.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                                        if self.sc >= 300 and self.sc <= 399:
+                                            self.increment("{}.request.url.api-call.crawlers.3xx.{}".format(self.prefix, self.nodename))
+                                            self.gauges["{}.request.url.api-call.crawlers.3xx.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
                                             if __d['Tr'] > 0:
-                                                self.gauges["{}.request.url.home.crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                                                self.gauges["{}.request.url.api-call.crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                                         else:
-                                            if sc >= 400 and sc <= 499:
-                                                self.increment("{}.request.url.home.crawlers.4xx.{}".format(self.prefix, self.nodename))
-                                            elif sc >= 500 and sc <= 599:
-                                                self.increment("{}.request.url.home.{}.crawlers.5xx.{}".format(self.prefix, __ip, self.nodename))
-                                                self.increment("{}.request.url.home.crawlers.5xx.{}".format(self.prefix, self.nodename))
-                                            if sc < 400 or sc > 499:
-                                                self.increment("{}.request.url.home.{}.crawlers.{}".format(self.prefix, __ip, self.nodename))
-                                                self.gauges["{}.request.url.home.{}.crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
+                                            if self.sc >= 400 and self.sc <= 499:
+                                                self.increment("{}.request.url.api-call.crawlers.4xx.{}".format(self.prefix, self.nodename))
+                                            elif self.sc >= 500 and self.sc <= 599:
+                                                self.increment("{}.request.url.api-call.{}.crawlers.5xx.{}".format(self.prefix, __ip, self.nodename))
+                                                self.increment("{}.request.url.api-call.crawlers.5xx.{}".format(self.prefix, self.nodename))
+                                            if self.sc < 400 or self.sc > 499:
+                                                self.increment("{}.request.url.api-call.{}.crawlers.{}".format(self.prefix, __ip, self.nodename))
+                                                self.gauges["{}.request.url.api-call.{}.crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
                                                 if __d['Tr'] > 0:
-                                                    self.gauges["{}.request.url.home.{}.crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
+                                                    self.gauges["{}.request.url.api-call.{}.crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
                                     else:
-                                        self.increment("{}.request.url.home.non-crawlers.{}".format(self.prefix, self.nodename))
-                                        self.gauges["{}.request.url.home.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                        self.increment("{}.request.url.api-call.non-crawlers.{}".format(self.prefix, self.nodename))
+                                        self.gauges["{}.request.url.api-call.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
                                         if __d['Tr'] > 0:
-                                            self.gauges["{}.request.url.home.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
-                                        if sc >= 300 and sc <= 399:
-                                            self.increment("{}.request.url.home.non-crawlers.3xx.{}".format(self.prefix, self.nodename))
-                                            self.gauges["{}.request.url.home.non-crawlers.3xx.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                            self.gauges["{}.request.url.api-call.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                                        if self.sc >= 300 and self.sc <= 399:
+                                            self.increment("{}.request.url.api-call.non-crawlers.3xx.{}".format(self.prefix, self.nodename))
+                                            self.gauges["{}.request.url.api-call.non-crawlers.3xx.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
                                             if __d['Tr'] > 0:
-                                                self.gauges["{}.request.url.home.non-crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                                                self.gauges["{}.request.url.api-call.non-crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                                         else:
-                                            if sc >= 400 and sc <= 499:
-                                                self.increment("{}.request.url.home.non-crawlers.4xx.{}".format(self.prefix, self.nodename))
-                                            elif sc >= 500 and sc <= 599:
-                                                self.increment("{}.request.url.home.{}.non-crawlers.5xx.{}".format(self.prefix, __ip, self.nodename))
-                                                self.increment("{}.request.url.home.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
-                                            if sc < 400 or sc > 499:
-                                                self.increment("{}.request.url.home.{}.non-crawlers.{}".format(self.prefix, __ip, self.nodename))
-                                                self.gauges["{}.request.url.home.{}.non-crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
+                                            if self.sc >= 400 and self.sc <= 499:
+                                                self.increment("{}.request.url.api-call.non-crawlers.4xx.{}".format(self.prefix, self.nodename))
+                                            elif self.sc >= 500 and self.sc <= 599:
+                                                self.increment("{}.request.url.api-call.{}.non-crawlers.5xx.{}".format(self.prefix, __ip, self.nodename))
+                                                self.increment("{}.request.url.api-call.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
+                                            if self.sc < 400 or self.sc > 499:
+                                                self.increment("{}.request.url.api-call.{}.non-crawlers.{}".format(self.prefix, __ip, self.nodename))
+                                                self.gauges["{}.request.url.api-call.{}.non-crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
                                                 if __d['Tr'] > 0:
-                                                    self.gauges["{}.request.url.home.{}.non-crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
+                                                    self.gauges["{}.request.url.api-call.{}.non-crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
                             else:
-                                __im = ISSUUPIXEL_PATTERN.match(__iu.path)
-                                if __im or __iu.path == "/v1" or __iu.path == "/v1/":
-                                    if __iu.path == "/v1" or __iu.path == "/v1/":
+                                __im = ISSUUHOME_PATTERN.match(__iu.path)
+                                if __im or __iu.path == "/home" or __iu.path == "/home/":
+                                    if __iu.path == "/home" or __iu.path == "/home/":
                                         __ip = "root"
                                     else:
-                                        __ip = __im.groupdict()['pixel'].replace(".", "-")
+                                        __ip = __im.groupdict()['subhome'].replace(".", "-")
                                     if __ip:
                                         if is_spider:
-                                            self.increment("{}.request.url.pixeltrack.crawlers.{}".format(self.prefix, self.nodename))
-                                            self.gauges["{}.request.url.pixeltrack.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                            self.increment("{}.request.url.home.crawlers.{}".format(self.prefix, self.nodename))
+                                            self.gauges["{}.request.url.home.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
                                             if __d['Tr'] > 0:
-                                                self.gauges["{}.request.url.pixeltrack.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
-                                            if sc >= 300 and sc <= 399:
-                                                self.increment("{}.request.url.pixeltrack.crawlers.3xx.{}".format(self.prefix, self.nodename))
-                                                self.gauges["{}.request.url.pixeltrack.crawlers.3xx.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                                self.gauges["{}.request.url.home.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                                            if self.sc >= 300 and self.sc <= 399:
+                                                self.increment("{}.request.url.home.crawlers.3xx.{}".format(self.prefix, self.nodename))
+                                                self.gauges["{}.request.url.home.crawlers.3xx.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
                                                 if __d['Tr'] > 0:
-                                                    self.gauges["{}.request.url.pixeltrack.crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                                                    self.gauges["{}.request.url.home.crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                                             else:
-                                                if sc >= 400 and sc <= 499:
-                                                    self.increment("{}.request.url.pixeltrack.crawlers.4xx.{}".format(self.prefix, self.nodename))
-                                                elif sc >= 500 and sc <= 599:
-                                                    self.increment("{}.request.url.pixeltrack.{}.crawlers.5xx.{}".format(self.prefix, __ip, self.nodename))
-                                                    self.increment("{}.request.url.pixeltrack.crawlers.5xx.{}".format(self.prefix, self.nodename))
-                                                if sc < 400 or sc > 499:
-                                                    self.increment("{}.request.url.pixeltrack.{}.crawlers.{}".format(self.prefix, __ip, self.nodename))
-                                                    self.gauges["{}.request.url.pixeltrack.{}.crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
+                                                if self.sc >= 400 and self.sc <= 499:
+                                                    self.increment("{}.request.url.home.crawlers.4xx.{}".format(self.prefix, self.nodename))
+                                                elif self.sc >= 500 and self.sc <= 599:
+                                                    self.increment("{}.request.url.home.{}.crawlers.5xx.{}".format(self.prefix, __ip, self.nodename))
+                                                    self.increment("{}.request.url.home.crawlers.5xx.{}".format(self.prefix, self.nodename))
+                                                if self.sc < 400 or self.sc > 499:
+                                                    self.increment("{}.request.url.home.{}.crawlers.{}".format(self.prefix, __ip, self.nodename))
+                                                    self.gauges["{}.request.url.home.{}.crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
                                                     if __d['Tr'] > 0:
-                                                        self.gauges["{}.request.url.pixeltrack.{}.crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
+                                                        self.gauges["{}.request.url.home.{}.crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
                                         else:
-                                            self.increment("{}.request.url.pixeltrack.non-crawlers.{}".format(self.prefix, self.nodename))
-                                            self.gauges["{}.request.url.pixeltrack.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                            self.increment("{}.request.url.home.non-crawlers.{}".format(self.prefix, self.nodename))
+                                            self.gauges["{}.request.url.home.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
                                             if __d['Tr'] > 0:
-                                                self.gauges["{}.request.url.pixeltrack.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
-                                            if sc >= 300 and sc <= 399:
-                                                self.increment("{}.request.url.pixeltrack.non-crawlers.3xx.{}".format(self.prefix, self.nodename))
-                                                self.gauges["{}.request.url.pixeltrack.non-crawlers.3xx.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                                self.gauges["{}.request.url.home.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                                            if self.sc >= 300 and self.sc <= 399:
+                                                self.increment("{}.request.url.home.non-crawlers.3xx.{}".format(self.prefix, self.nodename))
+                                                self.gauges["{}.request.url.home.non-crawlers.3xx.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
                                                 if __d['Tr'] > 0:
-                                                    self.gauges["{}.request.url.pixeltrack.non-crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                                                    self.gauges["{}.request.url.home.non-crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                                             else:
-                                                if sc >= 400 and sc <= 499:
-                                                    self.increment("{}.request.url.pixeltrack.non-crawlers.4xx.{}".format(self.prefix, self.nodename))
-                                                elif sc >= 500 and sc <= 599:
-                                                    self.increment("{}.request.url.pixeltrack.{}.non-crawlers.5xx.{}".format(self.prefix, __ip, self.nodename))
-                                                    self.increment("{}.request.url.pixeltrack.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
-                                                if sc < 400 or sc > 499:
-                                                    self.increment("{}.request.url.pixeltrack.{}.non-crawlers.{}".format(self.prefix, __ip, self.nodename))
-                                                    self.gauges["{}.request.url.pixeltrack.{}.non-crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
+                                                if self.sc >= 400 and self.sc <= 499:
+                                                    self.increment("{}.request.url.home.non-crawlers.4xx.{}".format(self.prefix, self.nodename))
+                                                elif self.sc >= 500 and self.sc <= 599:
+                                                    self.increment("{}.request.url.home.{}.non-crawlers.5xx.{}".format(self.prefix, __ip, self.nodename))
+                                                    self.increment("{}.request.url.home.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
+                                                if self.sc < 400 or self.sc > 499:
+                                                    self.increment("{}.request.url.home.{}.non-crawlers.{}".format(self.prefix, __ip, self.nodename))
+                                                    self.gauges["{}.request.url.home.{}.non-crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
                                                     if __d['Tr'] > 0:
-                                                        self.gauges["{}.request.url.pixeltrack.{}.non-crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
+                                                        self.gauges["{}.request.url.home.{}.non-crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
+                                else:
+                                    __im = ISSUUPIXEL_PATTERN.match(__iu.path)
+                                    if __im or __iu.path == "/v1" or __iu.path == "/v1/":
+                                        if __iu.path == "/v1" or __iu.path == "/v1/":
+                                            __ip = "root"
+                                        else:
+                                            __ip = __im.groupdict()['pixel'].replace(".", "-")
+                                        if __ip:
+                                            if is_spider:
+                                                self.increment("{}.request.url.pixeltrack.crawlers.{}".format(self.prefix, self.nodename))
+                                                self.gauges["{}.request.url.pixeltrack.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                                if __d['Tr'] > 0:
+                                                    self.gauges["{}.request.url.pixeltrack.crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                                                if self.sc >= 300 and self.sc <= 399:
+                                                    self.increment("{}.request.url.pixeltrack.crawlers.3xx.{}".format(self.prefix, self.nodename))
+                                                    self.gauges["{}.request.url.pixeltrack.crawlers.3xx.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                                    if __d['Tr'] > 0:
+                                                        self.gauges["{}.request.url.pixeltrack.crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                                                else:
+                                                    if self.sc >= 400 and self.sc <= 499:
+                                                        self.increment("{}.request.url.pixeltrack.crawlers.4xx.{}".format(self.prefix, self.nodename))
+                                                    elif self.sc >= 500 and self.sc <= 599:
+                                                        self.increment("{}.request.url.pixeltrack.{}.crawlers.5xx.{}".format(self.prefix, __ip, self.nodename))
+                                                        self.increment("{}.request.url.pixeltrack.crawlers.5xx.{}".format(self.prefix, self.nodename))
+                                                    if self.sc < 400 or self.sc > 499:
+                                                        self.increment("{}.request.url.pixeltrack.{}.crawlers.{}".format(self.prefix, __ip, self.nodename))
+                                                        self.gauges["{}.request.url.pixeltrack.{}.crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
+                                                        if __d['Tr'] > 0:
+                                                            self.gauges["{}.request.url.pixeltrack.{}.crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
+                                            else:
+                                                self.increment("{}.request.url.pixeltrack.non-crawlers.{}".format(self.prefix, self.nodename))
+                                                self.gauges["{}.request.url.pixeltrack.non-crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                                if __d['Tr'] > 0:
+                                                    self.gauges["{}.request.url.pixeltrack.non-crawlers.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                                                if self.sc >= 300 and self.sc <= 399:
+                                                    self.increment("{}.request.url.pixeltrack.non-crawlers.3xx.{}".format(self.prefix, self.nodename))
+                                                    self.gauges["{}.request.url.pixeltrack.non-crawlers.3xx.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
+                                                    if __d['Tr'] > 0:
+                                                        self.gauges["{}.request.url.pixeltrack.non-crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
+                                                else:
+                                                    if self.sc >= 400 and self.sc <= 499:
+                                                        self.increment("{}.request.url.pixeltrack.non-crawlers.4xx.{}".format(self.prefix, self.nodename))
+                                                    elif self.sc >= 500 and self.sc <= 599:
+                                                        self.increment("{}.request.url.pixeltrack.{}.non-crawlers.5xx.{}".format(self.prefix, __ip, self.nodename))
+                                                        self.increment("{}.request.url.pixeltrack.non-crawlers.5xx.{}".format(self.prefix, self.nodename))
+                                                    if self.sc < 400 or self.sc > 499:
+                                                        self.increment("{}.request.url.pixeltrack.{}.non-crawlers.{}".format(self.prefix, __ip, self.nodename))
+                                                        self.gauges["{}.request.url.pixeltrack.{}.non-crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
+                                                        if __d['Tr'] > 0:
+                                                            self.gauges["{}.request.url.pixeltrack.{}.non-crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
                 except:
                     pass
 
             for backend in ["backend-" + __d['backend_name'], "all-backends"]:
                 suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
 
-                if cc_event:
-                    self.increment("{}.response.clientabort.status.{}.{}".format(self.prefix, status_code.lower(), suffix))
+                if self.cc_event:
+                    self.increment("{}.response.clientabort.status.{}.{}".format(self.prefix, self.status_code.lower(), suffix))
                 else:
-                    self.increment("{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix))
-                self.increment("{}.request.method.{}.{}".format(self.prefix, method.lower(), suffix))
+                    self.increment("{}.response.status.{}.{}".format(self.prefix, self.status_code.lower(), suffix))
+                self.increment("{}.request.method.{}.{}".format(self.prefix, self.method.lower(), suffix))
 
                 self.gauges["{}.bytesread-pct.{}.{}".format(self.prefix, "{}", suffix)].add(__d['bytes_read'])
                 self.gauges["{}.request-time-pct.{}.{}".format(self.prefix, "{}", suffix)].add(__d['Tt'])

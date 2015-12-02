@@ -9,7 +9,8 @@ unset STATSD_HOST_PORT
 unset HAPROXY_SOCKET
 unset REQUEST_HEADERS
 unset CRAWLERHOSTS
-unset ISSUUDOCS
+unset ISSUU
+unset MAGMA
 unset USE_XFF_AS_CLIENTIP
 
 test -f /etc/default/logster-haproxy-graphite && . /etc/default/logster-haproxy-graphite
@@ -30,9 +31,14 @@ if [ -n "${CRAWLERHOSTS}" ]; then
     CRAWLERHOSTS_OPTION=" --crawlerhosts ${CRAWLERHOSTS}"
 fi
 
-unset ISSUUDOCS_OPTION
-if [ -n "${ISSUUDOCS}" ]; then
-    ISSUUDOCS_OPTION=" --issuudocs"
+unset ISSUU_OPTION
+if [ -n "${ISSUU}" ]; then
+    ISSUU_OPTION=" --issuu"
+fi
+
+unset MAGMA_OPTION
+if [ -n "${MAGMA}" ]; then
+    MAGMA_OPTION=" --magma"
 fi
 
 unset USE_XFF_AS_CLIENTIP_OPTION
@@ -47,13 +53,13 @@ function do_work () {
     if [ -n "${STATSD_HOST_PORT}" ]; then
         timeout --kill-after=100 90 logster --output statsd \
             --statsd-host ${STATSD_HOST_PORT} \
-            --parser-options "--socket ${HAPROXY_SOCKET}${CRAWLERHOSTS_OPTION}${REQUEST_HEADERS_OPTION}${ISSUUDOCS_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}" \
+            --parser-options "--socket ${HAPROXY_SOCKET}${CRAWLERHOSTS_OPTION}${REQUEST_HEADERS_OPTION}${ISSUU_OPTION}${MAGMA_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}" \
             HaProxyLogster \
             /var/log/haproxy.log
     else
         timeout --kill-after=100 90 logster --output graphite \
             --graphite-host ${GRAPHITE_HOST_PORT} \
-            --parser-options "--socket ${HAPROXY_SOCKET}${CRAWLERHOSTS_OPTION}${REQUEST_HEADERS_OPTION}${ISSUUDOCS_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}" \
+            --parser-options "--socket ${HAPROXY_SOCKET}${CRAWLERHOSTS_OPTION}${REQUEST_HEADERS_OPTION}${ISSUU_OPTION}${MAGMA_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}" \
             HaProxyLogster \
             /var/log/haproxy.log
     fi

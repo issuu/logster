@@ -104,6 +104,11 @@ magma_patterns = [
 
   {'pattern':  re.compile('^/magmin($|/.+)'), 'metric': 'magmin' },
   {'pattern':  re.compile('^/navigation_panel($|/.+)'), 'metric': 'navigationpanel' },
+  {'pattern':  re.compile('^/customers($|/.+)'), 'metric': 'customers' },
+  {'pattern':  re.compile('^/hidden_tips($|/.+)'), 'metric': 'hidden_tips' },
+  {'pattern':  re.compile('^/mobile($|/.+)'), 'metric': 'mobile' },
+  {'pattern':  re.compile('^/pricing($|/.+)'), 'metric': 'pricing' },
+  {'pattern':  re.compile('^/tour($|/.+)'), 'metric': 'tour' },
 
   {'pattern':  re.compile('^/publications/[^/]+/articles/[^/]+/assets($|/.+)'), 'metric': 'publications-articles-assets' },
   {'pattern':  re.compile('^/publications/[^/]+/articles/[^/]+/comparison\.js($|/.+)'), 'metric': 'publications-articles-comparisonjs' },
@@ -127,12 +132,14 @@ magma_patterns = [
 
   {'pattern':  re.compile('^/system_notifications($|/.+)'), 'metric': 'system-notifications' },
 
-  {'pattern':  re.compile('^/users/account($|/.+)'), 'metric': 'assets' },
+  {'pattern':  re.compile('^/users/account($|/.+)'), 'metric': 'users-account' },
+  {'pattern':  re.compile('^/users/edit($|/.+)'), 'metric': 'users-edit' },
   {'pattern':  re.compile('^/users/migration/existing_account($|/.+)'), 'metric': 'users-migration-existingaccount' },
   {'pattern':  re.compile('^/users/migration/new_account($|/.+)'), 'metric': 'users-migration-newaccount' },
   {'pattern':  re.compile('^/users/migration($|/.+)'), 'metric': 'users-migration' },
   {'pattern':  re.compile('^/users/password/new($|/.+)'), 'metric': 'users-password-new' },
   {'pattern':  re.compile('^/users/sign_in($|/.+)'), 'metric': 'users-signin' },
+  {'pattern':  re.compile('^/users/sign_out($|/.+)'), 'metric': 'users-signout' },
   {'pattern':  re.compile('^/users($|/.+)'), 'metric': 'users' }
 ]
 
@@ -991,10 +998,13 @@ class HaProxyLogster(LogsterParser):
                     __iu = urlparse(__d['path'])
 
                     if self.magma:
-                        for __p in magma_patterns:
-                            if __p['pattern'].match(__iu.path):
-                                self.urlstat(__d, __p['metric'])
-                                break
+                        if __iu.path == "/":
+                            self.urlstat(__d, "root")
+                        else:
+                            for __p in magma_patterns:
+                                if __p['pattern'].match(__iu.path):
+                                    self.urlstat(__d, __p['metric'])
+                                    break
     
                     if self.issuu:
                         if ISSUUDOC_PATTERN.match(__iu.path):

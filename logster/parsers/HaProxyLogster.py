@@ -839,51 +839,36 @@ class HaProxyLogster(LogsterParser):
             if client_ip.strNormal() in self.crawlerips:
                 self.is_spider = True
             elif ua:
-                try:
-                    # Spider
-                    if ua['device']['family'] == 'Spider':
+                # Spider
+                if ua['device']['family'] == 'Spider':
+                    self.is_spider = True
+                elif ua['device']['family'] == 'Other':
+                    if BOT_PATTERN.match(ua['string']):
                         self.is_spider = True
-                    elif ua['device']['family'] == 'Other' and BOT_PATTERN.match(ua['string']):
-                        self.is_spider = True
-                    elif ua['device']['family'] == 'Other' and IMGPROXY_PATTERN.match(ua['string']):
+                    elif IMGPROXY_PATTERN.match(ua['string']):
                         self.is_img_proxy = True
-                    elif ua['device']['family'] == 'Other' and PREVIEW_PATTERN.match(ua['string']):
+                    elif PREVIEW_PATTERN.match(ua['string']):
                         self.is_preview_browser = True
-                    else:
-                        for backend in ["backend-" + __d['backend_name'], "all-backends"]:
-                            suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
-                            # OS Family, i.e. Windows 7, Windows 2000, iOS, Android, Mac OS X, Windows Phone, Windows Mobile
-                            os_family=ua['os']['family']
-                            os_familyname=os_family.split(' ')[0]
-                            if os_familyname == 'Windows':
-                                if os_family in ['Windows Phone', 'Windows Mobile']:
-                                    self.increment("{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, suffix))
-                                else:
-                                    self.increment("{}.stats.browser.ua.os.windows.{}".format(self.prefix, suffix))
-                            elif os_family == 'iOS':
-                                self.increment("{}.stats.browser.ua.os.ios.{}".format(self.prefix, suffix))
-                            elif os_family == 'Android':
-                                self.increment("{}.stats.browser.ua.os.android.{}".format(self.prefix, suffix))
-                            elif os_family in ['Mac OS X', 'Mac OS']:
-                                self.increment("{}.stats.browser.ua.os.mac-os-x.{}".format(self.prefix, suffix))
-                            elif os_family in LINUX_VARIANTS:
-                                self.increment("{}.stats.browser.ua.os.linux.{}".format(self.prefix, suffix))
-                            elif os_familyname == 'BlackBerry':
-                                self.increment("{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, suffix))
-                            else:
-                                self.increment("{}.stats.browser.ua.os.other.{}".format(self.prefix, suffix))
-                except:
-                    for backend in ["backend-" + __d['backend_name'], "all-backends"]:
-                        suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
-                        self.increment("{}.stats.browser.ua.os.other.{}".format(self.prefix, suffix))
             elif ua is None and 'crh_user-agent' in __d and client_ip.iptype() != 'PRIVATE':
                 # Empty User-Agent string and none private network - mark it as a spider
                 self.is_spider = True
 
-            if self.is_spider:
-                for backend in ["backend-" + __d['backend_name'], "all-backends"]:
-                    suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
+            # try and do all this in one for-loop
+            for backend in ["backend-" + __d['backend_name'], "all-backends"]:
+                suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
 
+                if self.cc_event:
+                    self.increment("{}.response.clientabort.status.{}.{}".format(self.prefix, self.status_code.lower(), suffix))
+                else:
+                    self.increment("{}.response.status.{}.{}".format(self.prefix, self.status_code.lower(), suffix))
+                self.increment("{}.request.method.{}.{}".format(self.prefix, self.method.lower(), suffix))
+
+                self.gauges["{}.bytesread-pct.{}.{}".format(self.prefix, "{}", suffix)].add(__d['bytes_read'])
+                self.gauges["{}.request-time-pct.{}.{}".format(self.prefix, "{}", suffix)].add(__d['Tt'])
+                if __d['Tr'] > 0:
+                    self.gauges["{}.server-time-pct.{}.{}".format(self.prefix, "{}", suffix)].add(__d['Tr'])
+
+                if self.is_spider:
                     self.increment("{}.stats.browser.ua.crawlers.{}".format(self.prefix, suffix))
                     if ua:
                         self.increment("{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, suffix))
@@ -939,9 +924,7 @@ class HaProxyLogster(LogsterParser):
                     elif self.sc >= 500 and self.sc <= 599:
                         self.increment("{}.response.status.crawlers.5xx.{}".format(self.prefix, suffix))
 
-            if self.is_img_proxy:
-                for backend in ["backend-" + __d['backend_name'], "all-backends"]:
-                    suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
+                elif self.is_img_proxy:
                     self.increment("{}.stats.browser.ua.imgproxy.{}".format(self.prefix, suffix))
                     if ua:
                         try:
@@ -950,9 +933,7 @@ class HaProxyLogster(LogsterParser):
                         except:
                             pass
 
-            if self.is_preview_browser:
-                for backend in ["backend-" + __d['backend_name'], "all-backends"]:
-                    suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
+                elif self.is_preview_browser:
                     self.increment("{}.stats.browser.ua.preview.{}".format(self.prefix, suffix))
                     if ua:
                         try:
@@ -960,6 +941,32 @@ class HaProxyLogster(LogsterParser):
                                 self.increment("{}.stats.browser.ua.preview.google.{}".format(self.prefix, suffix))
                         except:
                             pass
+
+                else:
+                    if ua:
+                        try:
+                            # OS Family, i.e. Windows 7, Windows 2000, iOS, Android, Mac OS X, Windows Phone, Windows Mobile
+                            os_family=ua['os']['family']
+                            os_familyname=os_family.split(' ')[0]
+                            if os_familyname == 'Windows':
+                                if os_family in ['Windows Phone', 'Windows Mobile']:
+                                    self.increment("{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, suffix))
+                                else:
+                                    self.increment("{}.stats.browser.ua.os.windows.{}".format(self.prefix, suffix))
+                            elif os_family == 'iOS':
+                                self.increment("{}.stats.browser.ua.os.ios.{}".format(self.prefix, suffix))
+                            elif os_family == 'Android':
+                                self.increment("{}.stats.browser.ua.os.android.{}".format(self.prefix, suffix))
+                            elif os_family in ['Mac OS X', 'Mac OS']:
+                                self.increment("{}.stats.browser.ua.os.mac-os-x.{}".format(self.prefix, suffix))
+                            elif os_family in LINUX_VARIANTS:
+                                self.increment("{}.stats.browser.ua.os.linux.{}".format(self.prefix, suffix))
+                            elif os_familyname == 'BlackBerry':
+                                self.increment("{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, suffix))
+                            else:
+                                self.increment("{}.stats.browser.ua.os.other.{}".format(self.prefix, suffix))
+                        except:
+                            self.increment("{}.stats.browser.ua.os.other.{}".format(self.prefix, suffix))
 
             if al and not self.is_spider and not self.is_img_proxy and not self.is_preview_browser:
                 if al in LANGUAGES:
@@ -1184,20 +1191,6 @@ class HaProxyLogster(LogsterParser):
                                                             self.gauges["{}.request.url.pixeltrack.{}.non-crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
                 except:
                     pass
-
-            for backend in ["backend-" + __d['backend_name'], "all-backends"]:
-                suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
-
-                if self.cc_event:
-                    self.increment("{}.response.clientabort.status.{}.{}".format(self.prefix, self.status_code.lower(), suffix))
-                else:
-                    self.increment("{}.response.status.{}.{}".format(self.prefix, self.status_code.lower(), suffix))
-                self.increment("{}.request.method.{}.{}".format(self.prefix, self.method.lower(), suffix))
-
-                self.gauges["{}.bytesread-pct.{}.{}".format(self.prefix, "{}", suffix)].add(__d['bytes_read'])
-                self.gauges["{}.request-time-pct.{}.{}".format(self.prefix, "{}", suffix)].add(__d['Tt'])
-                if __d['Tr'] > 0:
-                    self.gauges["{}.server-time-pct.{}.{}".format(self.prefix, "{}", suffix)].add(__d['Tr'])
 
         else:
             __m = self.updown_pattern.match(line)

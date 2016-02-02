@@ -157,6 +157,9 @@ HaP_ERR = 2
 HaP_SOCK_ERR = 3
 HaP_BUFSIZE = 8192
 
+# an associative array. In python these are called dictionaries.
+ua_cache = {}
+
 def resolveHost(host_or_ip):
     try:
         ip = IP(host_or_ip)
@@ -682,25 +685,18 @@ class HaProxyLogster(LogsterParser):
                     suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
                     self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.other.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.admantx.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.proximic.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.facebook.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.pinterest.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.pingdom.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.route53.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.curl.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.heritrix.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.opensiteexplorer.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.seznambot.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.ia_archiver.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.siteimprove.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.exabot.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.catchpoint.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.ips.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, suffix)] = 0
@@ -797,7 +793,12 @@ class HaProxyLogster(LogsterParser):
                     if 'crh_user-agent' in __d:
                         if __d['crh_user-agent']:
                             try:
-                                ua = user_agent_parser.Parse(__d['crh_user-agent'].replace('User-Agent: ','',1))
+                                normalized_ua = __d['crh_user-agent'].replace('User-Agent: ','',1)
+                                if normalized_ua in ua_cache:
+                                    ua = ua_cache[normalized_ua]
+                                else:
+                                    ua = user_agent_parser.Parse(normalized_ua)
+                                    ua_cache[normalized_ua] = ua
                             except:
                                 pass
                     if 'crh_accept-language' in __d:
@@ -855,6 +856,7 @@ class HaProxyLogster(LogsterParser):
 
             # try and do all this in one for-loop
             for backend in ["backend-" + __d['backend_name'], "all-backends"]:
+
                 suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
 
                 if self.cc_event:
@@ -868,14 +870,16 @@ class HaProxyLogster(LogsterParser):
                 if __d['Tr'] > 0:
                     self.gauges["{}.server-time-pct.{}.{}".format(self.prefix, "{}", suffix)].add(__d['Tr'])
 
+                # speed things up
+                if backend == 'backend-normal-varnish' or backend == 'backend-rollout' or backend == 'backend-statushub' or backend == 'backend-geoip_servers' or backend == 'backend-deadhost' or backend == 'backend-search' or backend == 'backend-i2smartlook' or backend == 'backend-hijacked' :
+                    continue
+
                 if self.is_spider:
                     self.increment("{}.stats.browser.ua.crawlers.{}".format(self.prefix, suffix))
                     if ua:
                         self.increment("{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, suffix))
                         try:
-                            if 'Feedfetcher-Google' in ua['string']:
-                                self.increment("{}.stats.browser.ua.crawlers.feedfetcher.{}".format(self.prefix, suffix))
-                            elif ua['user_agent']['family'] == 'Googlebot' or 'Google' in ua['string']:
+                            if ua['user_agent']['family'] == 'Googlebot' or 'Google' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, suffix))
                             elif 'bingbot' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, suffix))
@@ -885,34 +889,20 @@ class HaProxyLogster(LogsterParser):
                                 self.increment("{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, suffix))
                             elif 'YandexBot' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, suffix))
-                            elif 'ADmantX' in ua['string']:
-                                self.increment("{}.stats.browser.ua.crawlers.admantx.{}".format(self.prefix, suffix))
-                            elif 'proximic' in ua['string']:
-                                self.increment("{}.stats.browser.ua.crawlers.proximic.{}".format(self.prefix, suffix))
                             elif 'facebook' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.facebook.{}".format(self.prefix, suffix))
                             elif 'pinterest' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.pinterest.{}".format(self.prefix, suffix))
-                            elif 'Pingdom' in ua['string']:
-                                self.increment("{}.stats.browser.ua.crawlers.pingdom.{}".format(self.prefix, suffix))
-                            elif 'Amazon Route 53' in ua['string']:
-                                self.increment("{}.stats.browser.ua.crawlers.route53.{}".format(self.prefix, suffix))
-                            elif 'curl' in ua['string'] or 'cURL' in ua['string']:
-                                self.increment("{}.stats.browser.ua.crawlers.curl.{}".format(self.prefix, suffix))
-                            elif 'heritrix' in ua['string']:
-                                self.increment("{}.stats.browser.ua.crawlers.heritrix.{}".format(self.prefix, suffix))
                             elif 'opensiteexplorer' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.opensiteexplorer.{}".format(self.prefix, suffix))
                             elif 'SeznamBot' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.seznambot.{}".format(self.prefix, suffix))
-                            elif 'ia_archiver' in ua['string']:
-                                self.increment("{}.stats.browser.ua.crawlers.ia_archiver.{}".format(self.prefix, suffix))
                             elif 'Siteimprove' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.siteimprove.{}".format(self.prefix, suffix))
-                            elif 'Exabot' in ua['string']:
-                                self.increment("{}.stats.browser.ua.crawlers.exabot.{}".format(self.prefix, suffix))
-                            elif 'Catchpoint' in ua['string']:
-                                self.increment("{}.stats.browser.ua.crawlers.catchpoint.{}".format(self.prefix, suffix))
+                            elif 'curl' in ua['string'] or 'cURL' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.curl.{}".format(self.prefix, suffix))
+                            else:
+                                self.increment("{}.stats.browser.ua.crawlers.other.{}".format(self.prefix, suffix))
                         except:
                             pass
                     elif client_ip.strNormal() in self.crawlerips:

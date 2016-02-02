@@ -542,8 +542,8 @@ class HaProxyLogster(LogsterParser):
         #[29/Nov/2012:14:26:47.198] '
         self.add_pattern('accept_date', r'\[\S+\]')
 
-        # www
-        self.add_pattern('frontend_name', r'\S+')
+        # www or www~ (if ssl)
+        self.add_pattern('frontend_name', r'\S+[~]?')
 
         # normal/wwwA or www/<NOSRV>
         self.add_pattern('backend_name', r'\S+', '/')

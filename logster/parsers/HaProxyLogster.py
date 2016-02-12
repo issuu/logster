@@ -819,7 +819,7 @@ class HaProxyLogster(LogsterParser):
                     client_ip = IP(xff)
                 else:
                     client_ip = IP(__d['client_ip'])
-                    if client_ip in IP('127.0.0.1/8') and xff:
+                    if client_ip in IP('127.0.0.0/16') and xff:
                         client_ip = IP(xff)
             except:
                 # This should in theory never happen

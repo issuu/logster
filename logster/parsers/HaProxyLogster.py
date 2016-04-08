@@ -31,7 +31,7 @@ REQUEST_METHODS = ['GET','HEAD','POST','PUT','DELETE','TRACE','OPTIONS','CONNECT
 
 # http://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 # The most common
-STATUS_CODES = [200,204,206,301,302,304,308,400,401,403,404,405,408,410,416,500,502,503,504]
+STATUS_CODES = [200,204,206,301,302,304,307,308,400,401,403,404,405,408,410,416,451,500,502,503,504]
 
 # Most common
 LANGUAGES = ['en','es','pt','zh','ja','de','it','fr','ru','da','ar']

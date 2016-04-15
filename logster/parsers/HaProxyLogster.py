@@ -440,7 +440,7 @@ class HaProxyLogster(LogsterParser):
             __p = __p + i
             try:
                 __rx = re.compile(__p)
-            except Exception:
+            except Exception as e:
                 #raise LogsterParsingException, "pattern compile failure: %s" % e
                 print >> sys.stderr, "pattern compile failure: %s" % e
                 sys.exit(2)
@@ -1037,7 +1037,7 @@ class HaProxyLogster(LogsterParser):
                             if __im:
                                 __ip = __im.groupdict()['subcall'].replace(".", "-")
                                 if __ip:
-                                    if is_spider:
+                                    if self.is_spider:
                                         self.increment("{}.request.url.api-call.crawlers.{}".format(self.prefix, self.nodename))
                                         self.gauges["{}.request.url.api-call.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
                                         if __d['Tr'] > 0:
@@ -1087,7 +1087,7 @@ class HaProxyLogster(LogsterParser):
                                     else:
                                         __ip = __im.groupdict()['subhome'].replace(".", "-")
                                     if __ip:
-                                        if is_spider:
+                                        if self.is_spider:
                                             self.increment("{}.request.url.home.crawlers.{}".format(self.prefix, self.nodename))
                                             self.gauges["{}.request.url.home.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
                                             if __d['Tr'] > 0:
@@ -1137,7 +1137,7 @@ class HaProxyLogster(LogsterParser):
                                         else:
                                             __ip = __im.groupdict()['pixel'].replace(".", "-")
                                         if __ip:
-                                            if is_spider:
+                                            if self.is_spider:
                                                 self.increment("{}.request.url.pixeltrack.crawlers.{}".format(self.prefix, self.nodename))
                                                 self.gauges["{}.request.url.pixeltrack.crawlers.time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tt'])
                                                 if __d['Tr'] > 0:
@@ -1179,7 +1179,8 @@ class HaProxyLogster(LogsterParser):
                                                         self.gauges["{}.request.url.pixeltrack.{}.non-crawlers.time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tt'])
                                                         if __d['Tr'] > 0:
                                                             self.gauges["{}.request.url.pixeltrack.{}.non-crawlers.server-time-pct.{}.{}".format(self.prefix, __ip, "{}", self.nodename)].add(__d['Tr'])
-                except:
+                except Exception as e:
+                    print >> sys.stderr, e
                     pass
 
         else:

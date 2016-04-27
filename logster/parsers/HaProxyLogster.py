@@ -792,15 +792,12 @@ class HaProxyLogster(LogsterParser):
 
                     if 'crh_user-agent' in __d:
                         if __d['crh_user-agent']:
+                            normalized_ua = __d['crh_user-agent'].replace('User-Agent: ','',1)
                             try:
-                                normalized_ua = __d['crh_user-agent'].replace('User-Agent: ','',1)
-                                if normalized_ua in ua_cache:
-                                    ua = ua_cache[normalized_ua]
-                                else:
-                                    ua = user_agent_parser.Parse(normalized_ua)
-                                    ua_cache[normalized_ua] = ua
+                                ua = ua_cache[normalized_ua]
                             except:
-                                pass
+                                ua = user_agent_parser.Parse(normalized_ua)
+                                ua_cache[normalized_ua] = ua
                     if 'crh_accept-language' in __d:
                         if __d['crh_accept-language']:
                             al = getPreferredLocale(__d['crh_accept-language'])

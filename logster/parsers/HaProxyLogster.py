@@ -1070,6 +1070,7 @@ class HaProxyLogster(LogsterParser):
                                                 self.gauges["{}.request.url.api-call.non-crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, "{}", self.nodename)].add(__d['Tr'])
                                         else:
                                             if self.sc >= 400 and self.sc <= 499:
+                                                self.increment("{}.request.url.api-call.{}.non-crawlers.4xx.{}".format(self.prefix, __ip, self.nodename))
                                                 self.increment("{}.request.url.api-call.non-crawlers.4xx.{}".format(self.prefix, self.nodename))
                                             elif self.sc >= 500 and self.sc <= 599:
                                                 self.increment("{}.request.url.api-call.{}.non-crawlers.5xx.{}".format(self.prefix, __ip, self.nodename))

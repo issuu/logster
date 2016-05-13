@@ -693,6 +693,7 @@ class HaProxyLogster(LogsterParser):
                     self.counters["{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.facebook.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.pinterest.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.mj12bot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.curl.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.opensiteexplorer.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.seznambot.{}".format(self.prefix, suffix)] = 0
@@ -896,6 +897,8 @@ class HaProxyLogster(LogsterParser):
                                 self.increment("{}.stats.browser.ua.crawlers.seznambot.{}".format(self.prefix, suffix))
                             elif 'Siteimprove' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.siteimprove.{}".format(self.prefix, suffix))
+                            elif 'MJ12bot' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.mj12bot.{}".format(self.prefix, suffix))
                             elif 'curl' in ua['string'] or 'cURL' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.curl.{}".format(self.prefix, suffix))
                             else:

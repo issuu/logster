@@ -795,29 +795,29 @@ class HaProxyLogster(LogsterParser):
                     _uastr = __d.get('crh_user-agent')
                     if _uastr is not None:
                         normalized_ua = _uastr.replace('User-Agent: ','',1)
-                        try:
-                            ua = ua_cache[normalized_ua]
-                        except:
+                        ua = ua_cache.get(normalized_ua)
+                        if ua is None:
                             ua = user_agent_parser.Parse(normalized_ua)
                             ua_cache[normalized_ua] = ua
-                    try:
-                        al = getPreferredLocale(__d['crh_accept-language'])
-                    except:
-                        pass
-                    try:
-                        xff = __d['crh_x-forwarded-for'].split(',')[-1].strip()
-                    except:
-                        pass
-                    try:
-                        dnt = __d['crh_dnt']
-                    except:
-                        pass
+
+                    _al = __d.get('crh_accept-language')
+                    if _al is not None:
+                        al = getPreferredLocale(_al)
+
+                    _xff = __d.get('crh_x-forwarded-for')
+                    if _xff is not None:
+                        try:
+                            xff = _xff.split(',')[-1].strip()
+                        except:
+                            pass
+
+                    dnt = __d.get('crh_dnt')
 
             _ip = xff if (__d['client_ip'].startswith('127.0.') or self.usexffip) and xff else __d['client_ip']
-            try:
-                client_ip = ip_cache(_ip)
-            except:
+            client_ip = ip_cache.get(_ip)
+            if client_ip is None:
                 client_ip = IP(_ip)
+                ip_cache[_ip] = client_ip
 
             self.increment("{}.meta.parsed-lines.{}".format(self.prefix, self.nodename))
 

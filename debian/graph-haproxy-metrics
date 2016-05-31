@@ -51,13 +51,13 @@ test -d ${LOGDIR} || mkdir -p ${LOGDIR}
 
 function do_work () {
     if [ -n "${STATSD_HOST_PORT}" ]; then
-        timeout --kill-after=100 90 logster --output statsd \
+        timeout --kill-after=110 100 logster --output statsd \
             --statsd-host ${STATSD_HOST_PORT} \
             --parser-options "--socket ${HAPROXY_SOCKET}${CRAWLERHOSTS_OPTION}${REQUEST_HEADERS_OPTION}${ISSUU_OPTION}${MAGMA_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}" \
             HaProxyLogster \
             /var/log/haproxy.log
     else
-        timeout --kill-after=100 90 logster --output graphite \
+        timeout --kill-after=110 100 logster --output graphite \
             --graphite-host ${GRAPHITE_HOST_PORT} \
             --parser-options "--socket ${HAPROXY_SOCKET}${CRAWLERHOSTS_OPTION}${REQUEST_HEADERS_OPTION}${ISSUU_OPTION}${MAGMA_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}" \
             HaProxyLogster \
@@ -85,7 +85,7 @@ A=$(date +%s)
 do_work
 B=$(date +%s)
 D=$(expr $B - $A)
-if [ $D -ge 90 ]; then
+if [ $D -ge 100 ]; then
     [ -e "${STATEFILE}" ] && rm -f ${STATEFILE}
     [ -e "${LOCKFILE}"  ] && rm -f ${LOCKFILE}
 fi

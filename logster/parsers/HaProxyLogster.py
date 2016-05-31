@@ -159,6 +159,7 @@ HaP_BUFSIZE = 8192
 
 # an associative array. In python these are called dictionaries.
 ua_cache = {}
+ip_cache = {}
 
 def resolveHost(host_or_ip):
     try:
@@ -791,37 +792,32 @@ class HaProxyLogster(LogsterParser):
                     for i in range(len(crhs)):
                         __d['crh_'+self.headers[i]] = crhs[i]
 
-                    if 'crh_user-agent' in __d:
-                        if __d['crh_user-agent']:
-                            normalized_ua = __d['crh_user-agent'].replace('User-Agent: ','',1)
-                            try:
-                                ua = ua_cache[normalized_ua]
-                            except:
-                                ua = user_agent_parser.Parse(normalized_ua)
-                                ua_cache[normalized_ua] = ua
-                    if 'crh_accept-language' in __d:
-                        if __d['crh_accept-language']:
-                            al = getPreferredLocale(__d['crh_accept-language'])
-                    if 'crh_x-forwarded-for' in __d:
-                        if __d['crh_x-forwarded-for']:
-                            try:
-                                xff = __d['crh_x-forwarded-for'].split(',')[-1].strip()
-                            except:
-                                pass
-                    if 'crh_dnt' in __d:
-                        if __d['crh_dnt']:
-                            dnt = __d['crh_dnt']
+                    _uastr = __d.get('crh_user-agent')
+                    if _uastr is not None:
+                        normalized_ua = _uastr.replace('User-Agent: ','',1)
+                        try:
+                            ua = ua_cache[normalized_ua]
+                        except:
+                            ua = user_agent_parser.Parse(normalized_ua)
+                            ua_cache[normalized_ua] = ua
+                    try:
+                        al = getPreferredLocale(__d['crh_accept-language'])
+                    except:
+                        pass
+                    try:
+                        xff = __d['crh_x-forwarded-for'].split(',')[-1].strip()
+                    except:
+                        pass
+                    try:
+                        dnt = __d['crh_dnt']
+                    except:
+                        pass
 
+            _ip = xff if (__d['client_ip'].startswith('127.0.') or self.usexffip) and xff else __d['client_ip']
             try:
-                if xff and self.usexffip:
-                    client_ip = IP(xff)
-                else:
-                    client_ip = IP(__d['client_ip'])
-                    if client_ip in IP('127.0.0.0/16') and xff:
-                        client_ip = IP(xff)
+                client_ip = ip_cache(_ip)
             except:
-                # This should in theory never happen
-                client_ip = IP('127.0.0.1')
+                client_ip = IP(_ip)
 
             self.increment("{}.meta.parsed-lines.{}".format(self.prefix, self.nodename))
 

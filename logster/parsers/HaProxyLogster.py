@@ -834,12 +834,13 @@ class HaProxyLogster(LogsterParser):
                 # Spider
                 if ua['device']['family'] == 'Spider':
                     self.is_spider = True
-                elif BOT_PATTERN.match(ua['string']):
-                    self.is_spider = True
-                elif IMGPROXY_PATTERN.match(ua['string']):
-                    self.is_img_proxy = True
-                elif PREVIEW_PATTERN.match(ua['string']):
-                    self.is_preview_browser = True
+                elif ua['device']['family'] == 'Other' or ua['os']['family'] == 'Other':
+                    if BOT_PATTERN.match(ua['string']):
+                        self.is_spider = True
+                    elif IMGPROXY_PATTERN.match(ua['string']):
+                        self.is_img_proxy = True
+                    elif PREVIEW_PATTERN.match(ua['string']):
+                        self.is_preview_browser = True
             elif ua is None and 'crh_user-agent' in __d and client_ip.iptype() != 'PRIVATE':
                 # Empty User-Agent string and none private network - mark it as a spider
                 self.is_spider = True

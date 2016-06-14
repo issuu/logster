@@ -39,7 +39,7 @@ LANGUAGES = ['en','es','pt','zh','ja','de','it','fr','ru','da','ar']
 LINUX_VARIANTS = ['Linux', 'Ubuntu', 'Debian', 'Fedora', 'Gentoo', 'Red Hat', 'SUSE']
 
 # In case we cannot detect the User-Agent use this crud detection of crawlers
-BOT_PATTERN = re.compile('.*( Ezooms/|WinHttp\.WinHttpRequest|heritrix/|Java/|[Pp]ython|Siteimprove.com|Catchpoint|Exabot|Crawler|Bot|Spider|AndroidDownloadManager|URL2File/|Sentry/|Apache-HttpClient/|PHP[/ ]|Wget/|Mediapartners-Google|curl/|WordPress/|Twitter/|archiver|check_http/|<\?php |(http://|\w+@)\w+(\.\w+)+)')
+BOT_PATTERN = re.compile('.*(Googlebot[/-]| Ezooms/|WinHttp\.WinHttpRequest|heritrix/|Java/|[Pp]ython|Siteimprove.com|Catchpoint|Exabot|Crawler|Bot|Spider|AndroidDownloadManager|URL2File/|Sentry/|Apache-HttpClient/|PHP[/ ]|Wget/|Mediapartners-Google|AdsBot-Google|curl/|WordPress/|Twitter/|archiver|check_http/|<\?php |(http://|\w+@)\w+(\.\w+)+)')
 IMGPROXY_PATTERN = re.compile('.*\(via ggpht.com GoogleImageProxy\)')
 PREVIEW_PATTERN = re.compile('.*Google Web Preview\)')
 
@@ -490,8 +490,6 @@ class HaProxyLogster(LogsterParser):
                             help='HaProxy Unix Socket')
         optparser.add_option('--headers', '-x', dest='headers', default=None,
                             help='HaProxy Captured Request Headers in a comma separated list')
-        optparser.add_option('--crawlerhosts', '-c', dest='crawlerhosts', default=None,
-                            help="Comma separated list of known crawlerhost's/ip's, i.e. findthatfile.com,63.208.194.130")
         optparser.add_option('--issuu', '-i', dest='issuu', action="store_true", default=False,
                             help='Special parsing of Issuu paths, i.e. /<account>/docs/<document>')
         optparser.add_option('--magma', '-m', dest='magma', action="store_true", default=False,
@@ -507,10 +505,6 @@ class HaProxyLogster(LogsterParser):
         self.headers = None
         if opts.headers:
             self.headers = [x.lower() for x in opts.headers.split(',')]
- 
-        self.crawlerips = []
-        if opts.crawlerhosts:
-            self.crawlerips = [resolveHost(x) for x in opts.crawlerhosts.split(',')]
  
         if opts.pxy_socket is None:
             print >> sys.stderr, 'Missing --socket option'
@@ -688,6 +682,12 @@ class HaProxyLogster(LogsterParser):
                     self.counters["{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.other.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.googlebot-image.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.googlebot-news.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.googlebot-video.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.googlebot-mobile.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.google-adsense.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.google-adsbot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, suffix)] = 0
@@ -699,7 +699,6 @@ class HaProxyLogster(LogsterParser):
                     self.counters["{}.stats.browser.ua.crawlers.opensiteexplorer.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.seznambot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.siteimprove.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.ips.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.os.windows.{}".format(self.prefix, suffix)] = 0
@@ -831,9 +830,7 @@ class HaProxyLogster(LogsterParser):
             self.is_img_proxy = False
             self.is_preview_browser = False
 
-            if client_ip.strNormal() in self.crawlerips:
-                self.is_spider = True
-            elif ua:
+            if ua:
                 # Spider
                 if ua['device']['family'] == 'Spider':
                     self.is_spider = True
@@ -873,7 +870,19 @@ class HaProxyLogster(LogsterParser):
                     if ua:
                         self.increment("{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, suffix))
                         try:
-                            if ua['user_agent']['family'] == 'Googlebot' or 'Google' in ua['string']:
+                            if 'Googlebot-News' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.googlebot-news.{}".format(self.prefix, suffix))
+                            elif 'Googlebot-Image' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.googlebot-image.{}".format(self.prefix, suffix))
+                            elif 'Googlebot-Video' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.googlebot-video.{}".format(self.prefix, suffix))
+                            elif 'Googlebot-Mobile' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.googlebot-mobile.{}".format(self.prefix, suffix))
+                            elif 'Mediapartners-Google' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.google-adsense.{}".format(self.prefix, suffix))
+                            elif 'AdsBot-Google' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.google-adsbot.{}".format(self.prefix, suffix))
+                            elif ua['user_agent']['family'] == 'Googlebot' or 'Google' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, suffix))
                             elif 'bingbot' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, suffix))
@@ -901,8 +910,6 @@ class HaProxyLogster(LogsterParser):
                                 self.increment("{}.stats.browser.ua.crawlers.other.{}".format(self.prefix, suffix))
                         except:
                             pass
-                    elif client_ip.strNormal() in self.crawlerips:
-                        self.increment("{}.stats.browser.ua.crawlers.ips.{}".format(self.prefix, suffix))
                     else:
                         self.increment("{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, suffix))
                     if self.sc >= 400 and self.sc <= 499:

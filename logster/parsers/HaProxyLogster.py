@@ -696,6 +696,7 @@ class HaProxyLogster(LogsterParser):
         self.counters["{}.meta.parsed-lines.{}".format(self.prefix, self.nodename)] = 0
         self.counters["{}.meta.unparsed-lines.{}".format(self.prefix, self.nodename)] = 0
         self.counters["{}.meta.start-stop.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.meta.exceptions.{}".format(self.prefix, self.nodename)] = 0
 
         self.counters["{}.stats.cur-conns.{}".format(self.prefix, self.nodename)] = int(ha_info['CurrConns'])
         self.counters["{}.stats.tasks.{}".format(self.prefix, self.nodename)] = int(ha_info['Tasks'])
@@ -1115,6 +1116,7 @@ class HaProxyLogster(LogsterParser):
                                             self.urlstat(__d, "pixeltrack."+__ip)
                 except Exception as e:
                     print >> sys.stderr, e
+                    self.increment("{}.meta.exceptions.{}".format(self.prefix, self.nodename))
                     pass
 
         else:

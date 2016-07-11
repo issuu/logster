@@ -61,6 +61,36 @@ ISSUUPIXEL_PATTERN = re.compile('^/v1/(?P<pixel>[^?]*)')
 ISSUUEMAILREJECTED_PATTERN = re.compile('^/emailrejected($|/.+)')
 ISSUUOPTOUT_PATTERN = re.compile('^/optout($|/.+)')
 
+ISSUU_THINLAYER_CALLS = [
+    '_debug',
+    'ads',
+    'articles',
+    'backend-iab-category',
+    'backend-search-suggestions',
+    'billing',
+    'clippings',
+    'clippingsv2',
+    'fbpagetab',
+    'history',
+    'inpubad',
+    'inspection',
+    'interests',
+    'internal_call',
+    'licensing',
+    'mobile',
+    'notifier',
+    'partner',
+    'payment',
+    'print-on-demand',
+    'protecteddocument',
+    'protectedimage',
+    'protectedpage',
+    'publisher-suite',
+    'stream',
+    'reader3',
+    'recommendations'
+]
+
 magma_patterns = [
   {'pattern':  re.compile('^/about($|/.+)'), 'metric': 'about' },
 
@@ -1041,7 +1071,10 @@ class HaProxyLogster(LogsterParser):
                                 __ip = __im.groupdict()['subcall'].replace(".", "-")
                                 self.urlstat(__d, "api-call")
                                 if __ip:
-                                    self.urlstat(__d, "api-call."+__ip)
+                                    if __ip in ISSUU_THINLAYER_CALLS:
+                                        self.urlstat(__d, "api-call."+__ip)
+                                    else:
+                                        self.urlstat(__d, "api-call.unknown")
                             else:
                                 __im = ISSUUHOME_PATTERN.match(__iu.path)
                                 if __im or __iu.path == "/home" or __iu.path == "/home/":

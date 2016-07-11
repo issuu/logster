@@ -91,6 +91,20 @@ ISSUU_THINLAYER_CALLS = [
     'recommendations'
 ]
 
+ISSUU_HOME_CALLS = [
+    '_debug',
+    'campaigns',
+    'docs',
+    'fbapp',
+    'following',
+    'activity',
+    'publications',
+    'publisher',
+    'services',
+    'settings',
+    'statistics'
+]
+
 magma_patterns = [
   {'pattern':  re.compile('^/about($|/.+)'), 'metric': 'about' },
 
@@ -1074,17 +1088,21 @@ class HaProxyLogster(LogsterParser):
                                     if __ip in ISSUU_THINLAYER_CALLS:
                                         self.urlstat(__d, "api-call."+__ip)
                                     else:
-                                        self.urlstat(__d, "api-call.unknown")
+                                        self.urlstat(__d, "api-call.other")
                             else:
                                 __im = ISSUUHOME_PATTERN.match(__iu.path)
                                 if __im or __iu.path == "/home" or __iu.path == "/home/":
                                     self.urlstat(__d, "home")
                                     if __iu.path == "/home" or __iu.path == "/home/":
                                         __ip = "root"
+                                        self.urlstat(__d, "home."+__ip)
                                     else:
                                         __ip = __im.groupdict()['subhome'].replace(".", "-")
-                                    if __ip:
-                                        self.urlstat(__d, "home."+__ip)
+                                        if __ip:
+                                            if __ip in ISSUU_HOME_CALLS:
+                                                self.urlstat(__d, "home."+__ip)
+                                            else:
+                                                self.urlstat(__d, "home.other")
                                 else:
                                     __im = ISSUUPIXEL_PATTERN.match(__iu.path)
                                     if __im or __iu.path == "/v1" or __iu.path == "/v1/":

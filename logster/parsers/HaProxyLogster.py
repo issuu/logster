@@ -649,7 +649,7 @@ class HaProxyLogster(LogsterParser):
         # Up/Down log lines
         #
         self.reset_pattern()
-        self.add_pattern('log_time', r'\S+( |  )\d+ \d+:\d+:\d+')
+        self.add_pattern('log_time', r'(\S+( |  )\d+ \d+:\d+:\d+|\d+\-\d+\-\d+T\d+:\d+:\d+\.\d+\+\d+:\d+)')
         self.add_pattern('hostname', r'\S+')
         self.add_pattern('process_id', r'\S+', ': ')
 
@@ -670,7 +670,7 @@ class HaProxyLogster(LogsterParser):
         #
         self.reset_pattern()
         # start/stop/pause haproxy
-        self.add_pattern('log_time', r'\S+( |  )\d+ \d+:\d+:\d+')
+        self.add_pattern('log_time', r'(\S+( |  )\d+ \d+:\d+:\d+|\d+\-\d+\-\d+T\d+:\d+:\d+\.\d+\+\d+:\d+)')
         self.add_pattern('hostname', r'\S+')
         self.add_pattern('process_id', r'\S+', ': ')
         self.add_pattern('startstop', r'(Proxy \S+ started\.|Pausing proxy \S+\.|Stopping (backend|proxy) \S+ in \d+ \S+\.|Proxy \S+ stopped \([^)]+\)\.)','')
@@ -678,13 +678,14 @@ class HaProxyLogster(LogsterParser):
 
         #
         # no server available
+        # 2016-07-11T13:17:12.586458+00:00 wwwproxy-1 haproxy[31142]: EMERG backend rollout has no server available!
         #
         self.reset_pattern()
         # start/stop/pause haproxy
-        self.add_pattern('log_time', r'\S+( |  )\d+ \d+:\d+:\d+')
+        self.add_pattern('log_time', r'(\S+( |  )\d+ \d+:\d+:\d+|\d+\-\d+\-\d+T\d+:\d+:\d+\.\d+\+\d+:\d+)')
         self.add_pattern('hostname', r'\S+')
         self.add_pattern('process_id', r'\S+', ': ')
-        self.add_pattern('backend_name', r'\S+', ' ', 'backend ')
+        self.add_pattern('backend_name', r'\S+', ' ', 'EMERG backend ')
         # skip the rest ...
         self.add_pattern('skipped', r'.*','', 'has no server available!')
         self.noserver_pattern = self.build_pattern()

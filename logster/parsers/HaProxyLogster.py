@@ -652,6 +652,7 @@ class HaProxyLogster(LogsterParser):
         self.add_pattern('log_time', r'(\S+( |  )\d+ \d+:\d+:\d+|\d+\-\d+\-\d+T\d+:\d+:\d+\.\d+\+\d+:\d+)')
         self.add_pattern('hostname', r'\S+')
         self.add_pattern('process_id', r'\S+', ': ')
+        self.add_pattern('level', r'\S+')
 
         # Server normal/wwwA or www/<NOSRV>
         self.add_pattern('backend_name', r'\S+', '/', 'Server ')
@@ -673,19 +674,20 @@ class HaProxyLogster(LogsterParser):
         self.add_pattern('log_time', r'(\S+( |  )\d+ \d+:\d+:\d+|\d+\-\d+\-\d+T\d+:\d+:\d+\.\d+\+\d+:\d+)')
         self.add_pattern('hostname', r'\S+')
         self.add_pattern('process_id', r'\S+', ': ')
+        self.add_pattern('level', r'\S+')
         self.add_pattern('startstop', r'(Proxy \S+ started\.|Pausing proxy \S+\.|Stopping (backend|proxy) \S+ in \d+ \S+\.|Proxy \S+ stopped \([^)]+\)\.)','')
         self.startstop_pattern = self.build_pattern()
 
         #
         # no server available
-        # 2016-07-11T13:17:12.586458+00:00 wwwproxy-1 haproxy[31142]: EMERG backend rollout has no server available!
         #
         self.reset_pattern()
         # start/stop/pause haproxy
         self.add_pattern('log_time', r'(\S+( |  )\d+ \d+:\d+:\d+|\d+\-\d+\-\d+T\d+:\d+:\d+\.\d+\+\d+:\d+)')
         self.add_pattern('hostname', r'\S+')
         self.add_pattern('process_id', r'\S+', ': ')
-        self.add_pattern('backend_name', r'\S+', ' ', 'EMERG backend ')
+        self.add_pattern('level', r'\S+')
+        self.add_pattern('backend_name', r'\S+', ' ', 'backend ')
         # skip the rest ...
         self.add_pattern('skipped', r'.*','', 'has no server available!')
         self.noserver_pattern = self.build_pattern()
@@ -1139,8 +1141,10 @@ class HaProxyLogster(LogsterParser):
                 else:
                     __m = self.noserver_pattern.match(line)
                     if __m:
-                        #__d = __m.groupdict()
-                        self.counters["{}.meta.noserver.{}".format(self.prefix, self.nodename)] = 1
+                        __d = __m.groupdict()
+                        for backend in ["backend-" + __d['backend_name'], "all-backends"]:
+                            suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
+                            self.increment("{}.meta.noserver.{}".format(self.prefix, suffix))
                     else:
                         #raise LogsterParsingException, "Failed to parse line: %s" % line
                         print >> sys.stderr, 'Failed to parse line: %s' % line

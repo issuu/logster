@@ -47,7 +47,7 @@ PREVIEW_PATTERN = re.compile('.*Google Web Preview\)')
 ISSUUDOC_PATTERN = re.compile('^/[^/]+/docs($|/.+)')
 ISSUUSTACKS_PATTERN = re.compile('^/[^/]+/stacks($|/.+)')
 ISSUUFOLLOWERS_PATTERN = re.compile('^/[^/]+/followers($|/.+)')
-ISSUUCALL_PATTERN = re.compile('^(/|/api/)(call|res)/(?P<subcall>[^/]+)/.+')
+ISSUUCALL_PATTERN = re.compile('^(/|/api/)(internal_call|call|res)/(?P<subcall>[^/]+)/.+')
 ISSUUHOME_PATTERN = re.compile('^/home/(?P<subhome>[^/]+)')
 ISSUUQUERY_PATTERN = re.compile('^(/|/api/)query($|/.+)')
 ISSUUSEARCH_PATTERN = re.compile('^/search($|/.+)')
@@ -72,7 +72,9 @@ ISSUU_THINLAYER_CALLS = [
     'clippingsv2',
     'fbpagetab',
     'history',
+    'hmm',
     'inpubad',
+    'inspect',
     'inspection',
     'interests',
     'internal_call',

@@ -458,7 +458,7 @@ class HaProxyLogster(LogsterParser):
                     elif self.sc >= 500 and self.sc <= 599:
                         self.increment("{}.request.url.{}.crawlers.5xx.{}".format(self.prefix, metric_key, self.nodename))
                         if self.sc in [500,502,503,504]:
-                            self.increment("{}.request.url.{}.crawlers.{}.{}".format(self.prefix, metric_key, self.sc, self.nodename))
+                            self.increment("{}.request.url.{}.crawlers.5xx.{}.{}".format(self.prefix, metric_key, self.sc, self.nodename))
                     self.gauges["{}.request.url.{}.crawlers.time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tt'])
                     if r['Tr'] > 0:
                         self.gauges["{}.request.url.{}.crawlers.server-time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tr'])
@@ -478,7 +478,7 @@ class HaProxyLogster(LogsterParser):
                     elif self.sc >= 500 and self.sc <= 599:
                         self.increment("{}.request.url.{}.non-crawlers.5xx.{}".format(self.prefix, metric_key, self.nodename))
                         if self.sc in [500,502,503,504]:
-                            self.increment("{}.request.url.{}.non-crawlers.{}.{}".format(self.prefix, metric_key, self.sc, self.nodename))
+                            self.increment("{}.request.url.{}.non-crawlers.5xx.{}.{}".format(self.prefix, metric_key, self.sc, self.nodename))
                     self.gauges["{}.request.url.{}.non-crawlers.time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tt'])
                     if r['Tr'] > 0:
                         self.gauges["{}.request.url.{}.non-crawlers.server-time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tr'])

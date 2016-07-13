@@ -457,6 +457,8 @@ class HaProxyLogster(LogsterParser):
                         self.increment("{}.request.url.{}.crawlers.4xx.{}".format(self.prefix, metric_key, self.nodename))
                     elif self.sc >= 500 and self.sc <= 599:
                         self.increment("{}.request.url.{}.crawlers.5xx.{}".format(self.prefix, metric_key, self.nodename))
+                        if self.sc in [500,502,503,504]:
+                            self.increment("{}.request.url.{}.crawlers.{}.{}".format(self.prefix, metric_key, self.sc, self.nodename))
                     self.gauges["{}.request.url.{}.crawlers.time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tt'])
                     if r['Tr'] > 0:
                         self.gauges["{}.request.url.{}.crawlers.server-time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tr'])
@@ -475,6 +477,8 @@ class HaProxyLogster(LogsterParser):
                         self.increment("{}.request.url.{}.non-crawlers.4xx.{}".format(self.prefix, metric_key, self.nodename))
                     elif self.sc >= 500 and self.sc <= 599:
                         self.increment("{}.request.url.{}.non-crawlers.5xx.{}".format(self.prefix, metric_key, self.nodename))
+                        if self.sc in [500,502,503,504]:
+                            self.increment("{}.request.url.{}.non-crawlers.{}.{}".format(self.prefix, metric_key, self.sc, self.nodename))
                     self.gauges["{}.request.url.{}.non-crawlers.time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tt'])
                     if r['Tr'] > 0:
                         self.gauges["{}.request.url.{}.non-crawlers.server-time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tr'])
@@ -718,10 +722,18 @@ class HaProxyLogster(LogsterParser):
                 self.counters["{}.request.url.{}.crawlers.3xx.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.crawlers.4xx.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.crawlers.5xx.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.5xx.500.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.5xx.502.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.5xx.503.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.5xx.504.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.non-crawlers.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.non-crawlers.3xx.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.non-crawlers.4xx.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.non-crawlers.5xx.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.5xx.500.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.5xx.502.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.5xx.503.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.5xx.504.{}".format(self.prefix, u, self.nodename)] = 0
 
         if self.headers:
             if 'user-agent' in self.headers:
@@ -765,6 +777,10 @@ class HaProxyLogster(LogsterParser):
 
                     self.counters["{}.response.status.crawlers.4xx.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.response.status.crawlers.5xx.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.response.status.crawlers.5xx.500.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.response.status.crawlers.5xx.502.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.response.status.crawlers.5xx.503.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.response.status.crawlers.5xx.504.{}".format(self.prefix, suffix)] = 0
 
             if 'accept-language' in self.headers:
                 for lang in ['OTHER']+LANGUAGES:
@@ -966,6 +982,8 @@ class HaProxyLogster(LogsterParser):
                         self.increment("{}.response.status.crawlers.4xx.{}".format(self.prefix, suffix))
                     elif self.sc >= 500 and self.sc <= 599:
                         self.increment("{}.response.status.crawlers.5xx.{}".format(self.prefix, suffix))
+                        if self.sc in [500,502,503,504]:
+                            self.increment("{}.response.status.crawlers.5xx.{}.{}".format(self.prefix, self.sc, suffix))
 
                 elif self.is_img_proxy:
                     self.increment("{}.stats.browser.ua.imgproxy.{}".format(self.prefix, suffix))

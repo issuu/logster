@@ -449,12 +449,16 @@ class HaProxyLogster(LogsterParser):
                 self.increment("{}.request.url.{}.crawlers.{}".format(self.prefix, metric_key, self.nodename))
                 if self.sc >= 300 and self.sc <= 399:
                     self.increment("{}.request.url.{}.crawlers.3xx.{}".format(self.prefix, metric_key, self.nodename))
+                    if self.sc in [301,302,304]:
+                        self.increment("{}.request.url.{}.crawlers.3xx.{}.{}".format(self.prefix, metric_key, self.sc, self.nodename))
                     self.gauges["{}.request.url.{}.crawlers.3xx.time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tt'])
                     if r['Tr'] > 0:
                         self.gauges["{}.request.url.{}.crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tr'])
                 else:
                     if self.sc >= 400 and self.sc <= 499:
                         self.increment("{}.request.url.{}.crawlers.4xx.{}".format(self.prefix, metric_key, self.nodename))
+                        if self.sc in [400,401,403,404]:
+                            self.increment("{}.request.url.{}.crawlers.4xx.{}.{}".format(self.prefix, metric_key, self.sc, self.nodename))
                     elif self.sc >= 500 and self.sc <= 599:
                         self.increment("{}.request.url.{}.crawlers.5xx.{}".format(self.prefix, metric_key, self.nodename))
                         if self.sc in [500,502,503,504]:
@@ -469,12 +473,16 @@ class HaProxyLogster(LogsterParser):
                 self.increment("{}.request.url.{}.non-crawlers.{}".format(self.prefix, metric_key, self.nodename))
                 if self.sc >= 300 and self.sc <= 399:
                     self.increment("{}.request.url.{}.non-crawlers.3xx.{}".format(self.prefix, metric_key, self.nodename))
+                    if self.sc in [301,302,304]:
+                        self.increment("{}.request.url.{}.non-crawlers.3xx.{}.{}".format(self.prefix, metric_key, self.sc, self.nodename))
                     self.gauges["{}.request.url.{}.non-crawlers.3xx.time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tt'])
                     if r['Tr'] > 0:
                         self.gauges["{}.request.url.{}.non-crawlers.3xx.server-time-pct.{}.{}".format(self.prefix, metric_key, "{}", self.nodename)].add(r['Tr'])
                 else:
                     if self.sc >= 400 and self.sc <= 499:
                         self.increment("{}.request.url.{}.non-crawlers.4xx.{}".format(self.prefix, metric_key, self.nodename))
+                        if self.sc in [400,401,403,404]:
+                            self.increment("{}.request.url.{}.non-crawlers.4xx.{}.{}".format(self.prefix, metric_key, self.sc, self.nodename))
                     elif self.sc >= 500 and self.sc <= 599:
                         self.increment("{}.request.url.{}.non-crawlers.5xx.{}".format(self.prefix, metric_key, self.nodename))
                         if self.sc in [500,502,503,504]:
@@ -720,7 +728,14 @@ class HaProxyLogster(LogsterParser):
             for u in ["root","docs","stacks","followers","search","publish","explore","api-query","multipart","signin","signup","fbapp"]:
                 self.counters["{}.request.url.{}.crawlers.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.crawlers.3xx.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.3xx.301.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.3xx.302.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.3xx.304.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.crawlers.4xx.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.4xx.400.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.4xx.401.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.4xx.403.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.4xx.404.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.crawlers.5xx.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.crawlers.5xx.500.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.crawlers.5xx.502.{}".format(self.prefix, u, self.nodename)] = 0
@@ -728,7 +743,14 @@ class HaProxyLogster(LogsterParser):
                 self.counters["{}.request.url.{}.crawlers.5xx.504.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.non-crawlers.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.non-crawlers.3xx.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.3xx.301.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.3xx.302.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.3xx.304.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.non-crawlers.4xx.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.4xx.400.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.4xx.401.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.4xx.403.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.4xx.404.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.non-crawlers.5xx.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.non-crawlers.5xx.500.{}".format(self.prefix, u, self.nodename)] = 0
                 self.counters["{}.request.url.{}.non-crawlers.5xx.502.{}".format(self.prefix, u, self.nodename)] = 0
@@ -776,6 +798,10 @@ class HaProxyLogster(LogsterParser):
                     self.counters["{}.stats.browser.ua.preview.google.{}".format(self.prefix, suffix)] = 0
 
                     self.counters["{}.response.status.crawlers.4xx.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.response.status.crawlers.4xx.400.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.response.status.crawlers.4xx.401.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.response.status.crawlers.4xx.403.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.response.status.crawlers.4xx.404.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.response.status.crawlers.5xx.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.response.status.crawlers.5xx.500.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.response.status.crawlers.5xx.502.{}".format(self.prefix, suffix)] = 0
@@ -980,6 +1006,8 @@ class HaProxyLogster(LogsterParser):
                         self.increment("{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, suffix))
                     if self.sc >= 400 and self.sc <= 499:
                         self.increment("{}.response.status.crawlers.4xx.{}".format(self.prefix, suffix))
+                        if self.sc in [400,401,403,404]:
+                            self.increment("{}.response.status.crawlers.4xx.{}.{}".format(self.prefix, self.sc, suffix))
                     elif self.sc >= 500 and self.sc <= 599:
                         self.increment("{}.response.status.crawlers.5xx.{}".format(self.prefix, suffix))
                         if self.sc in [500,502,503,504]:

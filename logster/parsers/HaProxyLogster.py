@@ -651,8 +651,11 @@ class HaProxyLogster(LogsterParser):
         # the final regex for HAProxy lines
         self.log_line_pattern = self.build_pattern()
 
+
         #
         # Up/Down log lines
+        # 2016-08-02T07:29:16.860473+00:00 wwwproxy-1 haproxy[726]: ALERT Backup Server normal/www5 is DOWN. 3 active and 2 backup servers left. 0 sessions active, 0 requeued, 0 remaining in queue.
+        # 2016-08-02T07:33:13.129175+00:00 wwwproxy-1 haproxy[726]: NOTICE Server crawler/www5 is UP. 3 active and 0 backup servers online. 0 sessions requeued, 0 total in queue.
         #
         self.reset_pattern()
         self.add_pattern('log_time', r'(\S+( |  )\d+ \d+:\d+:\d+|\d+\-\d+\-\d+T\d+:\d+:\d+\.\d+\+\d+:\d+)')
@@ -660,8 +663,8 @@ class HaProxyLogster(LogsterParser):
         self.add_pattern('process_id', r'\S+', ': ')
         self.add_pattern('level', r'\S+')
 
-        # Server normal/wwwA or www/<NOSRV>
-        self.add_pattern('backend_name', r'\S+', '/', 'Server ')
+        # (Backup Server|Server) normal/wwwA or www/<NOSRV>
+        self.add_pattern('backend_name', r'\S+', '/', r'(Backup Server|Server) ')
         self.add_pattern('server_name', r'\S+')
 
         #is UP/DOWN, reason:
@@ -671,6 +674,29 @@ class HaProxyLogster(LogsterParser):
         # skip the rest ...
         self.add_pattern('skipped', r'.*','')
         self.updown_pattern = self.build_pattern()
+
+        #
+        # Health Check Notice
+        # 2016-08-02T07:33:25.808096+00:00 wwwproxy-1 haproxy[726]: NOTICE Health check for backup server normal/www6 succeeded, reason: Layer7 check passed, code: 200, info: "OK", check duration: 329ms, status: 1/2 DOWN.
+        # 2016-08-02T07:33:25.822150+00:00 wwwproxy-1 haproxy[726]: NOTICE Health check for server crawler/www6 succeeded, reason: Layer7 check passed, code: 200, info: "OK", check duration: 242ms, status: 1/2 DOWN.
+        #
+        self.reset_pattern()
+        self.add_pattern('log_time', r'(\S+( |  )\d+ \d+:\d+:\d+|\d+\-\d+\-\d+T\d+:\d+:\d+\.\d+\+\d+:\d+)')
+        self.add_pattern('hostname', r'\S+')
+        self.add_pattern('process_id', r'\S+', ': ')
+        self.add_pattern('level', r'\S+')
+
+        # Health check ....
+        self.add_pattern('backend_name', r'\S+', '/', r'Health check for (backup server|server) ')
+        self.add_pattern('server_name', r'\S+')
+
+        #succeeded/failed, reason:
+        self.add_pattern('check', r'\S+', ', ')
+        self.add_pattern('reason', r'[^,]+', ', ', 'reason: ')
+
+        # skip the rest ...
+        self.add_pattern('skipped', r'.*','')
+        self.health_pattern = self.build_pattern()
 
         #
         # Start/Stop/Pause log lines
@@ -705,6 +731,7 @@ class HaProxyLogster(LogsterParser):
         self.counters["{}.meta.parsed-lines.{}".format(self.prefix, self.nodename)] = 0
         self.counters["{}.meta.unparsed-lines.{}".format(self.prefix, self.nodename)] = 0
         self.counters["{}.meta.start-stop.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.meta.health-notice.{}".format(self.prefix, self.nodename)] = 0
         self.counters["{}.meta.exceptions.{}".format(self.prefix, self.nodename)] = 0
 
         self.counters["{}.stats.cur-conns.{}".format(self.prefix, self.nodename)] = int(ha_info['CurrConns'])
@@ -1174,21 +1201,26 @@ class HaProxyLogster(LogsterParser):
                         print >> sys.stderr, 'Failed to parse line: %s' % line
                         self.increment("{}.meta.unparsed-lines.{}".format(self.prefix, self.nodename))
             else:
-                __m = self.startstop_pattern.match(line)
+                __m = self.health_pattern.match(line)
                 if __m:
                     __d = __m.groupdict()
-                    self.counters["{}.meta.start-stop.{}".format(self.prefix, self.nodename)] = 1
+                    self.counters["{}.meta.health-notice.{}".format(self.prefix, self.nodename)] = 1
                 else:
-                    __m = self.noserver_pattern.match(line)
+                    __m = self.startstop_pattern.match(line)
                     if __m:
                         __d = __m.groupdict()
-                        for backend in ["backend-" + __d['backend_name'], "all-backends"]:
-                            suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
-                            self.increment("{}.meta.noserver.{}".format(self.prefix, suffix))
+                        self.counters["{}.meta.start-stop.{}".format(self.prefix, self.nodename)] = 1
                     else:
-                        #raise LogsterParsingException, "Failed to parse line: %s" % line
-                        print >> sys.stderr, 'Failed to parse line: %s' % line
-                        self.increment("{}.meta.unparsed-lines.{}".format(self.prefix, self.nodename))
+                        __m = self.noserver_pattern.match(line)
+                        if __m:
+                            __d = __m.groupdict()
+                            for backend in ["backend-" + __d['backend_name'], "all-backends"]:
+                                suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
+                                self.increment("{}.meta.noserver.{}".format(self.prefix, suffix))
+                        else:
+                            #raise LogsterParsingException, "Failed to parse line: %s" % line
+                            print >> sys.stderr, 'Failed to parse line: %s' % line
+                            self.increment("{}.meta.unparsed-lines.{}".format(self.prefix, self.nodename))
 
     def increment(self, name):
         '''increment'''

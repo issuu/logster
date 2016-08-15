@@ -1260,18 +1260,19 @@ class HaProxyLogster(LogsterParser):
                 pass
             self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = int(variance)
 
-        for backend in self.url_counter:
-            suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
-            url_variance = 0
-            try:
-                urls = self.url_counter[backend]
-                if len(ips) > 0:
-                    sample = urls.values()
-                    if len(sample) > 0:
-                        url_variance = reduce(lambda x,y: x+y, map(lambda xi: (xi-(float(reduce(lambda x,y : x+y, sample)) / len(sample)))**2, sample))/ len(sample)
-            except:
-                pass
-            self.counters["{}.stats.backend.url-variance.{}".format(self.prefix, suffix)] = int(url_variance)
+# This takes to long time to process
+#        for backend in self.url_counter:
+#            suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
+#            url_variance = 0
+#            try:
+#                urls = self.url_counter[backend]
+#                if len(ips) > 0:
+#                    sample = urls.values()
+#                    if len(sample) > 0:
+#                        url_variance = reduce(lambda x,y: x+y, map(lambda xi: (xi-(float(reduce(lambda x,y : x+y, sample)) / len(sample)))**2, sample))/ len(sample)
+#            except:
+#                pass
+#            self.counters["{}.stats.backend.url-variance.{}".format(self.prefix, suffix)] = int(url_variance)
 
         for name, value in self.counters.items():
             metrics.append(MetricObject(name, value))

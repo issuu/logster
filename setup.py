@@ -22,7 +22,7 @@ setup(
         #'pygtail>=0.5.1',
         'ua-parser'
     ],
-    ext_modules = cythonize("logster/parsers/HaProxyLogster.pyx"),
+    ext_modules = cythonize(["tailers/logtailtailer.pyx", "tailers/pygtailtailer.pyx", "logster/logster_helper.pyx", "logster/parsers/HaProxyLogster.pyx"]),
     zip_safe=False,
     scripts=[
         'bin/logster'

@@ -416,6 +416,7 @@ class HaProxyLogster(LogsterParser):
     '''HaProxyLogster'''
 
     ip_counter = {}
+    url_counter = {}
     patterns = []
     log_def = []
     regexs = []
@@ -849,7 +850,9 @@ class HaProxyLogster(LogsterParser):
             self.counters["{}.meta.up-down.{}".format(self.prefix, suffix)] = 0
             self.counters["{}.meta.noserver.{}".format(self.prefix, suffix)] = 0
             self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = 0
+            self.counters["{}.stats.backend.url-variance.{}".format(self.prefix, suffix)] = 0
             self.ip_counter[backend] = {}
+            self.url_counter[backend] = {}
         for haproxy in filter(lambda y: y['srvname'] == 'BACKEND', ha_stats):
             suffix = "{}.{}".format(self.nodename, "backend-"+haproxy['backend'].replace(".", "-"))
             self.counters["{}.stats.backend.queue.{}".format(self.prefix, suffix)] = haproxy['qcur']
@@ -1107,11 +1110,25 @@ class HaProxyLogster(LogsterParser):
                     except:
                         self.ip_counter['all-backends'][client_ip.ip] = 1
 
-            # skip redirects ?
-            if (self.magma or self.issuu) and self.sc > 0:
-                try:
-                    __iu = urlparse(__d['path'])
+            try:
+                __iu = urlparse(__d['path'])
+            except:
+                __iu = None
 
+            if __iu is not None:
+                if __d['server_name'] != '<NOSRV>':
+                    try:
+                        self.url_counter['backend-'+__d['backend_name']][__iu.path] += 1
+                    except:
+                        self.url_counter['backend-'+__d['backend_name']][__iu.path] = 1
+                try:
+                    self.url_counter['all-backends'][__iu.path] += 1
+                except:
+                    self.url_counter['all-backends'][__iu.path] = 1
+
+            # skip redirects ?
+            if (self.magma or self.issuu) and self.sc > 0 and __iu is not None:
+                try:
                     if self.magma:
                         if __iu.path == "/":
                             self.urlstat(__d, "root")
@@ -1242,6 +1259,19 @@ class HaProxyLogster(LogsterParser):
             except:
                 pass
             self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = int(variance)
+
+        for backend in self.url_counter:
+            suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
+            url_variance = 0
+            try:
+                urls = self.url_counter[backend]
+                if len(ips) > 0:
+                    sample = urls.values()
+                    if len(sample) > 0:
+                        url_variance = reduce(lambda x,y: x+y, map(lambda xi: (xi-(float(reduce(lambda x,y : x+y, sample)) / len(sample)))**2, sample))/ len(sample)
+            except:
+                pass
+            self.counters["{}.stats.backend.url-variance.{}".format(self.prefix, suffix)] = int(url_variance)
 
         for name, value in self.counters.items():
             metrics.append(MetricObject(name, value))

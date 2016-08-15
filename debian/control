@@ -4,7 +4,8 @@ Priority: extra
 Maintainer: Kiall Mac Innes <kiall@managedit.ie>
 Build-Depends:
     debhelper (>= 8.0.0),
-    python (>= 2.6)
+    python (>= 2.6),
+    dh-python
 Build-Depends-Indep:
     python-setuptools
 Standards-Version: 3.9.3

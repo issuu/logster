@@ -5,6 +5,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
+from Cython.Build import cythonize
 
 setup(
     name='logster',
@@ -21,6 +22,7 @@ setup(
         #'pygtail>=0.5.1',
         'ua-parser'
     ],
+    ext_modules = cythonize("HaProxyLogster.pyx"),
     zip_safe=False,
     scripts=[
         'bin/logster'

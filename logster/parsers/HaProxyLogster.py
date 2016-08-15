@@ -1115,16 +1115,16 @@ class HaProxyLogster(LogsterParser):
             except:
                 __iu = None
 
-            if __iu is not None:
-                if __d['server_name'] != '<NOSRV>':
-                    try:
-                        self.url_counter['backend-'+__d['backend_name']][__iu.path] += 1
-                    except:
-                        self.url_counter['backend-'+__d['backend_name']][__iu.path] = 1
-                try:
-                    self.url_counter['all-backends'][__iu.path] += 1
-                except:
-                    self.url_counter['all-backends'][__iu.path] = 1
+#            if __iu is not None:
+#                if __d['server_name'] != '<NOSRV>':
+#                    try:
+#                        self.url_counter['backend-'+__d['backend_name']][__iu.path] += 1
+#                    except:
+#                        self.url_counter['backend-'+__d['backend_name']][__iu.path] = 1
+#                try:
+#                    self.url_counter['all-backends'][__iu.path] += 1
+#                except:
+#                    self.url_counter['all-backends'][__iu.path] = 1
 
             # skip redirects ?
             if (self.magma or self.issuu) and self.sc > 0 and __iu is not None:

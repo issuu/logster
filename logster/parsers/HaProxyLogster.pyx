@@ -437,7 +437,20 @@ class HaProxyLogster(LogsterParser):
     is_preview_browser = False
 
     # clientabort
+    # CC   The client aborted before the connection could be established to the
+    #      server. This can happen when haproxy tries to connect to a recently
+    #      dead (or unchecked) server, and the client aborts while haproxy is
+    #      waiting for the server to respond or for "timeout connect" to expire.
     cc_event = False
+
+    # clientdisconnect
+    # CD   The client unexpectedly aborted during data transfer. This can be
+    #      caused by a browser crash, by an intermediate equipment between the
+    #      client and haproxy which decided to actively break the connection,
+    #      by network routing issues between the client and haproxy, or by a
+    #      keep-alive session between the server and the client terminated first
+    #      by the client.
+    cd_event = False
 
     counters = defaultdict(lambda: 0)
     gauges = defaultdict(PercentileMetric)
@@ -879,6 +892,7 @@ class HaProxyLogster(LogsterParser):
             self.block       = __d['term_event']=='P' and __d['term_session']=='R'
             # annoying chinese sites causing 503s because of client aborts
             self.cc_event    = __d['term_event']=='C' and __d['term_session']=='C'
+            self.cd_event    = __d['term_event']=='C' and __d['term_session']=='D'
 
             if self.tarpit:
                 # Do not process any further iff tarpit

@@ -65,6 +65,7 @@ ISSUU_THINLAYER_CALLS = [
     '_debug',
     'ads',
     'articles',
+    'backend-category',
     'backend-iab-category',
     'backend-search-suggestions',
     'billing',

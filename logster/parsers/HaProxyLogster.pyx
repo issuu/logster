@@ -71,6 +71,7 @@ ISSUU_THINLAYER_CALLS = [
     'billing',
     'clippings',
     'clippingsv2',
+    'document-page',
     'fbpagetab',
     'history',
     'hmm',
@@ -661,7 +662,7 @@ class HaProxyLogster(LogsterParser):
         # This final line might not be complete (truncated 1024 buffer)
         self.add_pattern('method', r'\S+', r'( |")', r'"')
         self.add_pattern('path', r'\S*', r'( |)')
-        self.add_pattern('httpversion', r'.*?', r'("|)')
+        self.add_pattern('protocol', r'.*?', r'("|)')
 
         # the final regex for HAProxy lines
         self.log_line_pattern = self.build_pattern()

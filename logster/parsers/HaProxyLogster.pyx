@@ -60,6 +60,7 @@ ISSUUFBAPP_PATTERN = re.compile('^/_fbapp($|/.+)')
 ISSUUPIXEL_PATTERN = re.compile('^/v1/(?P<pixel>[^?]*)')
 ISSUUEMAILREJECTED_PATTERN = re.compile('^/emailrejected($|/.+)')
 ISSUUOPTOUT_PATTERN = re.compile('^/optout($|/.+)')
+ISSUUOEMBED_PATTERN = re.compile('^/(oembed|oembed_wp|oembed_tumblr)($|/.+)')
 
 ISSUU_THINLAYER_CALLS = [
     '_debug',
@@ -1173,6 +1174,8 @@ class HaProxyLogster(LogsterParser):
                             self.urlstat(__d, "emailrejected")
                         elif ISSUUOPTOUT_PATTERN.match(__iu.path):
                             self.urlstat(__d, "optout")
+                        elif ISSUUOEMBED.match(__iu.path):
+                            self.urlstat(__d, "oembed")
                         elif ISSUUMULTIPART_PATTERN.match(__iu.path):
                             self.urlstat(__d, "multipart")
                         elif ISSUUSIGNIN_PATTERN.match(__iu.path):

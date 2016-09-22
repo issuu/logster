@@ -1177,7 +1177,7 @@ class HaProxyLogster(LogsterParser):
                             self.urlstat(__d, "emailrejected")
                         elif ISSUUOPTOUT_PATTERN.match(__iu.path):
                             self.urlstat(__d, "optout")
-                        elif ISSUUOEMBED.match(__iu.path):
+                        elif ISSUUOEMBED_PATTERN.match(__iu.path):
                             self.urlstat(__d, "oembed")
                         elif ISSUUMULTIPART_PATTERN.match(__iu.path):
                             self.urlstat(__d, "multipart")

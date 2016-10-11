@@ -87,13 +87,15 @@ ISSUU_THINLAYER_CALLS = [
     'partner',
     'payment',
     'print-on-demand',
+    'promoted',
     'protecteddocument',
     'protectedimage',
     'protectedpage',
     'publisher-suite',
-    'stream',
+    'reader',
     'reader3',
-    'recommendations'
+    'recommendations',
+    'stream'
 ]
 
 ISSUU_HOME_CALLS = [

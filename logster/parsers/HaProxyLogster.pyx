@@ -39,7 +39,7 @@ LANGUAGES = ['en','es','pt','zh','ja','de','it','fr','ru','da','ar']
 LINUX_VARIANTS = ['Linux', 'Ubuntu', 'Debian', 'Fedora', 'Gentoo', 'Red Hat', 'SUSE']
 
 # In case we cannot detect the User-Agent use this crud detection of crawlers
-BOT_PATTERN = re.compile('.*(Googlebot[/-]| Ezooms/|WinHttp\.WinHttpRequest|heritrix/|Java/|[Pp]ython|Siteimprove.com|Catchpoint|Exabot|Crawler|Bot|Spider|AndroidDownloadManager|URL2File/|Sentry/|Apache-HttpClient/|PHP[/ ]|Wget/|Mediapartners-Google|AdsBot-Google|curl/|WordPress/|Twitter/|archiver|check_http/|<\?php |(http://|\w+@)\w+(\.\w+)+)')
+BOT_PATTERN = re.compile('.*(Googlebot[/-]| Ezooms/|WinHttp\.WinHttpRequest|heritrix/|Java/|[Pp]ython|Siteimprove.com|Catchpoint|Exabot|Crawler|Bot|Spider|AndroidDownloadManager|URL2File/|Sentry/|Apache-HttpClient/|PHP[/ ]|Wget/|Mediapartners-Google|AdsBot-Google|curl/|WordPress/|Twitter/|archiver|check_http/|python-requests/|<\?php |(http://|\w+@)\w+(\.\w+)+)')
 IMGPROXY_PATTERN = re.compile('.*\(via ggpht.com GoogleImageProxy\)')
 PREVIEW_PATTERN = re.compile('.*Google Web Preview\)')
 
@@ -822,6 +822,7 @@ class HaProxyLogster(LogsterParser):
                     self.counters["{}.stats.browser.ua.crawlers.seznambot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.siteimprove.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.archive-it.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.python-requests.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.os.windows.{}".format(self.prefix, suffix)] = 0
@@ -831,6 +832,7 @@ class HaProxyLogster(LogsterParser):
                     self.counters["{}.stats.browser.ua.os.linux.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.os.other.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.cfnetwork.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.imgproxy.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.preview.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.imgproxy.google.{}".format(self.prefix, suffix)] = 0
@@ -1026,6 +1028,10 @@ class HaProxyLogster(LogsterParser):
                                 self.increment("{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, suffix))
                             elif 'YandexBot' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, suffix))
+                            elif 'python-requests' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.python-requests.{}".format(self.prefix, suffix))
+                            elif 'curl' in ua['string'] or 'cURL' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.curl.{}".format(self.prefix, suffix))
                             elif 'facebook' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.facebook.{}".format(self.prefix, suffix))
                             elif 'pinterest' in ua['string']:
@@ -1040,8 +1046,6 @@ class HaProxyLogster(LogsterParser):
                                 self.increment("{}.stats.browser.ua.crawlers.archive-it.{}".format(self.prefix, suffix))
                             elif 'MJ12bot' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.mj12bot.{}".format(self.prefix, suffix))
-                            elif 'curl' in ua['string'] or 'cURL' in ua['string']:
-                                self.increment("{}.stats.browser.ua.crawlers.curl.{}".format(self.prefix, suffix))
                             else:
                                 self.increment("{}.stats.browser.ua.crawlers.other.{}".format(self.prefix, suffix))
                         except:
@@ -1096,6 +1100,8 @@ class HaProxyLogster(LogsterParser):
                                 self.increment("{}.stats.browser.ua.os.linux.{}".format(self.prefix, suffix))
                             elif os_familyname == 'BlackBerry':
                                 self.increment("{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, suffix))
+                            elif 'CFNetwork' in ua['string']::
+                                self.increment("{}.stats.browser.ua.cfnetwork.{}".format(self.prefix, suffix))
                             else:
                                 self.increment("{}.stats.browser.ua.os.other.{}".format(self.prefix, suffix))
                         except:

@@ -39,7 +39,7 @@ LANGUAGES = ['en','es','pt','zh','ja','de','it','fr','ru','da','ar']
 LINUX_VARIANTS = ['Linux', 'Ubuntu', 'Debian', 'Fedora', 'Gentoo', 'Red Hat', 'SUSE']
 
 # In case we cannot detect the User-Agent use this crud detection of crawlers
-BOT_PATTERN = re.compile('.*(Googlebot[/-]| Ezooms/|WinHttp\.WinHttpRequest|heritrix/|Java/|[Pp]ython|Siteimprove.com|Catchpoint|Exabot|Crawler|Bot|Spider|AndroidDownloadManager|URL2File/|[Ss]entry/|Apache-HttpClient/|PHP[/ ]|Wget/|Mediapartners-Google|AdsBot-Google|curl/|WordPress/|Twitter/|archiver|check_http/|node-fetch/|Nutch/|ColdFusion|WhatsApp/|Clickagy|TurnitinBot|GetIntent|<\?php |(http://|\w+@)\w+(\.\w+)+)')
+BOT_PATTERN = re.compile('.*(Googlebot[/-]| Ezooms/|WinHttp\.WinHttpRequest|heritrix/|Java/|[Pp]ython|Siteimprove.com|Catchpoint|Exabot|Crawler|Bot|Spider|AndroidDownloadManager|URL2File/|[Ss]entry/|Apache-HttpClient/|PHP[/ ]|Wget/|Mediapartners-Google|AdsBot-Google|curl/|WordPress/|Twitter/|archiver|check_http/|node-fetch/|Nutch/|ColdFusion|WhatsApp/|Clickagy|GetIntent|Twitter|<\?php |(http://|\w+@)\w+(\.\w+)+)')
 IMGPROXY_PATTERN = re.compile('.*\(via ggpht.com GoogleImageProxy\)')
 PREVIEW_PATTERN = re.compile('.*Google Web Preview\)')
 
@@ -829,6 +829,7 @@ class HaProxyLogster(LogsterParser):
                     self.counters["{}.stats.browser.ua.crawlers.nutch.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.clickagy.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.coldfusion.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.twitterbot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.whatsapp.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.turnitinbot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.getintent.{}".format(self.prefix, suffix)] = 0
@@ -1014,64 +1015,67 @@ class HaProxyLogster(LogsterParser):
                     self.increment("{}.stats.browser.ua.crawlers.{}".format(self.prefix, suffix))
                     if ua:
                         self.increment("{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, suffix))
+                        _iua = ua['string'].lower()
                         try:
-                            if 'Googlebot-News' in ua['string']:
+                            if 'googlebot-news' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.googlebot-news.{}".format(self.prefix, suffix))
-                            elif 'Googlebot-Image' in ua['string']:
+                            elif 'googlebot-image' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.googlebot-image.{}".format(self.prefix, suffix))
-                            elif 'Googlebot-Video' in ua['string']:
+                            elif 'googlebot-video' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.googlebot-video.{}".format(self.prefix, suffix))
-                            elif 'Googlebot-Mobile' in ua['string']:
+                            elif 'googlebot-mobile' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.googlebot-mobile.{}".format(self.prefix, suffix))
-                            elif 'Mediapartners-Google' in ua['string']:
+                            elif 'mediapartners-google' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.google-adsense.{}".format(self.prefix, suffix))
-                            elif 'AdsBot-Google' in ua['string']:
+                            elif 'adsbot-google' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.google-adsbot.{}".format(self.prefix, suffix))
-                            elif ua['user_agent']['family'] == 'Googlebot' or 'Google' in ua['string']:
+                            elif ua['user_agent']['family'] == 'Googlebot' or 'google' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, suffix))
-                            elif 'bingbot' in ua['string']:
+                            elif 'bingbot' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, suffix))
-                            elif 'Yahoo! Slurp' in ua['string']:
+                            elif 'yahoo! slurp' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, suffix))
-                            elif 'Baiduspider' in ua['string']:
+                            elif 'baiduspider' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, suffix))
-                            elif 'YandexBot' in ua['string']:
+                            elif 'yandexbot' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, suffix))
-                            elif 'Python' in ua['string'] or 'python' in ua['string']:
+                            elif 'python' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.python.{}".format(self.prefix, suffix))
-                            elif 'Clickagy' in ua['string']:
+                            elif 'clickagy' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.clickagy.{}".format(self.prefix, suffix))
-                            elif 'WhatsApp' in ua['string']:
+                            elif 'twitterbot' in _iua:
+                                self.increment("{}.stats.browser.ua.crawlers.twitterbot.{}".format(self.prefix, suffix))
+                            elif 'whatsapp' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.whatsapp.{}".format(self.prefix, suffix))
-                            elif 'TurnitinBot' in ua['string']:
+                            elif 'turnitinbot' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.turnitinbot.{}".format(self.prefix, suffix))
-                            elif 'GetIntent' in ua['string']:
+                            elif 'getintent' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.getintent.{}".format(self.prefix, suffix))
-                            elif 'ColdFusion' in ua['string']:
+                            elif 'coldfusion' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.coldfusion.{}".format(self.prefix, suffix))
-                            elif 'sentry' in ua['string'] or 'Sentry' in ua['string']:
+                            elif 'sentry' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.sentry.{}".format(self.prefix, suffix))
-                            elif 'Java' in ua['string']:
+                            elif 'java' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.java.{}".format(self.prefix, suffix))
-                            elif 'curl' in ua['string'] or 'cURL' in ua['string'] or 'Wget' in ua['string']:
+                            elif 'curl' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.curl.{}".format(self.prefix, suffix))
-                            elif 'Nutch' in ua['string']:
+                            elif 'nutch' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.nutch.{}".format(self.prefix, suffix))
-                            elif 'node-fetch' in ua['string']:
+                            elif 'node-fetch' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.node-fetch.{}".format(self.prefix, suffix))
-                            elif 'facebook' in ua['string']:
+                            elif 'facebook' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.facebook.{}".format(self.prefix, suffix))
-                            elif 'pinterest' in ua['string']:
+                            elif 'pinterest' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.pinterest.{}".format(self.prefix, suffix))
-                            elif 'opensiteexplorer' in ua['string']:
+                            elif 'opensiteexplorer' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.opensiteexplorer.{}".format(self.prefix, suffix))
-                            elif 'SeznamBot' in ua['string']:
+                            elif 'seznambot' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.seznambot.{}".format(self.prefix, suffix))
-                            elif 'Siteimprove' in ua['string']:
+                            elif 'siteimprove' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.siteimprove.{}".format(self.prefix, suffix))
-                            elif 'Archive-It' in ua['string']:
+                            elif 'archive-it' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.archive-it.{}".format(self.prefix, suffix))
-                            elif 'MJ12bot' in ua['string']:
+                            elif 'mj12bot' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.mj12bot.{}".format(self.prefix, suffix))
                             else:
                                 self.increment("{}.stats.browser.ua.crawlers.other.{}".format(self.prefix, suffix))

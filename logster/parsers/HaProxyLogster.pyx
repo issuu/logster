@@ -39,7 +39,7 @@ LANGUAGES = ['en','es','pt','zh','ja','de','it','fr','ru','da','ar']
 LINUX_VARIANTS = ['Linux', 'Ubuntu', 'Debian', 'Fedora', 'Gentoo', 'Red Hat', 'SUSE']
 
 # In case we cannot detect the User-Agent use this crud detection of crawlers
-BOT_PATTERN = re.compile('.*(Googlebot[/-]| Ezooms/|WinHttp\.WinHttpRequest|heritrix/|Java/|[Pp]ython|Siteimprove.com|Catchpoint|Exabot|Crawler|Bot|Spider|AndroidDownloadManager|URL2File/|Sentry/|Apache-HttpClient/|PHP[/ ]|Wget/|Mediapartners-Google|AdsBot-Google|curl/|WordPress/|Twitter/|archiver|check_http/|node-fetch/|Nutch/|sentry/|ColdFusion|WhatsApp/|Clickagy|TurnitinBot|GetIntent|<\?php |(http://|\w+@)\w+(\.\w+)+)')
+BOT_PATTERN = re.compile('.*(Googlebot[/-]| Ezooms/|WinHttp\.WinHttpRequest|heritrix/|Java/|[Pp]ython|Siteimprove.com|Catchpoint|Exabot|Crawler|Bot|Spider|AndroidDownloadManager|URL2File/|[Ss]entry/|Apache-HttpClient/|PHP[/ ]|Wget/|Mediapartners-Google|AdsBot-Google|curl/|WordPress/|Twitter/|archiver|check_http/|node-fetch/|Nutch/|ColdFusion|WhatsApp/|Clickagy|TurnitinBot|GetIntent|<\?php |(http://|\w+@)\w+(\.\w+)+)')
 IMGPROXY_PATTERN = re.compile('.*\(via ggpht.com GoogleImageProxy\)')
 PREVIEW_PATTERN = re.compile('.*Google Web Preview\)')
 
@@ -1049,7 +1049,7 @@ class HaProxyLogster(LogsterParser):
                                 self.increment("{}.stats.browser.ua.crawlers.getintent.{}".format(self.prefix, suffix))
                             elif 'ColdFusion' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.coldfusion.{}".format(self.prefix, suffix))
-                            elif 'sentry' in ua['string']:
+                            elif 'sentry' in ua['string'] or 'Sentry' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.sentry.{}".format(self.prefix, suffix))
                             elif 'Java' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.java.{}".format(self.prefix, suffix))

@@ -39,7 +39,7 @@ LANGUAGES = ['en','es','pt','zh','ja','de','it','fr','ru','da','ar']
 LINUX_VARIANTS = ['Linux', 'Ubuntu', 'Debian', 'Fedora', 'Gentoo', 'Red Hat', 'SUSE']
 
 # In case we cannot detect the User-Agent use this crud detection of crawlers
-BOT_PATTERN = re.compile('.*(Googlebot[/-]| Ezooms/|WinHttp\.WinHttpRequest|heritrix/|Java/|[Pp]ython|Siteimprove.com|Catchpoint|Exabot|Crawler|Bot|Spider|AndroidDownloadManager|URL2File/|Sentry/|Apache-HttpClient/|PHP[/ ]|Wget/|Mediapartners-Google|AdsBot-Google|curl/|WordPress/|Twitter/|archiver|check_http/|python-requests/|node-fetch/|Nutch/|<\?php |(http://|\w+@)\w+(\.\w+)+)')
+BOT_PATTERN = re.compile('.*(Googlebot[/-]| Ezooms/|WinHttp\.WinHttpRequest|heritrix/|Java/|[Pp]ython|Siteimprove.com|Catchpoint|Exabot|Crawler|Bot|Spider|AndroidDownloadManager|URL2File/|Sentry/|Apache-HttpClient/|PHP[/ ]|Wget/|Mediapartners-Google|AdsBot-Google|curl/|WordPress/|Twitter/|archiver|check_http/|python-/|node-fetch/|Nutch/|sentry/|Clickagy|<\?php |(http://|\w+@)\w+(\.\w+)+)')
 IMGPROXY_PATTERN = re.compile('.*\(via ggpht.com GoogleImageProxy\)')
 PREVIEW_PATTERN = re.compile('.*Google Web Preview\)')
 
@@ -818,13 +818,16 @@ class HaProxyLogster(LogsterParser):
                     self.counters["{}.stats.browser.ua.crawlers.pinterest.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.mj12bot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.curl.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.java.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.opensiteexplorer.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.seznambot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.siteimprove.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.archive-it.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.python-requests.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.python.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.sentry.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.node-fetch.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.nutch.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.clickagy.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.os.windows.{}".format(self.prefix, suffix)] = 0
@@ -1030,8 +1033,14 @@ class HaProxyLogster(LogsterParser):
                                 self.increment("{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, suffix))
                             elif 'YandexBot' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, suffix))
-                            elif 'python-requests' in ua['string']:
-                                self.increment("{}.stats.browser.ua.crawlers.python-requests.{}".format(self.prefix, suffix))
+                            elif 'python-' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.python.{}".format(self.prefix, suffix))
+                            elif 'Clickagy' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.clickagy.{}".format(self.prefix, suffix))
+                            elif 'sentry' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.sentry.{}".format(self.prefix, suffix))
+                            elif 'Java' in ua['string']:
+                                self.increment("{}.stats.browser.ua.crawlers.java.{}".format(self.prefix, suffix))
                             elif 'curl' in ua['string'] or 'cURL' in ua['string'] or 'Wget' in ua['string']:
                                 self.increment("{}.stats.browser.ua.crawlers.curl.{}".format(self.prefix, suffix))
                             elif 'Nutch' in ua['string']:

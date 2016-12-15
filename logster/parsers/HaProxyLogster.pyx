@@ -1100,7 +1100,7 @@ class HaProxyLogster(LogsterParser):
                                 self.increment("{}.stats.browser.ua.os.linux.{}".format(self.prefix, suffix))
                             elif os_familyname == 'BlackBerry':
                                 self.increment("{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, suffix))
-                            elif 'CFNetwork' in ua['string']::
+                            elif 'CFNetwork' in ua['string']:
                                 self.increment("{}.stats.browser.ua.cfnetwork.{}".format(self.prefix, suffix))
                             else:
                                 self.increment("{}.stats.browser.ua.os.other.{}".format(self.prefix, suffix))

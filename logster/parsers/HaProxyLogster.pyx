@@ -479,6 +479,8 @@ class HaProxyLogster(LogsterParser):
 
         if self.cc_event:
             self.increment("{}.request.url.{}.{}.clientabort.status.{}.{}".format(self.prefix, metric_key, metric_ua, self.status_code.lower(), self.nodename))
+        elif self.cd_event:
+            self.increment("{}.request.url.{}.{}.clientdisconnect.status.{}.{}".format(self.prefix, metric_key, metric_ua, self.status_code.lower(), self.nodename))
         else:
             self.increment(_k)
             if self.sc >= 300 and self.sc <= 399:
@@ -877,6 +879,7 @@ class HaProxyLogster(LogsterParser):
                 self.counters["{}.request.method.{}.{}".format(self.prefix, method.lower(), suffix)] = 0
             for status_code in [str(x) for x in STATUS_CODES] + ['BADREQ','OTHER']:
                 self.counters["{}.response.clientabort.status.{}.{}".format(self.prefix, status_code.lower(), suffix)] = 0
+                self.counters["{}.response.clientdisconnect.status.{}.{}".format(self.prefix, status_code.lower(), suffix)] = 0
                 self.counters["{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix)] = 0
             self.counters["{}.meta.up-down.{}".format(self.prefix, suffix)] = 0
             self.counters["{}.meta.noserver.{}".format(self.prefix, suffix)] = 0
@@ -998,6 +1001,8 @@ class HaProxyLogster(LogsterParser):
 
                 if self.cc_event:
                     self.increment("{}.response.clientabort.status.{}.{}".format(self.prefix, self.status_code.lower(), suffix))
+                elif self.cd_event:
+                    self.increment("{}.response.clientdisconnect.status.{}.{}".format(self.prefix, self.status_code.lower(), suffix))
                 else:
                     self.increment("{}.response.status.{}.{}".format(self.prefix, self.status_code.lower(), suffix))
                 self.increment("{}.request.method.{}.{}".format(self.prefix, self.method.lower(), suffix))

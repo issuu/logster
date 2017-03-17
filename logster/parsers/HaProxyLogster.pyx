@@ -101,12 +101,14 @@ ISSUU_THINLAYER_CALLS = [
 ISSUU_HOME_CALLS = [
     '_debug',
     'campaigns',
+    'collaborate',
     'docs',
     'fbapp',
     'following',
     'activity',
     'publications',
     'publisher',
+    'sell',
     'services',
     'settings',
     'statistics'

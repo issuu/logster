@@ -61,6 +61,8 @@ ISSUUPIXEL_PATTERN = re.compile('^/v1/(?P<pixel>[^?]*)')
 ISSUUEMAILREJECTED_PATTERN = re.compile('^/emailrejected($|/.+)')
 ISSUUOPTOUT_PATTERN = re.compile('^/optout($|/.+)')
 ISSUUOEMBED_PATTERN = re.compile('^/(oembed|oembed_wp|oembed_tumblr)($|/.+)')
+ISSUUPUBLISHERSTORE_PATTERN = re.compile('^/store/publishers/(?P<publisher>[^/]+)/docs/.+')
+ISSUUCLAIM_PATTERN = re.compile('^/claim-account($|/.+)')
 
 ISSUU_THINLAYER_CALLS = [
     '_debug',
@@ -108,6 +110,7 @@ ISSUU_HOME_CALLS = [
     'activity',
     'publications',
     'publisher',
+    'purchases',
     'sell',
     'services',
     'settings',
@@ -1223,6 +1226,8 @@ class HaProxyLogster(LogsterParser):
                             self.urlstat(__d, "emailrejected")
                         elif ISSUUOPTOUT_PATTERN.match(__iu.path):
                             self.urlstat(__d, "optout")
+                        elif ISSUUCLAIM_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "claim-account")
                         elif ISSUUOEMBED_PATTERN.match(__iu.path):
                             self.urlstat(__d, "oembed")
                         elif ISSUUMULTIPART_PATTERN.match(__iu.path):
@@ -1269,6 +1274,18 @@ class HaProxyLogster(LogsterParser):
                                             __ip = __im.groupdict()['pixel'].replace(".", "-")
                                         if __ip:
                                             self.urlstat(__d, "pixeltrack."+__ip)
+                                    else:
+                                        __im = ISSUUPUBLISHERSTORE_PATTERN.match(__iu.path)
+                                        if __im or __iu.path == "/store" or __iu.path == "/store/":
+                                            self.urlstat(__d, "store")
+                                            if __iu.path == "/store" or __iu.path == "/store/":
+                                                __ip = "root"
+                                                self.urlstat(__d, "store."+__ip)
+                                            else:
+                                                __ip = __im.groupdict()['publisher'].replace(".", "-")
+                                                if __ip:
+                                                    self.urlstat(__d, "store.publisher."+__ip)
+
                 except Exception as e:
                     print >> sys.stderr, e
                     self.increment("{}.meta.exceptions.{}".format(self.prefix, self.nodename))

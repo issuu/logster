@@ -53,6 +53,7 @@ ISSUUQUERY_PATTERN = re.compile('^(/|/api/)query($|/.+)')
 ISSUUSEARCH_PATTERN = re.compile('^/search($|/.+)')
 ISSUUPUBLISH_PATTERN = re.compile('^/publish($|/.+)')
 ISSUUEXPLORE_PATTERN = re.compile('^/explore($|/.+)')
+ISSUUPRICING_PATTERN = re.compile('^/pricing($|/.+)')
 ISSUUMULTIPART_PATTERN = re.compile('^/multipart($|/.+)')
 ISSUUSIGNIN_PATTERN = re.compile('^/signin($|/.+)')
 ISSUUSIGNUP_PATTERN = re.compile('^/signup($|/.+)')
@@ -1222,6 +1223,8 @@ class HaProxyLogster(LogsterParser):
                             self.urlstat(__d, "publish")
                         elif ISSUUEXPLORE_PATTERN.match(__iu.path):
                             self.urlstat(__d, "explore")
+                        elif ISSUUPRICING_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "pricing")
                         elif ISSUUEMAILREJECTED_PATTERN.match(__iu.path):
                             self.urlstat(__d, "emailrejected")
                         elif ISSUUOPTOUT_PATTERN.match(__iu.path):

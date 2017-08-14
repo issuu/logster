@@ -255,7 +255,7 @@ def verifyGoogleBot(ip):
     if istrue is None:
         try:
             _n = gethostbyaddr(ip)[0]
-            istrue = GOOGLERDNS_PATTERN.match(_n) is not None and socket.gethostbyname(_n) == ip
+            istrue = GOOGLERDNS_PATTERN.match(_n) is not None and gethostbyname(_n) == ip
         except:
             istrue = False
         googlebot_cache[ip] = istrue
@@ -268,7 +268,7 @@ def verifyBingBot(ip):
     if istrue is None:
         try:
             _n = gethostbyaddr(ip)[0]
-            istrue = BINGRDNS_PATTERN.match(_n) is not None and socket.gethostbyname(_n) == ip
+            istrue = BINGRDNS_PATTERN.match(_n) is not None and gethostbyname(_n) == ip
         except:
             istrue = False
         bingbot_cache[ip] = istrue

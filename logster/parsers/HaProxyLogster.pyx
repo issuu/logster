@@ -619,6 +619,8 @@ class HaProxyLogster(LogsterParser):
                             help='Special parsing of Magma paths')
         optparser.add_option('--xffip', '-f', dest='usexffip', action="store_true", default=False,
                             help='Use X-Forwarded-For value for the client-ip (useful if behind another proxy like ELB)')
+        optparser.add_option('--verifybot', '-b', dest='verifybot', default=None,
+                            help='Verify the bot identity - reverse dns. A comma separated list: googlebot, bingbot')
 
         opts, args = optparser.parse_args(args=options)
 
@@ -632,7 +634,11 @@ class HaProxyLogster(LogsterParser):
         if opts.pxy_socket is None:
             print >> sys.stderr, 'Missing --socket option'
             raise Exception("Missing --socket option")
-            
+
+        self.verifybot = []
+        if opts.verifybot:
+            self.verifybot = [x.lower() for x in opts.verifybot.split(',')]
+
         # Get/parse running haproxy config (frontends, backends, servers)
         # Plus info stat - session rate ....
         haproxy = HaPConn(opts.pxy_socket)
@@ -1089,12 +1095,14 @@ class HaProxyLogster(LogsterParser):
                             elif 'adsbot-google' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.google-adsbot.{}".format(self.prefix, suffix))
                             elif ua['user_agent']['family'] == 'Googlebot' or 'google' in _iua:
-                                if not verifyGoogleBot(client_ip):
-                                    self.increment("{}.stats.browser.ua.crawlers.fake-googlebot.{}".format(self.prefix, suffix))
+                                if 'googlebot' in self.verifybot:
+                                    if not verifyGoogleBot(client_ip):
+                                        self.increment("{}.stats.browser.ua.crawlers.fake-googlebot.{}".format(self.prefix, suffix))
                                 self.increment("{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, suffix))
                             elif 'bingbot' in _iua:
-                                if not verifyBingBot(client_ip):
-                                    self.increment("{}.stats.browser.ua.crawlers.fake-bingbot.{}".format(self.prefix, suffix))
+                                if 'bingbot' in self.verifybot:
+                                    if not verifyBingBot(client_ip):
+                                        self.increment("{}.stats.browser.ua.crawlers.fake-bingbot.{}".format(self.prefix, suffix))
                                 self.increment("{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, suffix))
                             elif 'yahoo! slurp' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, suffix))

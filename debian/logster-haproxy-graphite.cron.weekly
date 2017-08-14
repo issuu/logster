@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# remove pickle cache files
+rm -f /var/tmp/haproxy_logster_*.p
+

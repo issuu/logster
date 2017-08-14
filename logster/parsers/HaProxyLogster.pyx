@@ -9,6 +9,7 @@ import sys
 import re
 import math
 import optparse
+import cPickle as pickle
 from collections import defaultdict
 from ua_parser import user_agent_parser
 from urlparse import urlparse
@@ -219,10 +220,23 @@ HaP_SOCK_ERR = 3
 HaP_BUFSIZE = 8192
 
 # an associative array. In python these are called dictionaries.
-ua_cache = {}
-ip_cache = {}
-googlebot_cache = {}
-bingbot_cache = {}
+# load cache
+try:
+    ua_cache = pickle.load( open( "/var/tmp/haproxy_logster_ua.p", "rb" ) )
+except:
+    ua_cache = {}
+try:
+    ip_cache = pickle.load( open( "/var/tmp/haproxy_logster_ip.p", "rb" ) )
+except:
+    ip_cache = {}
+try:
+    googlebot_cache = pickle.load( open( "/var/tmp/haproxy_logster_googlebot.p", "rb" ) )
+except:
+    googlebot_cache = {}
+try:
+    bingbot_cache = pickle.load( open( "/var/tmp/haproxy_logster_bingbot.p", "rb" ) )
+except:
+    bingbot_cache = {}
 
 def resolveHost(host_or_ip):
     try:
@@ -1405,5 +1419,10 @@ class HaProxyLogster(LogsterParser):
 
         for name, value in self.gauges.items():
             metrics.extend(value.as_metrics(name))
+
+        pickle.dump( ip_cache, open( "/var/tmp/haproxy_logster_ip.p", "rb" ) )
+        pickle.dump( ua_cache, open( "/var/tmp/haproxy_logster_ua.p", "rb" ) )
+        pickle.dump( bingbot_cache, open( "/var/tmp/haproxy_logster_bingbot.p", "rb" ) )
+        pickle.dump( googlebot_cache, open( "/var/tmp/haproxy_logster_googlebot.p", "rb" ) )
 
         return metrics

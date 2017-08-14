@@ -211,7 +211,7 @@ magma_patterns = [
 from logster.logster_helper import MetricObject, LogsterParser
 from logster.logster_helper import LogsterParsingException
 
-from socket import socket, gethostbyname, AF_UNIX, SOCK_STREAM
+from socket import socket, gethostbyname, gethostbyaddr, AF_UNIX, SOCK_STREAM
 
 HaP_OK = 1
 HaP_ERR = 2
@@ -221,6 +221,8 @@ HaP_BUFSIZE = 8192
 # an associative array. In python these are called dictionaries.
 ua_cache = {}
 ip_cache = {}
+googlebot_cache = {}
+bingbot_cache = {}
 
 def resolveHost(host_or_ip):
     try:
@@ -231,6 +233,32 @@ def resolveHost(host_or_ip):
             return gethostbyname(host_or_ip)
         except:
             return None
+
+
+GOOGLERDNS_PATTERN = re.compile('.*\.googlebot\.com$')
+def verifyGoogleBot(ip):
+    istrue = googlebot_cache.get(ip)
+    if istrue is None:
+        try:
+            _n = gethostbyaddr(ip)[0]
+            istrue = GOOGLERDNS_PATTERN.match(_n) is not None and socket.gethostbyname(_n) == ip
+        except:
+            istrue = False
+        googlebot_cache[ip] = istrue
+    return istrue
+
+
+BINGRDNS_PATTERN = re.compile('.*\.search\.msn\.com$')
+def verifyBingBot(ip):
+    istrue = bingbot_cache.get(ip)
+    if istrue is None:
+        try:
+            _n = gethostbyaddr(ip)[0]
+            istrue = BINGRDNS_PATTERN.match(_n) is not None and socket.gethostbyname(_n) == ip
+        except:
+            istrue = False
+        bingbot_cache[ip] = istrue
+    return istrue
 
 def getPreferredLocale(acceptLanguage):
     try:
@@ -815,6 +843,7 @@ class HaProxyLogster(LogsterParser):
                     self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.other.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.fake-googlebot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.googlebot-image.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.googlebot-news.{}".format(self.prefix, suffix)] = 0
@@ -822,6 +851,7 @@ class HaProxyLogster(LogsterParser):
                     self.counters["{}.stats.browser.ua.crawlers.googlebot-mobile.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.google-adsense.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.google-adsbot.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.fake-bingbot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, suffix)] = 0
@@ -1045,8 +1075,12 @@ class HaProxyLogster(LogsterParser):
                             elif 'adsbot-google' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.google-adsbot.{}".format(self.prefix, suffix))
                             elif ua['user_agent']['family'] == 'Googlebot' or 'google' in _iua:
+                                if not verifyGoogleBot(client_ip):
+                                    self.increment("{}.stats.browser.ua.crawlers.fake-googlebot.{}".format(self.prefix, suffix))
                                 self.increment("{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, suffix))
                             elif 'bingbot' in _iua:
+                                if not verifyBingBot(client_ip):
+                                    self.increment("{}.stats.browser.ua.crawlers.fake-bingbot.{}".format(self.prefix, suffix))
                                 self.increment("{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, suffix))
                             elif 'yahoo! slurp' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, suffix))

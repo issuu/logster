@@ -251,28 +251,30 @@ def resolveHost(host_or_ip):
 
 GOOGLERDNS_PATTERN = re.compile('.*\.googlebot\.com$')
 def verifyGoogleBot(ip):
-    istrue = googlebot_cache.get(ip)
-    if istrue is None:
+    _isTrueBot = googlebot_cache.get(ip)
+    if _isTrueBot is None:
         try:
             _n = gethostbyaddr(ip)[0]
-            istrue = GOOGLERDNS_PATTERN.match(_n) is not None and gethostbyname(_n) == ip
+            _isTrueBot = GOOGLERDNS_PATTERN.match(_n) is not None and gethostbyname(_n) == ip
         except:
-            istrue = False
-        googlebot_cache[ip] = istrue
-    return istrue
+            _isTrueBot = False
+        googlebot_cache[ip] = _isTrueBot
+    print >> sys.stderr, "ip {} is a true googlebot {}".format(ip, _isTrueBot)
+    return _isTrueBot
 
 
 BINGRDNS_PATTERN = re.compile('.*\.search\.msn\.com$')
 def verifyBingBot(ip):
-    istrue = bingbot_cache.get(ip)
-    if istrue is None:
+    _isTrueBot = bingbot_cache.get(ip)
+    if _isTrueBot is None:
         try:
             _n = gethostbyaddr(ip)[0]
-            istrue = BINGRDNS_PATTERN.match(_n) is not None and gethostbyname(_n) == ip
+            _isTrueBot = BINGRDNS_PATTERN.match(_n) is not None and gethostbyname(_n) == ip
         except:
-            istrue = False
-        bingbot_cache[ip] = istrue
-    return istrue
+            _isTrueBot = False
+        bingbot_cache[ip] = _isTrueBot
+    print >> sys.stderr, "ip {} is a true bingbot {}".format(ip, _isTrueBot)
+    return _isTrueBot
 
 def getPreferredLocale(acceptLanguage):
     try:

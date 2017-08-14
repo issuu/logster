@@ -1420,9 +1420,9 @@ class HaProxyLogster(LogsterParser):
         for name, value in self.gauges.items():
             metrics.extend(value.as_metrics(name))
 
-        pickle.dump( ip_cache, open( "/var/tmp/haproxy_logster_ip.p", "rb" ) )
-        pickle.dump( ua_cache, open( "/var/tmp/haproxy_logster_ua.p", "rb" ) )
-        pickle.dump( bingbot_cache, open( "/var/tmp/haproxy_logster_bingbot.p", "rb" ) )
-        pickle.dump( googlebot_cache, open( "/var/tmp/haproxy_logster_googlebot.p", "rb" ) )
+        pickle.dump( ip_cache, open( "/var/tmp/haproxy_logster_ip.p", "wb" ) )
+        pickle.dump( ua_cache, open( "/var/tmp/haproxy_logster_ua.p", "wb" ) )
+        pickle.dump( bingbot_cache, open( "/var/tmp/haproxy_logster_bingbot.p", "wb" ) )
+        pickle.dump( googlebot_cache, open( "/var/tmp/haproxy_logster_googlebot.p", "wb" ) )
 
         return metrics

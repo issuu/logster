@@ -60,7 +60,7 @@ function do_work () {
 }
 
 # Check if another is already running
-if [ -e "${LOCKFILE}" ]; then
+while [ -e "${LOCKFILE}" ]; do
     A=$(stat --format=%Y ${LOCKFILE})
     B=$(date +%s)
     D=$(expr $B - $A)
@@ -71,9 +71,9 @@ if [ -e "${LOCKFILE}" ]; then
         [ -e "${LOCKFILE}"  ] && rm -f ${LOCKFILE}
         do_work ; sleep 5
     else
-        exit 0
+        sleep 1
     fi
-fi
+done
 
 A=$(date +%s)
 do_work

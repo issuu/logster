@@ -1096,12 +1096,12 @@ class HaProxyLogster(LogsterParser):
                                 self.increment("{}.stats.browser.ua.crawlers.google-adsbot.{}".format(self.prefix, suffix))
                             elif ua['user_agent']['family'] == 'Googlebot' or 'google' in _iua:
                                 if 'googlebot' in self.verifybot:
-                                    if not verifyGoogleBot(client_ip.ip):
+                                    if not verifyGoogleBot(client_ip.strNormal()):
                                         self.increment("{}.stats.browser.ua.crawlers.fake-googlebot.{}".format(self.prefix, suffix))
                                 self.increment("{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, suffix))
                             elif 'bingbot' in _iua:
                                 if 'bingbot' in self.verifybot:
-                                    if not verifyBingBot(client_ip.ip):
+                                    if not verifyBingBot(client_ip.strNormal()):
                                         self.increment("{}.stats.browser.ua.crawlers.fake-bingbot.{}".format(self.prefix, suffix))
                                 self.increment("{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, suffix))
                             elif 'yahoo! slurp' in _iua:

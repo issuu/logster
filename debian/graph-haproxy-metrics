@@ -8,16 +8,16 @@ function log() {
     /usr/bin/logger -p ${facility}.${level} -t ${SCRIPT_NAME} "${1}"
 }
 
-# Only terminate on SIGUSR1
+# run this script with a lock
+[ "${FLOCKER}" != "$0" ] && exec env FLOCKER="$0" flock -en "$0" "$0" "$@" || :
+
 function on_exit() {
     log "Exiting ..."
-    [ -e "${PID_FILE}" ] && rm -f ${PID_FILE}
+    # if for some reason we did not shutdown in a clean way
+    [ -e "${LOCKFILE}"  ] && rm -f ${LOCKFILE}
     exit 0
 }
 trap on_exit EXIT HUP INT QUIT TERM
-
-# run this script with a lock
-[ "${FLOCKER}" != "$0" ] && exec env FLOCKER="$0" flock -en "$0" "$0" "$@" || :
 
 LOCKFILE=/var/run/logtail-logster.parsers.HaProxyLogster.HaProxyLogster-var-log-haproxy.log.lock
 STATEFILE=/var/run/logtail-logster.parsers.HaProxyLogster.HaProxyLogster-var-log-haproxy.log.state
@@ -88,8 +88,6 @@ function do_work () {
             HaProxyLogster \
             /var/log/haproxy.log
     fi
-    # if for some reason we did not shutdown in a clean way
-    [ -e "${LOCKFILE}"  ] && rm -f ${LOCKFILE}
 }
 
 # Check if another is already running - this should not happen

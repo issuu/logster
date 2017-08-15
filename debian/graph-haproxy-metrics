@@ -17,7 +17,6 @@ function on_exit() {
 trap on_exit EXIT HUP INT QUIT TERM
 
 # run this script with a lock
-log "flocker value: ${FLOCKER} != ${0}"
 [ "${FLOCKER}" != "$0" ] && exec env FLOCKER="$0" flock -en "$0" "$0" "$@" || :
 
 LOCKFILE=/var/run/logtail-logster.parsers.HaProxyLogster.HaProxyLogster-var-log-haproxy.log.lock
@@ -70,6 +69,12 @@ test -d ${LOGDIR} || mkdir -p ${LOGDIR}
 
 function do_work () {
     log "running logster ...."
+
+    if [ -e /var/tmp/haproxy_logster_cleancache ]; then
+        log "cleaning cache files ..."
+        rm -f /var/tmp/haproxy_logster_*.p /var/tmp/haproxy_logster_cleancache
+    fi
+
     if [ -n "${STATSD_HOST_PORT}" ]; then
         timeout --kill-after=110 100 logster --output statsd \
             --statsd-host ${STATSD_HOST_PORT} \
@@ -87,7 +92,7 @@ function do_work () {
     [ -e "${LOCKFILE}"  ] && rm -f ${LOCKFILE}
 }
 
-# Check if another is already running
+# Check if another is already running - this should not happen
 while [ -e "${LOCKFILE}" ]; do
     A=$(stat --format=%Y ${LOCKFILE})
     B=$(date +%s)
@@ -110,11 +115,11 @@ do_work
 B=$(date +%s)
 D=$(expr $B - $A)
 if [ $D -ge 110 ]; then
-    log "how often do we do this? is it a good idea?"
+    log "how often do we do this? is it a good idea? should not happen"
     [ -e "${STATEFILE}" ] && rm -f ${STATEFILE}
     [ -e "${LOCKFILE}"  ] && rm -f ${LOCKFILE}
 fi
-if [ $D -ge 60 ]; then
+if [ $D -ge 60 -a $D -lt 110 ]; then
     log "try catching up .... delta is ${D} secs"
     # try to catch up
     do_work

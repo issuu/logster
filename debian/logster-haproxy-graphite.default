@@ -20,3 +20,7 @@ HAPROXY_SOCKET=/var/run/haproxy.socket
 
 # Optional - Use X-Forwarded-For for the client ip
 # USE_XFF_AS_CLIENTIP=true
+
+# Optional - Use reverse dns lookup to verify bots (commasep list, currently only googlebot and bingbot)
+# VERIFYBOT=googlebot,bingbot
+

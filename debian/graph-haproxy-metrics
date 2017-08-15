@@ -1,5 +1,25 @@
 #!/bin/bash
 
+SCRIPT_NAME=$(basename $0)
+
+function log() {
+    facility=local1
+    level=${2:-info}
+    /usr/bin/logger -p ${facility}.${level} -t ${SCRIPT_NAME} "${1}"
+}
+
+# Only terminate on SIGUSR1
+function on_exit() {
+    log "Exiting ..."
+    [ -e "${PID_FILE}" ] && rm -f ${PID_FILE}
+    exit 0
+}
+trap on_exit EXIT HUP INT QUIT TERM
+
+# run this script with a lock
+log "flocker value: ${FLOCKER} != ${0}"
+[ "${FLOCKER}" != "$0" ] && exec env FLOCKER="$0" flock -en "$0" "$0" "$@" || :
+
 LOCKFILE=/var/run/logtail-logster.parsers.HaProxyLogster.HaProxyLogster-var-log-haproxy.log.lock
 STATEFILE=/var/run/logtail-logster.parsers.HaProxyLogster.HaProxyLogster-var-log-haproxy.log.state
 
@@ -40,23 +60,31 @@ if [ -n "${USE_XFF_AS_CLIENTIP}" ]; then
     USE_XFF_AS_CLIENTIP_OPTION=" --xffip"
 fi
 
+unset VERIFYBOT_OPTION
+if [ -n "${VERIFYBOT}" ]; then
+    VERIFYBOT_OPTION=" --verifybot ${VERIFYBOT}"
+fi
+
 LOGDIR=/var/log/logster/
 test -d ${LOGDIR} || mkdir -p ${LOGDIR}
 
 function do_work () {
+    log "running logster ...."
     if [ -n "${STATSD_HOST_PORT}" ]; then
         timeout --kill-after=110 100 logster --output statsd \
             --statsd-host ${STATSD_HOST_PORT} \
-            --parser-options "--socket ${HAPROXY_SOCKET}${REQUEST_HEADERS_OPTION}${ISSUU_OPTION}${MAGMA_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}" \
+            --parser-options "--socket ${HAPROXY_SOCKET}${REQUEST_HEADERS_OPTION}${ISSUU_OPTION}${MAGMA_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}${VERIFYBOT_OPTION}" \
             HaProxyLogster \
             /var/log/haproxy.log
     else
         timeout --kill-after=110 100 logster --output graphite \
             --graphite-host ${GRAPHITE_HOST_PORT} \
-            --parser-options "--socket ${HAPROXY_SOCKET}${REQUEST_HEADERS_OPTION}${ISSUU_OPTION}${MAGMA_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}" \
+            --parser-options "--socket ${HAPROXY_SOCKET}${REQUEST_HEADERS_OPTION}${ISSUU_OPTION}${MAGMA_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}${VERIFYBOT_OPTION}" \
             HaProxyLogster \
             /var/log/haproxy.log
     fi
+    # if for some reason we did not shutdown in a clean way
+    [ -e "${LOCKFILE}"  ] && rm -f ${LOCKFILE}
 }
 
 # Check if another is already running
@@ -64,14 +92,16 @@ while [ -e "${LOCKFILE}" ]; do
     A=$(stat --format=%Y ${LOCKFILE})
     B=$(date +%s)
     D=$(expr $B - $A)
-    if [ $D -gt 200 ]; then
-        pkill -9 -f 'perl.*logtail2'; sleep 20
-        pkill -9 -f 'python.*logster'; sleep 10
+    log "waiting for logster lockfile .... ${D} secs old"
+    if [ $D -gt 120 ]; then
+        log "killing running logster process and cleaning up lockfile and statefile"
+        pkill -9 -f 'perl.*logtail2'; sleep 2
+        pkill -9 -f 'python.*logster'; sleep 1
         [ -e "${STATEFILE}" ] && rm -f ${STATEFILE}
         [ -e "${LOCKFILE}"  ] && rm -f ${LOCKFILE}
         do_work ; sleep 5
     else
-        sleep 1
+        sleep 5
     fi
 done
 
@@ -79,11 +109,13 @@ A=$(date +%s)
 do_work
 B=$(date +%s)
 D=$(expr $B - $A)
-if [ $D -ge 100 ]; then
+if [ $D -ge 110 ]; then
+    log "how often do we do this? is it a good idea?"
     [ -e "${STATEFILE}" ] && rm -f ${STATEFILE}
     [ -e "${LOCKFILE}"  ] && rm -f ${LOCKFILE}
 fi
 if [ $D -ge 60 ]; then
+    log "try catching up .... delta is ${D} secs"
     # try to catch up
     do_work
 fi

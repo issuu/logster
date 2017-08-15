@@ -80,13 +80,13 @@ function do_work () {
             --statsd-host ${STATSD_HOST_PORT} \
             --parser-options "--socket ${HAPROXY_SOCKET}${REQUEST_HEADERS_OPTION}${ISSUU_OPTION}${MAGMA_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}${VERIFYBOT_OPTION}" \
             HaProxyLogster \
-            /var/log/haproxy.log
+            /var/log/haproxy.log || { log "Cmd timeout, removing state and lock file."; rm -f ${STATEFILE}; rm -f ${LOCKFILE}; }
     else
         timeout --kill-after=110 100 logster --output graphite \
             --graphite-host ${GRAPHITE_HOST_PORT} \
             --parser-options "--socket ${HAPROXY_SOCKET}${REQUEST_HEADERS_OPTION}${ISSUU_OPTION}${MAGMA_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}${VERIFYBOT_OPTION}" \
             HaProxyLogster \
-            /var/log/haproxy.log
+            /var/log/haproxy.log || { log "Cmd timeout, removing state and lockfile."; rm -f ${STATEFILE}; rm -f ${LOCKFILE}; }
     fi
 }
 

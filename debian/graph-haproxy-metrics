@@ -117,7 +117,8 @@ if [ $D -ge 110 ]; then
     [ -e "${STATEFILE}" ] && rm -f ${STATEFILE}
     [ -e "${LOCKFILE}"  ] && rm -f ${LOCKFILE}
 fi
-if [ $D -ge 60 -a $D -lt 110 ]; then
+S=$(date +%S)
+if [ $D -ge 60 -a $D -lt 110 -a $S -lt 45 ]; then
     log "try catching up .... delta is ${D} secs"
     # try to catch up
     do_work

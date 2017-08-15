@@ -251,27 +251,29 @@ def resolveHost(host_or_ip):
 
 GOOGLERDNS_PATTERN = re.compile('.*\.googlebot\.com$')
 def verifyGoogleBot(ip):
-    _isTrueBot = googlebot_cache.get(ip)
+    # ip.ip is an integer repr of the ip
+    _isTrueBot = googlebot_cache.get(ip.ip)
     if _isTrueBot is None:
         try:
-            _n = gethostbyaddr(ip)[0]
-            _isTrueBot = GOOGLERDNS_PATTERN.match(_n) is not None and gethostbyname(_n) == ip
+            _n = gethostbyaddr(ip.strNormal())[0]
+            _isTrueBot = GOOGLERDNS_PATTERN.match(_n) is not None and gethostbyname(_n) == ip.strNormal()
         except:
             _isTrueBot = False
-        googlebot_cache[ip] = _isTrueBot
+        googlebot_cache[ip.ip] = _isTrueBot
     return _isTrueBot
 
 
 BINGRDNS_PATTERN = re.compile('.*\.search\.msn\.com$')
 def verifyBingBot(ip):
-    _isTrueBot = bingbot_cache.get(ip)
+    # ip.ip is an integer repr of the ip
+    _isTrueBot = bingbot_cache.get(ip.ip)
     if _isTrueBot is None:
         try:
-            _n = gethostbyaddr(ip)[0]
-            _isTrueBot = BINGRDNS_PATTERN.match(_n) is not None and gethostbyname(_n) == ip
+            _n = gethostbyaddr(ip.strNormal())[0]
+            _isTrueBot = BINGRDNS_PATTERN.match(_n) is not None and gethostbyname(_n) == ip.strNormal()
         except:
             _isTrueBot = False
-        bingbot_cache[ip] = _isTrueBot
+        bingbot_cache[ip.ip] = _isTrueBot
     return _isTrueBot
 
 def getPreferredLocale(acceptLanguage):
@@ -1096,12 +1098,12 @@ class HaProxyLogster(LogsterParser):
                                 self.increment("{}.stats.browser.ua.crawlers.google-adsbot.{}".format(self.prefix, suffix))
                             elif ua['user_agent']['family'] == 'Googlebot' or 'google' in _iua:
                                 if 'googlebot' in self.verifybot:
-                                    if not verifyGoogleBot(client_ip.strNormal()):
+                                    if not verifyGoogleBot(client_ip):
                                         self.increment("{}.stats.browser.ua.crawlers.fake-googlebot.{}".format(self.prefix, suffix))
                                 self.increment("{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, suffix))
                             elif 'bingbot' in _iua:
                                 if 'bingbot' in self.verifybot:
-                                    if not verifyBingBot(client_ip.strNormal()):
+                                    if not verifyBingBot(client_ip):
                                         self.increment("{}.stats.browser.ua.crawlers.fake-bingbot.{}".format(self.prefix, suffix))
                                 self.increment("{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, suffix))
                             elif 'yahoo! slurp' in _iua:

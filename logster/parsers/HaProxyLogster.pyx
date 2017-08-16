@@ -238,16 +238,6 @@ try:
 except:
     bingbot_cache = {}
 
-def resolveHost(host_or_ip):
-    try:
-        ip = IP(host_or_ip)
-        return ip.strNormal()
-    except:
-        try:
-            return gethostbyname(host_or_ip)
-        except:
-            return None
-
 
 GOOGLERDNS_PATTERN = re.compile('.*\.googlebot\.com$')
 def verifyGoogleBot(ip):
@@ -518,44 +508,45 @@ class HaProxyLogster(LogsterParser):
         metric_ua = "crawlers" if self.is_spider else "non-crawlers"
 
         # if this is dynamic key and this is the first time we "see" it zero out all relevant statuc codes.
-        _k = "{}.request.url.{}.{}.{}".format(self.prefix, metric_key, metric_ua, self.nodename)
+        _kp = "{}.request.url.{}.{}".format(self.prefix, metric_key, metric_ua)
+        _k  = "{}.{}".format(_kp, self.nodename)
         if not _k in self.counters:
             self.counters[_k] = 0
-            self.counters["{}.request.url.{}.{}.3xx.{}".format(self.prefix, metric_key, metric_ua, self.nodename)] = 0
-            self.counters["{}.request.url.{}.{}.4xx.{}".format(self.prefix, metric_key, metric_ua, self.nodename)] = 0
-            self.counters["{}.request.url.{}.{}.5xx.{}".format(self.prefix, metric_key, metric_ua, self.nodename)] = 0
+            self.counters["{}.3xx.{}".format(_kp, self.nodename)] = 0
+            self.counters["{}.4xx.{}".format(_kp, self.nodename)] = 0
+            self.counters["{}.5xx.{}".format(_kp, self.nodename)] = 0
             for _sc in [301,302,304]:
-                self.counters["{}.request.url.{}.{}.3xx.{}.{}".format(self.prefix, metric_key, metric_ua, _sc, self.nodename)] = 0
+                self.counters["{}.3xx.{}.{}".format(_kp, _sc, self.nodename)] = 0
             for _sc in [400,401,403,404]:
-                self.counters["{}.request.url.{}.{}.4xx.{}.{}".format(self.prefix, metric_key, metric_ua, _sc, self.nodename)] = 0
+                self.counters["{}.4xx.{}.{}".format(_kp, _sc, self.nodename)] = 0
             for _sc in [500,502,503,504]:
-                self.counters["{}.request.url.{}.{}.5xx.{}.{}".format(self.prefix, metric_key, metric_ua, _sc, self.nodename)] = 0
+                self.counters["{}.5xx.{}.{}".format(_kp, _sc, self.nodename)] = 0
 
         if self.cc_event:
-            self.increment("{}.request.url.{}.{}.clientabort.status.{}.{}".format(self.prefix, metric_key, metric_ua, self.status_code.lower(), self.nodename))
+            self.increment("{}.clientabort.status.{}.{}".format(_kp, self.status_code.lower(), self.nodename))
         elif self.cd_event:
-            self.increment("{}.request.url.{}.{}.clientdisconnect.status.{}.{}".format(self.prefix, metric_key, metric_ua, self.status_code.lower(), self.nodename))
+            self.increment("{}.clientdisconnect.status.{}.{}".format(_kp, self.status_code.lower(), self.nodename))
         else:
             self.increment(_k)
             if self.sc >= 300 and self.sc <= 399:
-                self.increment("{}.request.url.{}.{}.3xx.{}".format(self.prefix, metric_key, metric_ua, self.nodename))
+                self.increment("{}.3xx.{}".format(_kp, self.nodename))
                 if self.sc in [301,302,304]:
-                    self.increment("{}.request.url.{}.{}.3xx.{}.{}".format(self.prefix, metric_key, metric_ua, self.sc, self.nodename))
-                self.gauges["{}.request.url.{}.{}.3xx.time-pct.{}.{}".format(self.prefix, metric_key, metric_ua, "{}", self.nodename)].add(r['Tt'])
+                    self.increment("{}.3xx.{}.{}".format(_kp, self.sc, self.nodename))
+                self.gauges["{}.3xx.time-pct.{}.{}".format(_kp, "{}", self.nodename)].add(r['Tt'])
                 if r['Tr'] > 0:
-                    self.gauges["{}.request.url.{}.{}.3xx.server-time-pct.{}.{}".format(self.prefix, metric_key, metric_ua, "{}", self.nodename)].add(r['Tr'])
+                    self.gauges["{}.3xx.server-time-pct.{}.{}".format(_kp, "{}", self.nodename)].add(r['Tr'])
             else:
                 if self.sc >= 400 and self.sc <= 499:
-                    self.increment("{}.request.url.{}.{}.4xx.{}".format(self.prefix, metric_key, metric_ua, self.nodename))
+                    self.increment("{}.4xx.{}".format(_kp, self.nodename))
                     if self.sc in [400,401,403,404]:
-                        self.increment("{}.request.url.{}.{}.4xx.{}.{}".format(self.prefix, metric_key, metric_ua, self.sc, self.nodename))
+                        self.increment("{}.4xx.{}.{}".format(_kp, self.sc, self.nodename))
                 elif self.sc >= 500 and self.sc <= 599:
-                    self.increment("{}.request.url.{}.{}.5xx.{}".format(self.prefix, metric_key, metric_ua, self.nodename))
+                    self.increment("{}.5xx.{}".format(_kp, self.nodename))
                     if self.sc in [500,502,503,504]:
-                        self.increment("{}.request.url.{}.{}.5xx.{}.{}".format(self.prefix, metric_key, metric_ua, self.sc, self.nodename))
-                self.gauges["{}.request.url.{}.{}.time-pct.{}.{}".format(self.prefix, metric_key, metric_ua, "{}", self.nodename)].add(r['Tt'])
+                        self.increment("{}.5xx.{}.{}".format(_kp, self.sc, self.nodename))
+                self.gauges["{}.time-pct.{}.{}".format(_kp, "{}", self.nodename)].add(r['Tt'])
                 if r['Tr'] > 0:
-                    self.gauges["{}.request.url.{}.{}.server-time-pct.{}.{}".format(self.prefix, metric_key, metric_ua, "{}", self.nodename)].add(r['Tr'])
+                    self.gauges["{}.server-time-pct.{}.{}".format(_kp, "{}", self.nodename)].add(r['Tr'])
 
 
     def build_pattern(self):

@@ -11,6 +11,9 @@ function log() {
 # run this script with a lock
 [ "${FLOCKER}" != "$0" ] && exec env FLOCKER="$0" flock -en "$0" "$0" "$@" || :
 
+LOCKFILE=/var/run/logtail-logster.parsers.HaProxyLogster.HaProxyLogster-var-log-haproxy.log.lock
+STATEFILE=/var/run/logtail-logster.parsers.HaProxyLogster.HaProxyLogster-var-log-haproxy.log.state
+
 function on_exit() {
     log "Exiting ..."
     # if for some reason we did not shutdown in a clean way
@@ -18,9 +21,6 @@ function on_exit() {
     exit 0
 }
 trap on_exit EXIT HUP INT QUIT TERM
-
-LOCKFILE=/var/run/logtail-logster.parsers.HaProxyLogster.HaProxyLogster-var-log-haproxy.log.lock
-STATEFILE=/var/run/logtail-logster.parsers.HaProxyLogster.HaProxyLogster-var-log-haproxy.log.state
 
 # pull this from the default file
 unset GRAPHITE_HOST_PORT
@@ -76,13 +76,13 @@ function do_work () {
     fi
 
     if [ -n "${STATSD_HOST_PORT}" ]; then
-        timeout --kill-after=110 100 logster --output statsd \
+        timeout --kill-after=115 110 logster --output statsd \
             --statsd-host ${STATSD_HOST_PORT} \
             --parser-options "--socket ${HAPROXY_SOCKET}${REQUEST_HEADERS_OPTION}${ISSUU_OPTION}${MAGMA_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}${VERIFYBOT_OPTION}" \
             HaProxyLogster \
             /var/log/haproxy.log || { log "Cmd timeout, removing state and lock file."; rm -f ${STATEFILE}; rm -f ${LOCKFILE}; }
     else
-        timeout --kill-after=110 100 logster --output graphite \
+        timeout --kill-after=115 110 logster --output graphite \
             --graphite-host ${GRAPHITE_HOST_PORT} \
             --parser-options "--socket ${HAPROXY_SOCKET}${REQUEST_HEADERS_OPTION}${ISSUU_OPTION}${MAGMA_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}${VERIFYBOT_OPTION}" \
             HaProxyLogster \
@@ -102,7 +102,7 @@ while [ -e "${LOCKFILE}" ]; do
         pkill -9 -f 'python.*logster'; sleep 1
         [ -e "${STATEFILE}" ] && rm -f ${STATEFILE}
         [ -e "${LOCKFILE}"  ] && rm -f ${LOCKFILE}
-        do_work ; sleep 5
+        # fallthru
     else
         sleep 5
     fi
@@ -111,16 +111,7 @@ done
 A=$(date +%s)
 do_work
 B=$(date +%s)
-D=$(expr $B - $A)
-if [ $D -ge 110 ]; then
-    log "how often do we do this? is it a good idea? should not happen"
-    [ -e "${STATEFILE}" ] && rm -f ${STATEFILE}
-    [ -e "${LOCKFILE}"  ] && rm -f ${LOCKFILE}
-fi
-S=$(date +%S)
-if [ $D -ge 60 -a $D -lt 110 -a $S -lt 45 ]; then
-    log "try catching up .... delta is ${D} secs"
-    # try to catch up
-    do_work
-fi
+log "work done in $(expr $B - $A) seconds."
+
+exit 0
 

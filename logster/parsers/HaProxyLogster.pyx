@@ -1268,18 +1268,20 @@ class HaProxyLogster(LogsterParser):
                                     break
     
                     if self.issuu:
-                        if ISSUUDOC_PATTERN.match(__iu.path):
+                        if __iu.path == "/":
+                            self.urlstat(__d, "root")
+                        elif ISSUUDOC_PATTERN.match(__iu.path):
                             self.urlstat(__d, "docs")
-                        elif ISSUUSTACKS_PATTERN.match(__iu.path):
-                            self.urlstat(__d, "stacks")
-                        elif ISSUUFOLLOWERS_PATTERN.match(__iu.path):
-                            self.urlstat(__d, "followers")
-                        elif ISSUUQUERY_PATTERN.match(__iu.path):
-                            self.urlstat(__d, "api-query")
                         elif ISSUUSEARCH_PATTERN.match(__iu.path):
                             self.urlstat(__d, "search")
                         elif ISSUUPUBLISH_PATTERN.match(__iu.path):
                             self.urlstat(__d, "publish")
+                        elif ISSUUQUERY_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "api-query")
+                        elif ISSUUSTACKS_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "stacks")
+                        elif ISSUUFOLLOWERS_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "followers")
                         elif ISSUUEXPLORE_PATTERN.match(__iu.path):
                             self.urlstat(__d, "explore")
                         elif ISSUUPRICING_PATTERN.match(__iu.path):
@@ -1300,8 +1302,6 @@ class HaProxyLogster(LogsterParser):
                             self.urlstat(__d, "signup")
                         elif ISSUUFBAPP_PATTERN.match(__iu.path):
                             self.urlstat(__d, "fbapp")
-                        elif __iu.path == "/":
-                            self.urlstat(__d, "root")
                         else:
                             __im = ISSUUCALL_PATTERN.match(__iu.path)
                             if __im:

@@ -436,9 +436,11 @@ def main():
         sys.exit(1)
 
     try:
+        logger.info("Finishing parser .....")
         parser.finish()
-        logger.info("Parser finish called.")
+        logger.info("Parser finish done.")
     except Exception, _e:
+        logger.info("Parser finish failed.")
         pass
 
     # Log the execution time

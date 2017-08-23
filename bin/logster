@@ -181,6 +181,7 @@ def lineno():
 def submit_stats(parser, duration, options):
     logger.info('Submitting stats ...')
     metrics = parser.get_state(duration)
+    logger.info('got {} metrics'.format(len(metrics)))
 
     if 'ganglia' in options.output:
         submit_ganglia(metrics, options)

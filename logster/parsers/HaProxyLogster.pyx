@@ -436,6 +436,10 @@ class PercentileMetric(MetricObject):
         else:
             self.percentiles = percentiles
 
+    def reset(self):
+        '''reset'''
+        self.track = []
+
     def add(self, value):
         '''add'''
         self.track.insert(0, float(value))
@@ -465,7 +469,6 @@ class HaProxyLogster(LogsterParser):
     '''HaProxyLogster'''
 
     ip_counter = {}
-    url_counter = {}
     patterns = []
     log_def = []
     regexs = []
@@ -594,6 +597,165 @@ class HaProxyLogster(LogsterParser):
                 return 'BADREQ'
         except:
             return 'BADREQ'
+
+    def initialize(self):
+        self.parsed_lines = 0
+        self.unparsed_lines = 0
+
+        # initialize counters - always send a value
+        self.counters["{}.meta.parsed-lines.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.meta.unparsed-lines.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.meta.start-stop.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.meta.health-notice.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.meta.exceptions.{}".format(self.prefix, self.nodename)] = 0
+
+        self.counters["{}.stats.cur-conns.{}".format(self.prefix, self.nodename)] = int(ha_info['CurrConns'])
+        self.counters["{}.stats.tasks.{}".format(self.prefix, self.nodename)] = int(ha_info['Tasks'])
+        self.counters["{}.stats.run-queue.{}".format(self.prefix, self.nodename)] = int(ha_info['Run_queue'])
+
+        self.counters["{}.request.internal.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.request.external.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.request.tarpit.{}".format(self.prefix, self.nodename)] = 0
+        self.counters["{}.request.block.{}".format(self.prefix, self.nodename)] = 0
+
+        if self.issuu:
+            for u in ["root","docs","stacks","followers","search","publish","explore","api-query","multipart","signin","signup","fbapp"]:
+                self.counters["{}.request.url.{}.crawlers.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.3xx.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.3xx.301.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.3xx.302.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.3xx.304.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.4xx.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.4xx.400.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.4xx.401.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.4xx.403.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.4xx.404.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.5xx.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.5xx.500.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.5xx.502.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.5xx.503.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.crawlers.5xx.504.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.3xx.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.3xx.301.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.3xx.302.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.3xx.304.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.4xx.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.4xx.400.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.4xx.401.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.4xx.403.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.4xx.404.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.5xx.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.5xx.500.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.5xx.502.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.5xx.503.{}".format(self.prefix, u, self.nodename)] = 0
+                self.counters["{}.request.url.{}.non-crawlers.5xx.504.{}".format(self.prefix, u, self.nodename)] = 0
+
+        if self.headers:
+            if 'user-agent' in self.headers:
+                # for each known backend - initialize counters
+                for backend in map(lambda x: "backend-"+x['backend'], filter(lambda y: y['srvname'] == 'BACKEND', ha_stats)) + ["all-backends"]:
+                    suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
+                    self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.other.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.fake-googlebot.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.real-googlebot.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.googlebot-image.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.googlebot-news.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.googlebot-video.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.googlebot-mobile.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.google-adsense.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.google-adsbot.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.fake-bingbot.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.real-bingbot.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.facebook.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.pinterest.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.mj12bot.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.curl.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.java.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.opensiteexplorer.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.seznambot.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.siteimprove.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.archive-it.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.python.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.sentry.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.node-fetch.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.nutch.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.clickagy.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.coldfusion.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.twitterbot.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.whatsapp.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.turnitinbot.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.getintent.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.os.windows.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.os.ios.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.os.android.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.os.mac-os-x.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.os.linux.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.os.other.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.cfnetwork.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.imgproxy.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.preview.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.imgproxy.google.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.preview.google.{}".format(self.prefix, suffix)] = 0
+
+                    self.counters["{}.response.status.crawlers.4xx.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.response.status.crawlers.4xx.400.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.response.status.crawlers.4xx.401.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.response.status.crawlers.4xx.403.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.response.status.crawlers.4xx.404.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.response.status.crawlers.5xx.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.response.status.crawlers.5xx.500.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.response.status.crawlers.5xx.502.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.response.status.crawlers.5xx.503.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.response.status.crawlers.5xx.504.{}".format(self.prefix, suffix)] = 0
+
+            if 'accept-language' in self.headers:
+                for lang in ['OTHER']+LANGUAGES:
+                    self.counters["{}.stats.browser.language.{}.{}".format(self.prefix, lang.lower(), self.nodename)] = 0
+
+            if 'dnt' in self.headers:
+                self.counters["{}.stats.browser.dnt.true.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.dnt.false.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.dnt.other.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.dnt.crawler.{}".format(self.prefix, self.nodename)] = 0
+                self.counters["{}.stats.browser.dnt.unset.{}".format(self.prefix, self.nodename)] = 0
+
+        # for each known backend - initialize counters
+        for backend in map(lambda x: "backend-"+x['backend'], filter(lambda y: y['srvname'] == 'BACKEND', ha_stats)) + ["all-backends"]:
+            suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
+            for method in ['BADREQ','OTHER']+REQUEST_METHODS:
+                self.counters["{}.request.method.{}.{}".format(self.prefix, method.lower(), suffix)] = 0
+            for status_code in [str(x) for x in STATUS_CODES] + ['BADREQ','OTHER']:
+                self.counters["{}.response.clientabort.status.{}.{}".format(self.prefix, status_code.lower(), suffix)] = 0
+                self.counters["{}.response.clientdisconnect.status.{}.{}".format(self.prefix, status_code.lower(), suffix)] = 0
+                self.counters["{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix)] = 0
+            self.counters["{}.meta.up-down.{}".format(self.prefix, suffix)] = 0
+            self.counters["{}.meta.noserver.{}".format(self.prefix, suffix)] = 0
+            self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = 0
+            self.counters["{}.stats.backend.url-variance.{}".format(self.prefix, suffix)] = 0
+            self.ip_counter[backend] = {}
+        for haproxy in filter(lambda y: y['srvname'] == 'BACKEND', ha_stats):
+            suffix = "{}.{}".format(self.nodename, "backend-"+haproxy['backend'].replace(".", "-"))
+            self.counters["{}.stats.backend.queue.{}".format(self.prefix, suffix)] = haproxy['qcur']
+            self.counters["{}.stats.backend.session-rate.{}".format(self.prefix, suffix)] = haproxy['rate']
+            self.counters["{}.stats.backend.sessions.{}".format(self.prefix, suffix)] = haproxy['scur']
+            self.counters["{}.stats.backend.error-response.{}".format(self.prefix, suffix)] = haproxy['eresp']
+            self.counters["{}.stats.backend.client-aborts.{}".format(self.prefix, suffix)] = haproxy['cliaborts']
+            self.counters["{}.stats.backend.server-aborts.{}".format(self.prefix, suffix)] = haproxy['srvaborts']
+        for haproxy in filter(lambda y: y['srvname'] == 'FRONTEND', ha_stats):
+            suffix = "{}.{}".format(self.nodename, "frontend-"+haproxy['backend'].replace(".", "-"))
+            self.counters["{}.stats.frontend.session-rate.{}".format(self.prefix, suffix)] = haproxy['rate']
+            self.counters["{}.stats.frontend.sessions.{}".format(self.prefix, suffix)] = haproxy['scur']
 
     def __init__(self, option_string=None):
 
@@ -797,164 +959,10 @@ class HaProxyLogster(LogsterParser):
         self.add_pattern('skipped', r'.*','', 'has no server available!')
         self.noserver_pattern = self.build_pattern()
 
-        self.parsed_lines = 0
-        self.unparsed_lines = 0
-
-        # initialize counters - always send a value
-        self.counters["{}.meta.parsed-lines.{}".format(self.prefix, self.nodename)] = 0
-        self.counters["{}.meta.unparsed-lines.{}".format(self.prefix, self.nodename)] = 0
-        self.counters["{}.meta.start-stop.{}".format(self.prefix, self.nodename)] = 0
-        self.counters["{}.meta.health-notice.{}".format(self.prefix, self.nodename)] = 0
-        self.counters["{}.meta.exceptions.{}".format(self.prefix, self.nodename)] = 0
-
-        self.counters["{}.stats.cur-conns.{}".format(self.prefix, self.nodename)] = int(ha_info['CurrConns'])
-        self.counters["{}.stats.tasks.{}".format(self.prefix, self.nodename)] = int(ha_info['Tasks'])
-        self.counters["{}.stats.run-queue.{}".format(self.prefix, self.nodename)] = int(ha_info['Run_queue'])
-
-        self.counters["{}.request.internal.{}".format(self.prefix, self.nodename)] = 0
-        self.counters["{}.request.external.{}".format(self.prefix, self.nodename)] = 0
-        self.counters["{}.request.tarpit.{}".format(self.prefix, self.nodename)] = 0
-        self.counters["{}.request.block.{}".format(self.prefix, self.nodename)] = 0
-
-        if self.issuu:
-            for u in ["root","docs","stacks","followers","search","publish","explore","api-query","multipart","signin","signup","fbapp"]:
-                self.counters["{}.request.url.{}.crawlers.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.crawlers.3xx.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.crawlers.3xx.301.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.crawlers.3xx.302.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.crawlers.3xx.304.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.crawlers.4xx.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.crawlers.4xx.400.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.crawlers.4xx.401.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.crawlers.4xx.403.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.crawlers.4xx.404.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.crawlers.5xx.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.crawlers.5xx.500.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.crawlers.5xx.502.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.crawlers.5xx.503.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.crawlers.5xx.504.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.non-crawlers.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.non-crawlers.3xx.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.non-crawlers.3xx.301.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.non-crawlers.3xx.302.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.non-crawlers.3xx.304.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.non-crawlers.4xx.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.non-crawlers.4xx.400.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.non-crawlers.4xx.401.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.non-crawlers.4xx.403.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.non-crawlers.4xx.404.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.non-crawlers.5xx.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.non-crawlers.5xx.500.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.non-crawlers.5xx.502.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.non-crawlers.5xx.503.{}".format(self.prefix, u, self.nodename)] = 0
-                self.counters["{}.request.url.{}.non-crawlers.5xx.504.{}".format(self.prefix, u, self.nodename)] = 0
-
-        if self.headers:
-            if 'user-agent' in self.headers:
-                # for each known backend - initialize counters
-                for backend in map(lambda x: "backend-"+x['backend'], filter(lambda y: y['srvname'] == 'BACKEND', ha_stats)) + ["all-backends"]:
-                    suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
-                    self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.other.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.fake-googlebot.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.real-googlebot.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.googlebot-image.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.googlebot-news.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.googlebot-video.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.googlebot-mobile.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.google-adsense.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.google-adsbot.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.fake-bingbot.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.real-bingbot.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.facebook.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.pinterest.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.mj12bot.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.curl.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.java.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.opensiteexplorer.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.seznambot.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.siteimprove.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.archive-it.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.python.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.sentry.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.node-fetch.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.nutch.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.clickagy.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.coldfusion.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.twitterbot.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.whatsapp.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.turnitinbot.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.getintent.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.os.windows-phone.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.os.windows.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.os.ios.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.os.android.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.os.mac-os-x.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.os.linux.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.os.blackberry.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.os.other.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.cfnetwork.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.imgproxy.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.preview.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.imgproxy.google.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.stats.browser.ua.preview.google.{}".format(self.prefix, suffix)] = 0
-
-                    self.counters["{}.response.status.crawlers.4xx.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.response.status.crawlers.4xx.400.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.response.status.crawlers.4xx.401.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.response.status.crawlers.4xx.403.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.response.status.crawlers.4xx.404.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.response.status.crawlers.5xx.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.response.status.crawlers.5xx.500.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.response.status.crawlers.5xx.502.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.response.status.crawlers.5xx.503.{}".format(self.prefix, suffix)] = 0
-                    self.counters["{}.response.status.crawlers.5xx.504.{}".format(self.prefix, suffix)] = 0
-
-            if 'accept-language' in self.headers:
-                for lang in ['OTHER']+LANGUAGES:
-                    self.counters["{}.stats.browser.language.{}.{}".format(self.prefix, lang.lower(), self.nodename)] = 0
-
-            if 'dnt' in self.headers:
-                self.counters["{}.stats.browser.dnt.true.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.dnt.false.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.dnt.other.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.dnt.crawler.{}".format(self.prefix, self.nodename)] = 0
-                self.counters["{}.stats.browser.dnt.unset.{}".format(self.prefix, self.nodename)] = 0
-
-        # for each known backend - initialize counters
-        for backend in map(lambda x: "backend-"+x['backend'], filter(lambda y: y['srvname'] == 'BACKEND', ha_stats)) + ["all-backends"]:
-            suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
-            for method in ['BADREQ','OTHER']+REQUEST_METHODS:
-                self.counters["{}.request.method.{}.{}".format(self.prefix, method.lower(), suffix)] = 0
-            for status_code in [str(x) for x in STATUS_CODES] + ['BADREQ','OTHER']:
-                self.counters["{}.response.clientabort.status.{}.{}".format(self.prefix, status_code.lower(), suffix)] = 0
-                self.counters["{}.response.clientdisconnect.status.{}.{}".format(self.prefix, status_code.lower(), suffix)] = 0
-                self.counters["{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix)] = 0
-            self.counters["{}.meta.up-down.{}".format(self.prefix, suffix)] = 0
-            self.counters["{}.meta.noserver.{}".format(self.prefix, suffix)] = 0
-            self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = 0
-            self.counters["{}.stats.backend.url-variance.{}".format(self.prefix, suffix)] = 0
-            self.ip_counter[backend] = {}
-            self.url_counter[backend] = {}
-        for haproxy in filter(lambda y: y['srvname'] == 'BACKEND', ha_stats):
-            suffix = "{}.{}".format(self.nodename, "backend-"+haproxy['backend'].replace(".", "-"))
-            self.counters["{}.stats.backend.queue.{}".format(self.prefix, suffix)] = haproxy['qcur']
-            self.counters["{}.stats.backend.session-rate.{}".format(self.prefix, suffix)] = haproxy['rate']
-            self.counters["{}.stats.backend.sessions.{}".format(self.prefix, suffix)] = haproxy['scur']
-            self.counters["{}.stats.backend.error-response.{}".format(self.prefix, suffix)] = haproxy['eresp']
-            self.counters["{}.stats.backend.client-aborts.{}".format(self.prefix, suffix)] = haproxy['cliaborts']
-            self.counters["{}.stats.backend.server-aborts.{}".format(self.prefix, suffix)] = haproxy['srvaborts']
-        for haproxy in filter(lambda y: y['srvname'] == 'FRONTEND', ha_stats):
-            suffix = "{}.{}".format(self.nodename, "frontend-"+haproxy['backend'].replace(".", "-"))
-            self.counters["{}.stats.frontend.session-rate.{}".format(self.prefix, suffix)] = haproxy['rate']
-            self.counters["{}.stats.frontend.sessions.{}".format(self.prefix, suffix)] = haproxy['scur']
+        #
+        # initialize metric variables
+        #
+        self.initialize()
 
     def parse_line(self, line):
         '''parse_line'''
@@ -1245,17 +1253,6 @@ class HaProxyLogster(LogsterParser):
             except:
                 __iu = None
 
-#            if __iu is not None:
-#                if __d['server_name'] != '<NOSRV>':
-#                    try:
-#                        self.url_counter['backend-'+__d['backend_name']][__iu.path] += 1
-#                    except:
-#                        self.url_counter['backend-'+__d['backend_name']][__iu.path] = 1
-#                try:
-#                    self.url_counter['all-backends'][__iu.path] += 1
-#                except:
-#                    self.url_counter['all-backends'][__iu.path] = 1
-
             # skip redirects ?
             if (self.magma or self.issuu) and self.sc > 0 and __iu is not None:
                 try:
@@ -1406,27 +1403,21 @@ class HaProxyLogster(LogsterParser):
                         variance = reduce(lambda x,y: x+y, map(lambda xi: (xi-(float(reduce(lambda x,y : x+y, sample)) / len(sample)))**2, sample))/ len(sample)
             except:
                 pass
+            self.ip_counter[backend] = {}
             self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = int(variance)
-
-# This takes to long time to process
-#        for backend in self.url_counter:
-#            suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
-#            url_variance = 0
-#            try:
-#                urls = self.url_counter[backend]
-#                if len(ips) > 0:
-#                    sample = urls.values()
-#                    if len(sample) > 0:
-#                        url_variance = reduce(lambda x,y: x+y, map(lambda xi: (xi-(float(reduce(lambda x,y : x+y, sample)) / len(sample)))**2, sample))/ len(sample)
-#            except:
-#                pass
-#            self.counters["{}.stats.backend.url-variance.{}".format(self.prefix, suffix)] = int(url_variance)
 
         for name, value in self.counters.items():
             metrics.append(MetricObject(name, value))
+            self.counters[name] = 0
 
         for name, value in self.gauges.items():
             metrics.extend(value.as_metrics(name))
+            self.gauges[name].reset()
+
+        return metrics
+
+
+    def finish(self):
 
         try:
             pickle.dump( ip_cache, open( "/var/tmp/haproxy_logster_ip.p", "wb" ) )
@@ -1436,4 +1427,3 @@ class HaProxyLogster(LogsterParser):
         except:
             pass
 
-        return metrics

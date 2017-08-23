@@ -401,7 +401,7 @@ def main():
 
             # Calculate now() - state file age to determine check duration.
             duration = floor(time()) - floor(state_file_age)
-            logger.debug("Setting duration to %s seconds." % duration)
+            logger.info("Setting duration to %s seconds." % duration)
 
         except OSError as e:
             logger.info('Writing new state file and exiting. (Was either first run, or state file went missing.)')
@@ -423,9 +423,12 @@ def main():
     except SystemExit as e:
         raise
     except Exception as e:
+        end_locking(lockfile, lock_file)
+        logger.info("Exception execution time: %s seconds." % exec_time)
+        logger.error("Exception caught at %s: %s" % (lineno(), e))
+        logger.error(traceback.format_exc())
         print("Exception caught at %s: %s" % (lineno(), e))
         traceback.print_exc()
-        end_locking(lockfile, lock_file)
         sys.exit(1)
 
     # Log the execution time

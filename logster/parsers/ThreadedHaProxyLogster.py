@@ -1061,8 +1061,8 @@ class listStats(baseStat):
 
         return servers
 
-class HaProxyLogster(LogsterParser):
-    '''HaProxyLogster'''
+class ThreadedHaProxyLogster(LogsterParser):
+    '''ThreadedHaProxyLogster'''
     def __init__(self, option_string=None):
 
         global issuu

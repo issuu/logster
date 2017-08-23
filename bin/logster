@@ -414,7 +414,7 @@ def main():
         # Parse each line from input, then send all stats to their collectors.
         for line in tailer.ireadlines():
             try:
-		if time.time()%60 > 59.0:
+                if time()%60 > 55.0:
                     submit_stats(parser, duration, options)
                 parser.parse_line(line)
             except LogsterParsingException as e:
@@ -437,6 +437,7 @@ def main():
 
     try:
         parser.finish()
+        logger.info("Parser finish called.")
     except Exception, _e:
         pass
 

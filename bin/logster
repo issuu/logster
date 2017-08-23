@@ -315,6 +315,7 @@ def submit_nsca(metrics, options):
 def submit_statsd(metrics, addr):
     if (not options.dry_run):
         host = options.statsd_host.split(':')
+        udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     for metric in metrics:
         metric_name = metric.name
@@ -326,7 +327,6 @@ def submit_statsd(metrics, addr):
         logger.debug("Submitting statsd metric: %s" % metric_string)
 
         if (not options.dry_run):
-            udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             udp_sock.sendto(metric_string, (host[0], int(host[1])))
         else:
             print("%s %s" % (options.statsd_host, metric_string))

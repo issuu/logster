@@ -220,15 +220,12 @@ HaP_SOCK_ERR = 3
 HaP_BUFSIZE = 8192
 
 # an associative array. In python these are called dictionaries.
+# The ua and ip cache could easily grow +50M and was then to slow
+# in loading and writing
+ua_cache = {}
+ip_cache = {}
+
 # load cache
-try:
-    ua_cache = pickle.load( open( "/var/tmp/haproxy_logster_ua.p", "rb" ) )
-except:
-    ua_cache = {}
-try:
-    ip_cache = pickle.load( open( "/var/tmp/haproxy_logster_ip.p", "rb" ) )
-except:
-    ip_cache = {}
 try:
     googlebot_cache = pickle.load( open( "/var/tmp/haproxy_logster_googlebot.p", "rb" ) )
 except:
@@ -237,7 +234,6 @@ try:
     bingbot_cache = pickle.load( open( "/var/tmp/haproxy_logster_bingbot.p", "rb" ) )
 except:
     bingbot_cache = {}
-
 
 GOOGLERDNS_PATTERN = re.compile('.*\.googlebot\.com$')
 def verifyGoogleBot(ip):
@@ -1415,8 +1411,6 @@ class HaProxyLogster(LogsterParser):
     def finish(self):
 
         try:
-            pickle.dump( ip_cache, open( "/var/tmp/haproxy_logster_ip.p", "wb" ) )
-            pickle.dump( ua_cache, open( "/var/tmp/haproxy_logster_ua.p", "wb" ) )
             pickle.dump( bingbot_cache, open( "/var/tmp/haproxy_logster_bingbot.p", "wb" ) )
             pickle.dump( googlebot_cache, open( "/var/tmp/haproxy_logster_googlebot.p", "wb" ) )
         except:

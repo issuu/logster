@@ -1397,11 +1397,11 @@ class ThreadedHaProxyLogster(LogsterParser):
                     counters["{}.response.status.crawlers.5xx.503.{}".format(prefix, suffix)] = 0
                     counters["{}.response.status.crawlers.5xx.504.{}".format(prefix, suffix)] = 0
 
-            if 'accept-language' in self.headers:
+            if 'accept-language' in headers:
                 for lang in ['OTHER']+LANGUAGES:
                     counters["{}.stats.browser.language.{}.{}".format(prefix, lang.lower(), nodename)] = 0
 
-            if 'dnt' in self.headers:
+            if 'dnt' in headers:
                 counters["{}.stats.browser.dnt.true.{}".format(prefix, nodename)] = 0
                 counters["{}.stats.browser.dnt.false.{}".format(prefix, nodename)] = 0
                 counters["{}.stats.browser.dnt.other.{}".format(prefix, nodename)] = 0
@@ -1488,6 +1488,13 @@ class ThreadedHaProxyLogster(LogsterParser):
 
     def parse_line(self, line):
         '''parse_line'''
+        global threads
+
+        if len(threads) > 999:
+            for t in threads:
+                t.join()
+            threads=[]
+
         t = threading.Thread(target=threaded_parse_line, args=(lock,line,))
         threads.append(t)
         t.start()

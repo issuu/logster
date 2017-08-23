@@ -470,10 +470,11 @@ class HaProxyLogster(LogsterParser):
     log_def = []
     regexs = []
     status_codes = defaultdict(lambda: defaultdict(lambda: 0))
-    method = defaultdict(lambda: defaultdict(lambda: 0))
+    methods = defaultdict(lambda: defaultdict(lambda: 0))
     response_time = defaultdict(PercentileMetric)
     prefix = PREFIX
     nodename = NODENAME.replace(".", "-")
+    method = ''
     status_code = ''
     sc = -1
 

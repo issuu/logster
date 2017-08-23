@@ -1386,14 +1386,14 @@ class HaProxyLogster(LogsterParser):
         for backend in self.ip_counter:
             suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
             variance = 0
-            try:
-                ips = self.ip_counter[backend]
-                if len(ips) > 0:
-                    sample = ips.values()
-                    if len(sample) > 0:
-                        variance = reduce(lambda x,y: x+y, map(lambda xi: (xi-(float(reduce(lambda x,y : x+y, sample)) / len(sample)))**2, sample))/ len(sample)
-            except:
-                pass
+#            try:
+#                ips = self.ip_counter[backend]
+#                if len(ips) > 0:
+#                    sample = ips.values()
+#                    if len(sample) > 0:
+#                        variance = reduce(lambda x,y: x+y, map(lambda xi: (xi-(float(reduce(lambda x,y : x+y, sample)) / len(sample)))**2, sample))/ len(sample)
+#            except:
+#                pass
             self.ip_counter[backend] = {}
             self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = int(variance)
 

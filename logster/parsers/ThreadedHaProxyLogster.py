@@ -1438,6 +1438,8 @@ class ThreadedHaProxyLogster(LogsterParser):
 
     def get_state(self, duration):
         '''get_state'''
+        global threads
+
         metrics = []
 
         for t in threads:

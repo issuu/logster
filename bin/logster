@@ -194,6 +194,8 @@ def submit_stats(parser, duration, options):
     if 'statsd' in options.output:
         submit_statsd(metrics, options)
 
+    logger.info('Stats submitted ...')
+
 
 def submit_stdout(metrics, options):
     for metric in metrics:
@@ -412,6 +414,8 @@ def main():
         # Parse each line from input, then send all stats to their collectors.
         for line in tailer.ireadlines():
             try:
+		if time.time()%60 > 59.0:
+                    submit_stats(parser, duration, options)
                 parser.parse_line(line)
             except LogsterParsingException as e:
                 # This should only catch recoverable exceptions (of which there
@@ -430,6 +434,11 @@ def main():
         print("Exception caught at %s: %s" % (lineno(), e))
         traceback.print_exc()
         sys.exit(1)
+
+    try:
+        parser.finish()
+    except Exception, _e:
+        pass
 
     # Log the execution time
     exec_time = round(time() - script_start_time, 1)

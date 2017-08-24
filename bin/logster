@@ -180,26 +180,31 @@ def lineno():
 
 def submit_stats(parser, duration, options):
     logger.info('Submitting stats ...')
-    metrics = parser.get_state(duration)
-    logger.info('got {} metrics'.format(len(metrics)))
-
     try:
-        if 'ganglia' in options.output:
-            submit_ganglia(metrics, options)
-        if 'graphite' in options.output:
-            submit_graphite(metrics, options)
-        if 'stdout' in options.output:
-            submit_stdout(metrics, options)
-        if 'cloudwatch' in options.output:
-            submit_cloudwatch(metrics, options)
-        if 'nsca' in options.output:
-            submit_nsca(metrics, options)
-        if 'statsd' in options.output:
-            submit_statsd(metrics, options)
+        metrics = parser.get_state(duration)
+        logger.info('got {} metrics'.format(len(metrics)))
+        try:
+            if 'ganglia' in options.output:
+                submit_ganglia(metrics, options)
+            if 'graphite' in options.output:
+                submit_graphite(metrics, options)
+            if 'stdout' in options.output:
+                submit_stdout(metrics, options)
+            if 'cloudwatch' in options.output:
+                submit_cloudwatch(metrics, options)
+            if 'nsca' in options.output:
+                submit_nsca(metrics, options)
+            if 'statsd' in options.output:
+                submit_statsd(metrics, options)
 
-        logger.info('Stats submitted ...')
+            logger.info('Stats submitted ...')
+        except Exception, _e:
+            logger.error('Failed to submit all or any stats: {}'.format(_e))
+            logger.error(traceback.format_exc())
+
     except Exception, _e:
-        logger.error('Failed to submit all or any stats: {}'.format(_e))
+        logger.error('Failed to get metrics: {}'.format(_e))
+        logger.error(traceback.format_exc())
 
 
 def submit_stdout(metrics, options):
@@ -436,8 +441,8 @@ def main():
         submit_stats(parser, duration, options)
 
     except SystemExit as e:
-        logger.info('System Exit at {}: {}'.format(lineno(), e))
-        logger.info(traceback.format_exc())
+        logger.error('System Exit at {}: {}'.format(lineno(), e))
+        logger.error(traceback.format_exc())
         raise
     except Exception as e:
         end_locking(lockfile, lock_file)

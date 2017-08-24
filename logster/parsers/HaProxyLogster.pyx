@@ -1268,7 +1268,7 @@ class HaProxyLogster(LogsterParser):
             if not self.is_spider and not self.is_img_proxy and not self.is_preview_browser:
                 if client_ip.iptype() != 'PRIVATE' and __d['backend_name'] != 'statistics':
                     if __d['server_name'] != '<NOSRV>':
-                        self.variance["{}.stats.backend.ip-variance.{}.{}".format(self.prefix, self.nodename, __d['backend_name'].replace(".", "-"))].push(client_ip.ip)
+                        self.variance["{}.stats.backend.ip-variance.{}.{}".format(self.prefix, self.nodename, 'backend-'+__d['backend_name'].replace(".", "-"))].push(client_ip.ip)
                     self.variance["{}.stats.backend.ip-variance.{}.{}".format(self.prefix, self.nodename, 'all-backends')].push(client_ip.ip)
 
             try:

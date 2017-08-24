@@ -694,7 +694,7 @@ class HaProxyLogster(LogsterParser):
         self.add_pattern('level', r'([^0-9]+)?')
 
         # 67.22.131.95:39339 '
-        self.add_pattern('client_ip', r'([\S+])?\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}', ':')
+        self.add_pattern('client_ip', r'([\S+])?(::ffff:)?\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}', ':')
         self.add_pattern('client_port', r'\d+')
 
         #[29/Nov/2012:14:26:47.198] '

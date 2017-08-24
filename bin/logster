@@ -198,12 +198,14 @@ def submit_stats(parser, duration, options):
                 submit_statsd(metrics, options)
 
             logger.info('Stats submitted ...')
-        except Exception, _e:
-            logger.error('Failed to submit all or any stats: {}'.format(_e))
+        except:
+            e = sys.exc_info()[0]
+            logger.error('Failed to submit all or any stats: {}'.format(e))
             logger.error(traceback.format_exc())
 
-    except Exception, _e:
-        logger.error('Failed to get metrics: {}'.format(_e))
+    except:
+        e = sys.exc_info()[0]
+        logger.error('Failed to get metrics: {}'.format(e))
         logger.error(traceback.format_exc())
 
 
@@ -442,9 +444,8 @@ def main():
                 # aren't any at the moment).
                 logger.error("Parsing exception caught at %s: %s" % (lineno(), e))
                 logger.error(traceback.format_exc())
-            except Exception as e:
-                # This should only catch recoverable exceptions (of which there
-                # aren't any at the moment).
+            except:
+                e = sys.exc_info()[0]
                 logger.error("Exception caught at %s: %s" % (lineno(), e))
                 logger.error(traceback.format_exc())
 
@@ -454,7 +455,8 @@ def main():
         logger.error('System Exit at {}: {}'.format(lineno(), e))
         logger.error(traceback.format_exc())
         raise
-    except Exception as e:
+    except:
+        e = sys.exc_info()[0]
         end_locking(lockfile, lock_file)
         logger.info("Exception execution time: %s seconds." % exec_time)
         logger.error("Exception caught at %s: %s" % (lineno(), e))
@@ -467,7 +469,7 @@ def main():
         logger.info("Finishing parser .....")
         parser.finish()
         logger.info("Parser finish done.")
-    except Exception, _e:
+    except:
         logger.info("Parser finish failed.")
         pass
 

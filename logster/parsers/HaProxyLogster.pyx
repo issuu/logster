@@ -758,6 +758,9 @@ class HaProxyLogster(LogsterParser):
         self.add_pattern('path', r'\S*', r'( |)')
         self.add_pattern('protocol', r'.*?', r'("|)')
 
+        # optional uuid 00000000:827C_00000000:0050_599ECBDA_61BB:34E9
+        self.add_pattern('uuid', r'.*?', r'( "|)')
+
         # the final regex for HAProxy lines
         self.log_line_pattern = self.build_pattern()
 

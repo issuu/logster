@@ -1424,7 +1424,7 @@ class HaProxyLogster(LogsterParser):
             self.gauges[name].reset()
 
         for name, value in self.variance.items():
-            metrics.extend(MetricObject(name, value.variance()))
+            metrics.append(MetricObject(name, value.variance()))
             self.variance[name].reset()
 
         return metrics

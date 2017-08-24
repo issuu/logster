@@ -96,7 +96,7 @@ while [ -e "${LOCKFILE}" ]; do
     B=$(date +%s)
     D=$(expr $B - $A)
     log "waiting for logster lockfile .... ${D} secs old"
-    if [ $D -gt 120 ]; then
+    if [ ${D:-0} -gt 120 ]; then
         log "killing running logster process and cleaning up lockfile and statefile"
         pkill -9 -f 'perl.*logtail2'; sleep 2
         pkill -9 -f 'python.*logster'; sleep 1
@@ -111,7 +111,16 @@ done
 A=$(date +%s)
 do_work
 B=$(date +%s)
-log "work done in $(expr $B - $A) seconds."
+D=$(expr $B - $A)
+log "work done in $D seconds."
+if [ ${D:-0} -gt 60 ]; then
+    log "trying to catch up ... "
+    A=$(date +%s)
+    do_work
+    B=$(date +%s)
+    D=$(expr $B - $A)
+    log "second work done in $D seconds."
+fi
 
 exit 0
 

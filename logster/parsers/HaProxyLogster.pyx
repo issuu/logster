@@ -421,6 +421,42 @@ class listStats(baseStat):
 
         return servers
 
+class RunningStats:
+    '''RunningStats for calculating variance, std.dev'''
+
+    def __init__(self):
+        self.n = 0
+        self.old_m = 0
+        self.new_m = 0
+        self.old_s = 0
+        self.new_s = 0
+
+    def reset(self):
+        self.n = 0
+
+    def push(self, x):
+        self.n += 1
+
+        if self.n == 1:
+            self.old_m = self.new_m = x
+            self.old_s = 0
+        else:
+            self.new_m = self.old_m + (x - self.old_m) / self.n
+            self.new_s = self.old_s + (x - self.old_m) * (x - self.new_m)
+
+            self.old_m = self.new_m
+            self.old_s = self.new_s
+
+    def mean(self):
+        return self.new_m if self.n else 0.0
+
+    def variance(self):
+        return self.new_s / (self.n - 1) if self.n > 1 else 0.0
+
+    def standard_deviation(self):
+        return math.sqrt(self.variance())
+
+
 class PercentileMetric(MetricObject):
     '''PercentileMetric'''
 
@@ -503,6 +539,7 @@ class HaProxyLogster(LogsterParser):
 
     counters = defaultdict(lambda: 0)
     gauges = defaultdict(PercentileMetric)
+    variance = defaultdict(RunningStats)
 
     def urlstat(self, r, metric_key):
         metric_ua = "crawlers" if self.is_spider else "non-crawlers"
@@ -939,9 +976,6 @@ class HaProxyLogster(LogsterParser):
                 self.counters["{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix)] = 0
             self.counters["{}.meta.up-down.{}".format(self.prefix, suffix)] = 0
             self.counters["{}.meta.noserver.{}".format(self.prefix, suffix)] = 0
-            self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = 0
-            self.counters["{}.stats.backend.url-variance.{}".format(self.prefix, suffix)] = 0
-            self.ip_counter[backend] = {}
         for haproxy in filter(lambda y: y['srvname'] == 'BACKEND', ha_stats):
             suffix = "{}.{}".format(self.nodename, "backend-"+haproxy['backend'].replace(".", "-"))
             self.counters["{}.stats.backend.queue.{}".format(self.prefix, suffix)] = haproxy['qcur']
@@ -1227,17 +1261,12 @@ class HaProxyLogster(LogsterParser):
             elif self.headers and 'dnt' in self.headers:
                 self.increment("{}.stats.browser.dnt.unset.{}".format(self.prefix, self.nodename))
 
+
             if not self.is_spider and not self.is_img_proxy and not self.is_preview_browser:
                 if client_ip.iptype() != 'PRIVATE' and __d['backend_name'] != 'statistics':
                     if __d['server_name'] != '<NOSRV>':
-                        try:
-                            self.ip_counter['backend-'+__d['backend_name']][client_ip.ip] += 1
-                        except:
-                            self.ip_counter['backend-'+__d['backend_name']][client_ip.ip] = 1
-                    try:
-                        self.ip_counter['all-backends'][client_ip.ip] += 1
-                    except:
-                        self.ip_counter['all-backends'][client_ip.ip] = 1
+                        self.variance["{}.stats.backend.ip-variance.{}.{}".format(self.prefix, self.nodename, __d['backend_name'].replace(".", "-"))].push(client_ip.ip)
+                    self.variance["{}.stats.backend.ip-variance.{}.{}".format(self.prefix, self.nodename, 'all-backends')].push(client_ip.ip)
 
             try:
                 __iu = urlparse(__d['path'])
@@ -1380,22 +1409,8 @@ class HaProxyLogster(LogsterParser):
         self.counters[name] += 1
 
     def get_state(self, duration):
-        '''get_state'''
+        '''get_state, can be called more than once'''
         metrics = []
-
-        for backend in self.ip_counter:
-            suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
-            variance = 0
-#            try:
-#                ips = self.ip_counter[backend]
-#                if len(ips) > 0:
-#                    sample = ips.values()
-#                    if len(sample) > 0:
-#                        variance = reduce(lambda x,y: x+y, map(lambda xi: (xi-(float(reduce(lambda x,y : x+y, sample)) / len(sample)))**2, sample))/ len(sample)
-#            except:
-#                pass
-            self.ip_counter[backend] = {}
-            self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = int(variance)
 
         for name, value in self.counters.items():
             metrics.append(MetricObject(name, value))
@@ -1404,6 +1419,10 @@ class HaProxyLogster(LogsterParser):
         for name, value in self.gauges.items():
             metrics.extend(value.as_metrics(name))
             self.gauges[name].reset()
+
+        for name, value in self.variance.items():
+            metrics.extend(MetricObject(name, value.variance()))
+            self.variance[name].reset()
 
         return metrics
 

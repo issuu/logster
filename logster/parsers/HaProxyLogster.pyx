@@ -1421,11 +1421,13 @@ class HaProxyLogster(LogsterParser):
 
         for name, value in self.gauges.items():
             metrics.extend(value.as_metrics(name))
-            self.gauges[name].reset()
 
         for name, value in self.variance.items():
             metrics.append(MetricObject(name, value.variance()))
-            self.variance[name].reset()
+
+        # reset dynamic non int dicts
+        self.gauges = defaultdict(PercentileMetric)
+        self.variance = defaultdict(RunningStats)
 
         return metrics
 

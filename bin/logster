@@ -183,20 +183,23 @@ def submit_stats(parser, duration, options):
     metrics = parser.get_state(duration)
     logger.info('got {} metrics'.format(len(metrics)))
 
-    if 'ganglia' in options.output:
-        submit_ganglia(metrics, options)
-    if 'graphite' in options.output:
-        submit_graphite(metrics, options)
-    if 'stdout' in options.output:
-        submit_stdout(metrics, options)
-    if 'cloudwatch' in options.output:
-        submit_cloudwatch(metrics, options)
-    if 'nsca' in options.output:
-        submit_nsca(metrics, options)
-    if 'statsd' in options.output:
-        submit_statsd(metrics, options)
+    try:
+        if 'ganglia' in options.output:
+            submit_ganglia(metrics, options)
+        if 'graphite' in options.output:
+            submit_graphite(metrics, options)
+        if 'stdout' in options.output:
+            submit_stdout(metrics, options)
+        if 'cloudwatch' in options.output:
+            submit_cloudwatch(metrics, options)
+        if 'nsca' in options.output:
+            submit_nsca(metrics, options)
+        if 'statsd' in options.output:
+            submit_statsd(metrics, options)
 
-    logger.info('Stats submitted ...')
+        logger.info('Stats submitted ...')
+    except Exception, _e:
+        logger.error('Failed to submit all or any stats: {}'.format(_e))
 
 
 def submit_stdout(metrics, options):
@@ -316,6 +319,10 @@ def submit_statsd(metrics, addr):
     if (not options.dry_run):
         host = options.statsd_host.split(':')
         udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # NOT sure if we should do this ?
+        #the SO_REUSEADDR flag tells the kernel to reuse a local socket in TIME_WAIT state, without waiting for its natural timeout to expire.
+        #udp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        #
         udp_sock.connect((host[0], int(host[1])))
 
     for metric in metrics:
@@ -328,7 +335,6 @@ def submit_statsd(metrics, addr):
         logger.debug("Submitting statsd metric: %s" % metric_string)
 
         if (not options.dry_run):
-            #udp_sock.sendto(metric_string, (host[0], int(host[1])))
             udp_sock.sendall(bytes("%s\n" % metric_string))
         else:
             print("%s %s" % (options.statsd_host, metric_string))
@@ -429,6 +435,7 @@ def main():
         submit_stats(parser, duration, options)
 
     except SystemExit as e:
+        logger.info('System Exit at {}: {}'.format(lineno(), e))
         raise
     except Exception as e:
         end_locking(lockfile, lock_file)

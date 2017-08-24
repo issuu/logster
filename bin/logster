@@ -435,7 +435,7 @@ def main():
                     new_minute = False
                     submit_stats(parser, duration, options)
                 else:
-                    new_minute = time()%60 < 55.0 and not new_minute:
+                    new_minute = time()%60 < 55.0 and not new_minute
                 parser.parse_line(line)
             except LogsterParsingException as e:
                 # This should only catch recoverable exceptions (of which there

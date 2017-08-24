@@ -430,12 +430,14 @@ def main():
             except LogsterParsingException as e:
                 # This should only catch recoverable exceptions (of which there
                 # aren't any at the moment).
-                logger.debug("Parsing exception caught at %s: %s" % (lineno(), e))
+                logger.info("Parsing exception caught at %s: %s" % (lineno(), e))
+                logger.info(traceback.format_exc())
 
         submit_stats(parser, duration, options)
 
     except SystemExit as e:
         logger.info('System Exit at {}: {}'.format(lineno(), e))
+        logger.info(traceback.format_exc())
         raise
     except Exception as e:
         end_locking(lockfile, lock_file)

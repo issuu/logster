@@ -654,7 +654,7 @@ class HaProxyLogster(LogsterParser):
         optparser.add_option('--verifybot', '-b', dest='verifybot', default=None,
                             help='Verify the bot identity - reverse dns. A comma separated list: googlebot, bingbot')
         optparser.add_option('--variancethreshold', '-w', dest='variancethreshold', default=0, type="int",
-                            help='When calculating variance on ip's, ignore ip's with hits less than this number.')
+                            help='When calculating variance on ips, ignore ips with hits less than this number.')
 
         opts, args = optparser.parse_args(args=options)
 

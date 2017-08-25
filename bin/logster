@@ -391,6 +391,8 @@ def main():
     lock_file  = '%s/%s-%s%s.lock' % (state_dir, tailer_klass.short_name, class_name, dirsafe_logfile)
     tailer = tailer_klass(log_file, state_file, options, logger)
 
+    lines_parsed = 0
+
     logger.info("Executing parser %s on logfile %s" % (class_name, log_file))
     logger.debug("Using state file %s" % state_file)
 
@@ -429,7 +431,6 @@ def main():
             sys.exit(0)
 
         new_minute = True
-
         # Parse each line from input, then send all stats to their collectors.
         for line in tailer.ireadlines():
             try:
@@ -439,6 +440,7 @@ def main():
                 else:
                     new_minute = time()%60 < 58.0 and not new_minute
                 parser.parse_line(line)
+                lines_parsed += 1
             except LogsterParsingException as e:
                 # This should only catch recoverable exceptions (of which there
                 # aren't any at the moment).
@@ -475,7 +477,7 @@ def main():
 
     # Log the execution time
     exec_time = round(time() - script_start_time, 1)
-    logger.info("Total execution time: %s seconds." % exec_time)
+    logger.info("Total execution time: %s seconds, lines parsed: %d" % (exec_time, lines_parsed))
 
     # Set mtime and atime for the state file to the startup time of the script
     # so that the cron interval is not thrown off by parsing a large number of

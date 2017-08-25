@@ -1425,18 +1425,18 @@ class HaProxyLogster(LogsterParser):
         '''get_state, can be called more than once'''
         metrics = []
 
-        for backend in ip_counter:
-            suffix = "{}.{}".format(nodename, backend.replace(".", "-"))
+        for backend in self.ip_counter:
+            suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
             variance = 0
             try:
-                ips = ip_counter[backend]
+                ips = self.ip_counter[backend]
                 if len(ips) > 0:
                     sample = ips.values()
                     if len(sample) > 0:
                         variance = reduce(lambda x,y: x+y, map(lambda xi: (xi-(float(reduce(lambda x,y : x+y, sample)) / len(sample)))**2, sample))/ len(sample)
             except:
                 pass
-            counters["{}.stats.backend.ip-variance.{}".format(prefix, suffix)] = int(variance)
+            self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = int(variance)
 
         for name, value in self.counters.items():
             metrics.append(MetricObject(name, value))

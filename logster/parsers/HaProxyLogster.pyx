@@ -1437,7 +1437,7 @@ class HaProxyLogster(LogsterParser):
                 ips = self.ip_counter[backend]
                 if len(ips) > 0:
                     _l = ips.values()
-                    print >> sys.stderr, "no of ip values %d"i % len(_l)
+                    print >> sys.stderr, "no of ip values %d" % len(_l)
                     if self.ignore_variance_below > 0:
                         sample = filter(lambda x: x >= self.ignore_variance_below, _l)
                     else:

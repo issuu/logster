@@ -24,3 +24,7 @@ HAPROXY_SOCKET=/var/run/haproxy.socket
 # Optional - Use reverse dns lookup to verify bots (commasep list, currently only googlebot and bingbot)
 # VERIFYBOT=googlebot,bingbot
 
+# Optional - Calculating ip variance can be time consuming
+# Use this option to set a threshold, ignoring all ip's with
+# a hit count less than this number
+#VARIANCETHRESHOLD=250

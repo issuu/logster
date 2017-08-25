@@ -64,6 +64,11 @@ if [ -n "${VERIFYBOT}" ]; then
     VERIFYBOT_OPTION=" --verifybot ${VERIFYBOT}"
 fi
 
+unset VARIANCETHRESHOLD_OPTION
+if [ -n "${VARIANCETHRESHOLD}" ]; then
+    VARIANCETHRESHOLD_OPTION=" --variancethreshold ${VARIANCETHRESHOLD}"
+fi
+
 LOGDIR=/var/log/logster/
 test -d ${LOGDIR} || mkdir -p ${LOGDIR}
 
@@ -78,13 +83,13 @@ function do_work () {
     if [ -n "${STATSD_HOST_PORT}" ]; then
         timeout --kill-after=115 110 logster --output statsd \
             --statsd-host ${STATSD_HOST_PORT} \
-            --parser-options "--socket ${HAPROXY_SOCKET}${REQUEST_HEADERS_OPTION}${ISSUU_OPTION}${MAGMA_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}${VERIFYBOT_OPTION}" \
+            --parser-options "--socket ${HAPROXY_SOCKET}${REQUEST_HEADERS_OPTION}${ISSUU_OPTION}${MAGMA_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}${VERIFYBOT_OPTION}${VARIANCETHRESHOLD_OPTION}" \
             HaProxyLogster \
             /var/log/haproxy.log || { log "Cmd timeout, removing state and lock file."; rm -f ${STATEFILE}; rm -f ${LOCKFILE}; }
     else
         timeout --kill-after=115 110 logster --output graphite \
             --graphite-host ${GRAPHITE_HOST_PORT} \
-            --parser-options "--socket ${HAPROXY_SOCKET}${REQUEST_HEADERS_OPTION}${ISSUU_OPTION}${MAGMA_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}${VERIFYBOT_OPTION}" \
+            --parser-options "--socket ${HAPROXY_SOCKET}${REQUEST_HEADERS_OPTION}${ISSUU_OPTION}${MAGMA_OPTION}${USE_XFF_AS_CLIENTIP_OPTION}${VERIFYBOT_OPTION}${VARIANCETHRESHOLD_OPTION}" \
             HaProxyLogster \
             /var/log/haproxy.log || { log "Cmd timeout, removing state and lockfile."; rm -f ${STATEFILE}; rm -f ${LOCKFILE}; }
     fi

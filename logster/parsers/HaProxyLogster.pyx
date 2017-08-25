@@ -1275,12 +1275,10 @@ class HaProxyLogster(LogsterParser):
             if not self.is_spider and not self.is_img_proxy and not self.is_preview_browser:
                 if client_ip.iptype() != 'PRIVATE' and __d['backend_name'] != 'statistics':
                     if __d['server_name'] != '<NOSRV>':
-                        #self.variance["{}.stats.backend.ip-variance.{}.{}".format(self.prefix, self.nodename, 'backend-'+__d['backend_name'].replace(".", "-"))].push(client_ip.ip)
                         try:
                             self.ip_counter['backend-'+__d['backend_name']][client_ip.ip] += 1
                         except:
                             self.ip_counter['backend-'+__d['backend_name']][client_ip.ip] = 1
-                    #self.variance["{}.stats.backend.ip-variance.{}.{}".format(self.prefix, self.nodename, 'all-backends')].push(client_ip.ip)
                     try:
                         self.ip_counter['all-backends'][client_ip.ip] += 1
                     except:
@@ -1437,12 +1435,10 @@ class HaProxyLogster(LogsterParser):
                 ips = self.ip_counter[backend]
                 if len(ips) > 0:
                     _l = ips.values()
-                    print >> sys.stderr, "no of ip values %d" % len(_l)
                     if self.ignore_variance_below > 0:
                         sample = filter(lambda x: x >= self.ignore_variance_below, _l)
                     else:
-                        sample = ips.values()
-                    print >> sys.stderr, "reduced: %d" % len(sample)
+                        sample = _l
                     if len(sample) > 0:
                         variance = reduce(lambda x,y: x+y, map(lambda xi: (xi-(float(reduce(lambda x,y : x+y, sample)) / len(sample)))**2, sample))/ len(sample)
             except:
@@ -1456,8 +1452,8 @@ class HaProxyLogster(LogsterParser):
         for name, value in self.gauges.items():
             metrics.extend(value.as_metrics(name))
 
-        #for name, value in self.variance.items():
-        #    metrics.append(MetricObject(name, value.variance()))
+        for name, value in self.variance.items():
+            metrics.append(MetricObject(name, value.variance()))
 
         # reset dynamic non int dicts
         self.gauges = defaultdict(PercentileMetric)

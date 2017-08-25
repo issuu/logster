@@ -979,8 +979,8 @@ class HaProxyLogster(LogsterParser):
                 self.counters["{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix)] = 0
             self.counters["{}.meta.up-down.{}".format(self.prefix, suffix)] = 0
             self.counters["{}.meta.noserver.{}".format(self.prefix, suffix)] = 0
-            counters["{}.stats.backend.ip-variance.{}".format(prefix, suffix)] = 0
-            ip_counter[backend] = {}
+            self.counters["{}.stats.backend.ip-variance.{}".format(prefix, suffix)] = 0
+            self.ip_counter[backend] = {}
         for haproxy in filter(lambda y: y['srvname'] == 'BACKEND', ha_stats):
             suffix = "{}.{}".format(self.nodename, "backend-"+haproxy['backend'].replace(".", "-"))
             self.counters["{}.stats.backend.queue.{}".format(self.prefix, suffix)] = haproxy['qcur']
@@ -1272,14 +1272,14 @@ class HaProxyLogster(LogsterParser):
                     if __d['server_name'] != '<NOSRV>':
                         #self.variance["{}.stats.backend.ip-variance.{}.{}".format(self.prefix, self.nodename, 'backend-'+__d['backend_name'].replace(".", "-"))].push(client_ip.ip)
                         try:
-                            ip_counter['backend-'+__d['backend_name']][client_ip.ip] += 1
+                            self.ip_counter['backend-'+__d['backend_name']][client_ip.ip] += 1
                         except:
-                            ip_counter['backend-'+__d['backend_name']][client_ip.ip] = 1
+                            self.ip_counter['backend-'+__d['backend_name']][client_ip.ip] = 1
                     #self.variance["{}.stats.backend.ip-variance.{}.{}".format(self.prefix, self.nodename, 'all-backends')].push(client_ip.ip)
                     try:
-                        ip_counter['all-backends'][client_ip.ip] += 1
+                        self.ip_counter['all-backends'][client_ip.ip] += 1
                     except:
-                        ip_counter['all-backends'][client_ip.ip] = 1
+                        self.ip_counter['all-backends'][client_ip.ip] = 1
 
             try:
                 __iu = urlparse(__d['path'])

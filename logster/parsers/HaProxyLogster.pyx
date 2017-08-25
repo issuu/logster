@@ -984,6 +984,7 @@ class HaProxyLogster(LogsterParser):
                 self.counters["{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix)] = 0
             self.counters["{}.meta.up-down.{}".format(self.prefix, suffix)] = 0
             self.counters["{}.meta.noserver.{}".format(self.prefix, suffix)] = 0
+            self.counters["{}.stats.backend.ip-uniq.{}".format(self.prefix, suffix)] = 0
             self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = 0
             self.ip_counter[backend] = {}
         for haproxy in filter(lambda y: y['srvname'] == 'BACKEND', ha_stats):
@@ -1433,6 +1434,7 @@ class HaProxyLogster(LogsterParser):
             variance = 0
             try:
                 ips = self.ip_counter[backend]
+                self.counters["{}.stats.backend.ip-uniq.{}".format(self.prefix, suffix)] = len(ips)
                 if len(ips) > 0:
                     _l = ips.values()
                     if self.ignore_variance_below > 0:

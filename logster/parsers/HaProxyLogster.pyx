@@ -979,7 +979,7 @@ class HaProxyLogster(LogsterParser):
                 self.counters["{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix)] = 0
             self.counters["{}.meta.up-down.{}".format(self.prefix, suffix)] = 0
             self.counters["{}.meta.noserver.{}".format(self.prefix, suffix)] = 0
-            self.counters["{}.stats.backend.ip-variance.{}".format(prefix, suffix)] = 0
+            self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = 0
             self.ip_counter[backend] = {}
         for haproxy in filter(lambda y: y['srvname'] == 'BACKEND', ha_stats):
             suffix = "{}.{}".format(self.nodename, "backend-"+haproxy['backend'].replace(".", "-"))

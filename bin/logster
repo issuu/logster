@@ -433,11 +433,11 @@ def main():
         # Parse each line from input, then send all stats to their collectors.
         for line in tailer.ireadlines():
             try:
-                if time()%60 > 55.0 and new_minute:
+                if time()%60 > 58.0 and new_minute:
                     new_minute = False
                     submit_stats(parser, duration, options)
                 else:
-                    new_minute = time()%60 < 55.0 and not new_minute
+                    new_minute = time()%60 < 58.0 and not new_minute
                 parser.parse_line(line)
             except LogsterParsingException as e:
                 # This should only catch recoverable exceptions (of which there

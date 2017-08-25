@@ -113,17 +113,6 @@ do_work
 B=$(date +%s)
 D=$(expr $B - $A)
 log "work done in $D seconds."
-i=0
-while [ ${D:-0} -gt 60 -a ${D:-0} -lt 70 ]; then
-    sleep 5
-    i=$(expr $i + 1)
-    log "trying to catch up ... ${i}"
-    A=$(date +%s)
-    do_work
-    B=$(date +%s)
-    D=$(expr $B - $A)
-    log "work [${i}] done in $D seconds."
-done
 
 exit 0
 

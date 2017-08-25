@@ -430,15 +430,9 @@ def main():
             end_locking(lockfile, lock_file)
             sys.exit(0)
 
-        new_minute = True
         # Parse each line from input, then send all stats to their collectors.
         for line in tailer.ireadlines():
             try:
-                if time()%60 > 58.0 and new_minute:
-                    new_minute = False
-                    submit_stats(parser, duration, options)
-                else:
-                    new_minute = time()%60 < 58.0 and not new_minute
                 parser.parse_line(line)
                 lines_parsed += 1
             except LogsterParsingException as e:

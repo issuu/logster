@@ -512,6 +512,7 @@ class HaProxyLogster(LogsterParser):
     method = ''
     status_code = ''
     sc = -1
+    ignore_variance_below = 0
 
     tarpit = False
     block  = False
@@ -652,6 +653,8 @@ class HaProxyLogster(LogsterParser):
                             help='Use X-Forwarded-For value for the client-ip (useful if behind another proxy like ELB)')
         optparser.add_option('--verifybot', '-b', dest='verifybot', default=None,
                             help='Verify the bot identity - reverse dns. A comma separated list: googlebot, bingbot')
+        optparser.add_option('--variancethreshold', '-w', dest='variancethreshold', default=0, type="int",
+                            help='When calculating variance on ip's, ignore ip's with hits less than this number.')
 
         opts, args = optparser.parse_args(args=options)
 
@@ -662,6 +665,8 @@ class HaProxyLogster(LogsterParser):
         if opts.headers:
             self.headers = [x.lower() for x in opts.headers.split(',')]
  
+        self.ignore_variance_below = opts.variancethreshold
+
         if opts.pxy_socket is None:
             print >> sys.stderr, 'Missing --socket option'
             raise Exception("Missing --socket option")
@@ -1432,10 +1437,12 @@ class HaProxyLogster(LogsterParser):
                 ips = self.ip_counter[backend]
                 if len(ips) > 0:
                     _l = ips.values()
-                    print >> sys.stderr, "no of ip values:", len(_l)
-                    sample = filter(lambda x: x >= 1000, _l)
-                    print >> sys.stderr, "reduced:", len(sample)
-                    #sample = ips.values()
+                    print >> sys.stderr, "no of ip values %d"i % len(_l)
+                    if self.ignore_variance_below > 0:
+                        sample = filter(lambda x: x >= self.ignore_variance_below, _l)
+                    else:
+                        sample = ips.values()
+                    print >> sys.stderr, "reduced: %d" % len(sample)
                     if len(sample) > 0:
                         variance = reduce(lambda x,y: x+y, map(lambda xi: (xi-(float(reduce(lambda x,y : x+y, sample)) / len(sample)))**2, sample))/ len(sample)
             except:

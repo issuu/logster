@@ -979,6 +979,8 @@ class HaProxyLogster(LogsterParser):
                 self.counters["{}.response.status.{}.{}".format(self.prefix, status_code.lower(), suffix)] = 0
             self.counters["{}.meta.up-down.{}".format(self.prefix, suffix)] = 0
             self.counters["{}.meta.noserver.{}".format(self.prefix, suffix)] = 0
+            counters["{}.stats.backend.ip-variance.{}".format(prefix, suffix)] = 0
+            ip_counter[backend] = {}
         for haproxy in filter(lambda y: y['srvname'] == 'BACKEND', ha_stats):
             suffix = "{}.{}".format(self.nodename, "backend-"+haproxy['backend'].replace(".", "-"))
             self.counters["{}.stats.backend.queue.{}".format(self.prefix, suffix)] = haproxy['qcur']
@@ -1268,8 +1270,16 @@ class HaProxyLogster(LogsterParser):
             if not self.is_spider and not self.is_img_proxy and not self.is_preview_browser:
                 if client_ip.iptype() != 'PRIVATE' and __d['backend_name'] != 'statistics':
                     if __d['server_name'] != '<NOSRV>':
-                        self.variance["{}.stats.backend.ip-variance.{}.{}".format(self.prefix, self.nodename, 'backend-'+__d['backend_name'].replace(".", "-"))].push(client_ip.ip)
-                    self.variance["{}.stats.backend.ip-variance.{}.{}".format(self.prefix, self.nodename, 'all-backends')].push(client_ip.ip)
+                        #self.variance["{}.stats.backend.ip-variance.{}.{}".format(self.prefix, self.nodename, 'backend-'+__d['backend_name'].replace(".", "-"))].push(client_ip.ip)
+                        try:
+                            ip_counter['backend-'+__d['backend_name']][client_ip.ip] += 1
+                        except:
+                            ip_counter['backend-'+__d['backend_name']][client_ip.ip] = 1
+                    #self.variance["{}.stats.backend.ip-variance.{}.{}".format(self.prefix, self.nodename, 'all-backends')].push(client_ip.ip)
+                    try:
+                        ip_counter['all-backends'][client_ip.ip] += 1
+                    except:
+                        ip_counter['all-backends'][client_ip.ip] = 1
 
             try:
                 __iu = urlparse(__d['path'])
@@ -1415,6 +1425,19 @@ class HaProxyLogster(LogsterParser):
         '''get_state, can be called more than once'''
         metrics = []
 
+        for backend in ip_counter:
+            suffix = "{}.{}".format(nodename, backend.replace(".", "-"))
+            variance = 0
+            try:
+                ips = ip_counter[backend]
+                if len(ips) > 0:
+                    sample = ips.values()
+                    if len(sample) > 0:
+                        variance = reduce(lambda x,y: x+y, map(lambda xi: (xi-(float(reduce(lambda x,y : x+y, sample)) / len(sample)))**2, sample))/ len(sample)
+            except:
+                pass
+            counters["{}.stats.backend.ip-variance.{}".format(prefix, suffix)] = int(variance)
+
         for name, value in self.counters.items():
             metrics.append(MetricObject(name, value))
             self.counters[name] = 0
@@ -1422,8 +1445,8 @@ class HaProxyLogster(LogsterParser):
         for name, value in self.gauges.items():
             metrics.extend(value.as_metrics(name))
 
-        for name, value in self.variance.items():
-            metrics.append(MetricObject(name, value.variance()))
+        #for name, value in self.variance.items():
+        #    metrics.append(MetricObject(name, value.variance()))
 
         # reset dynamic non int dicts
         self.gauges = defaultdict(PercentileMetric)

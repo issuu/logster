@@ -113,11 +113,24 @@ while [ -e "${LOCKFILE}" ]; do
     fi
 done
 
+i=1
 A=$(date +%s)
 do_work
 B=$(date +%s)
 D=$(expr $B - $A)
-log "work done in $D seconds."
+log "${i}. work done in $D seconds."
+while [ ${D:-0} -gt 45 -a ${D:-0} -lt 60 ]; do
+    i=$(expr $i + 1)
+    # wait a up to 15 secs to process more log lines - with a bit of luck this should make us fail less
+    Z=$(expr 15 - 60 + ${D})
+    log "running a ${i}. time in ${Z} seconds"
+    sleep ${Z:-10}
+    A=$(date +%s)
+    do_work
+    B=$(date +%s)
+    D=$(expr $B - $A)
+    log "${i}. work done in $D seconds."
+done
 
 exit 0
 

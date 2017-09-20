@@ -55,6 +55,8 @@ ISSUUSEARCH_PATTERN = re.compile('^/search($|/.+)')
 ISSUUPUBLISH_PATTERN = re.compile('^/publish($|/.+)')
 ISSUUEXPLORE_PATTERN = re.compile('^/explore($|/.+)')
 ISSUUPRICING_PATTERN = re.compile('^/pricing($|/.+)')
+ISSUULEGAL_PATTERN = re.compile('^/legal($|/.+)')
+ISSUUSOCIAL_PATTERN = re.compile('^/social($|/.+)')
 ISSUUMULTIPART_PATTERN = re.compile('^/multipart($|/.+)')
 ISSUUSIGNIN_PATTERN = re.compile('^/signin($|/.+)')
 ISSUUSIGNUP_PATTERN = re.compile('^/signup($|/.+)')
@@ -64,6 +66,7 @@ ISSUUEMAILREJECTED_PATTERN = re.compile('^/emailrejected($|/.+)')
 ISSUUOPTOUT_PATTERN = re.compile('^/optout($|/.+)')
 ISSUUOEMBED_PATTERN = re.compile('^/(oembed|oembed_wp|oembed_tumblr)($|/.+)')
 ISSUUPUBLISHERSTORE_PATTERN = re.compile('^/store/publishers/(?P<publisher>[^/]+)/docs/.+')
+ISSUUSTORE_PATTERN = re.compile('^/store($|/.+)')
 ISSUUCLAIM_PATTERN = re.compile('^/claim-account($|/.+)')
 
 ISSUU_THINLAYER_CALLS = [
@@ -1311,6 +1314,8 @@ class HaProxyLogster(LogsterParser):
                             self.urlstat(__d, "docs")
                         elif ISSUUSEARCH_PATTERN.match(__iu.path):
                             self.urlstat(__d, "search")
+                        elif ISSUUSTORE_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "store")
                         elif ISSUUPUBLISH_PATTERN.match(__iu.path):
                             self.urlstat(__d, "publish")
                         elif ISSUUQUERY_PATTERN.match(__iu.path):
@@ -1323,6 +1328,10 @@ class HaProxyLogster(LogsterParser):
                             self.urlstat(__d, "explore")
                         elif ISSUUPRICING_PATTERN.match(__iu.path):
                             self.urlstat(__d, "pricing")
+                        elif ISSUUSOCIAL_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "social")
+                        elif ISSUULEGAL_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "legal")
                         elif ISSUUEMAILREJECTED_PATTERN.match(__iu.path):
                             self.urlstat(__d, "emailrejected")
                         elif ISSUUOPTOUT_PATTERN.match(__iu.path):

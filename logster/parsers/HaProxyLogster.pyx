@@ -40,7 +40,7 @@ LANGUAGES = ['en','es','pt','zh','ja','de','it','fr','ru','da','ar']
 LINUX_VARIANTS = ['Linux', 'Ubuntu', 'Debian', 'Fedora', 'Gentoo', 'Red Hat', 'SUSE']
 
 # In case we cannot detect the User-Agent use this crud detection of crawlers
-BOT_PATTERN = re.compile('.*(Googlebot[/-]| Ezooms/|WinHttp\.WinHttpRequest|heritrix/|Java/|[Pp]ython|Siteimprove.com|Catchpoint|Exabot|Crawler|Bot|Spider|AndroidDownloadManager|URL2File/|[Ss]entry/|Apache-HttpClient/|PHP[/ ]|Wget/|Mediapartners-Google|AdsBot-Google|curl/|WordPress/|Twitter/|archiver|check_http/|node-fetch/|Nutch/|ColdFusion|WhatsApp/|Clickagy|GetIntent|Twitter|<\?php |(http://|\w+@)\w+(\.\w+)+)')
+BOT_PATTERN = re.compile('.*(Googlebot[/-]|Applebot/| Ezooms/|WinHttp\.WinHttpRequest|heritrix/|Java/|[Pp]ython|Siteimprove.com|Catchpoint|Exabot|Crawler|Bot|Spider|AndroidDownloadManager|URL2File/|[Ss]entry/|Apache-HttpClient/|PHP[/ ]|Wget/|Mediapartners-Google|AdsBot-Google|curl/|WordPress/|Twitter/|archiver|check_http/|node-fetch/|Nutch/|ColdFusion|WhatsApp/|Clickagy|GetIntent|Twitter|<\?php |(http://|\w+@)\w+(\.\w+)+)')
 IMGPROXY_PATTERN = re.compile('.*\(via ggpht.com GoogleImageProxy\)')
 PREVIEW_PATTERN = re.compile('.*Google Web Preview\)')
 
@@ -232,6 +232,10 @@ ip_cache = {}
 
 # load cache
 try:
+    applebot_cache = pickle.load( open( "/var/tmp/haproxy_logster_applebot.p", "rb" ) )
+except:
+    applebot_cache = {}
+try:
     googlebot_cache = pickle.load( open( "/var/tmp/haproxy_logster_googlebot.p", "rb" ) )
 except:
     googlebot_cache = {}
@@ -239,6 +243,20 @@ try:
     bingbot_cache = pickle.load( open( "/var/tmp/haproxy_logster_bingbot.p", "rb" ) )
 except:
     bingbot_cache = {}
+
+APPLEBOTRDNS_PATTERN = re.compile('.*\.applebot\.apple\.com$')
+def verifyAppleBot(ip):
+    # ip.ip is an integer repr of the ip
+    _isTrueBot = applebot_cache.get(ip.ip)
+    if _isTrueBot is None:
+        try:
+            _n = gethostbyaddr(ip.strNormal())[0]
+            _isTrueBot = APPLEBOTRDNS_PATTERN.match(_n) is not None and gethostbyname(_n) == ip.strNormal()
+        except:
+            _isTrueBot = False
+        applebot_cache[ip.ip] = _isTrueBot
+    return _isTrueBot
+
 
 GOOGLERDNS_PATTERN = re.compile('.*\.googlebot\.com$')
 def verifyGoogleBot(ip):
@@ -907,6 +925,9 @@ class HaProxyLogster(LogsterParser):
                     self.counters["{}.stats.browser.ua.crawlers.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.other.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.applebot.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.fake-applebot.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.real-applebot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.fake-googlebot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.real-googlebot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, suffix)] = 0
@@ -1035,10 +1056,12 @@ class HaProxyLogster(LogsterParser):
             except:
                 self.sc = -1
 
-            ua  = None
-            al  = None
-            dnt = None
-            xff = None
+            ua   = None
+            al   = None
+            dnt  = None
+            xff  = None
+            host = None
+
             if self.headers and __d['captured_request_headers']:
                 crhs = __d['captured_request_headers'].split('|')
                 if len(crhs) == len(self.headers):
@@ -1065,6 +1088,7 @@ class HaProxyLogster(LogsterParser):
                             pass
 
                     dnt = __d.get('crh_dnt')
+                    host = __d.get('crh_host')
 
             _ip = xff if (__d['client_ip'].startswith('127.0.') or self.usexffip) and xff else __d['client_ip']
             client_ip = ip_cache.get(_ip)
@@ -1153,6 +1177,13 @@ class HaProxyLogster(LogsterParser):
                                     else:
                                         self.increment("{}.stats.browser.ua.crawlers.real-bingbot.{}".format(self.prefix, suffix))
                                 self.increment("{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, suffix))
+                            elif 'applebot' in _iua:
+                                if 'applebot' in self.verifybot:
+                                    if not verifyAppleBot(client_ip):
+                                        self.increment("{}.stats.browser.ua.crawlers.fake-applebot.{}".format(self.prefix, suffix))
+                                    else:
+                                        self.increment("{}.stats.browser.ua.crawlers.real-applebot.{}".format(self.prefix, suffix))
+                                self.increment("{}.stats.browser.ua.crawlers.applebot.{}".format(self.prefix, suffix))
                             elif 'yahoo! slurp' in _iua:
                                 self.increment("{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, suffix))
                             elif 'baiduspider' in _iua:
@@ -1480,6 +1511,7 @@ class HaProxyLogster(LogsterParser):
         try:
             pickle.dump( bingbot_cache, open( "/var/tmp/haproxy_logster_bingbot.p", "wb" ) )
             pickle.dump( googlebot_cache, open( "/var/tmp/haproxy_logster_googlebot.p", "wb" ) )
+            pickle.dump( applebot_cache, open( "/var/tmp/haproxy_logster_applebot.p", "wb" ) )
         except:
             pass
 

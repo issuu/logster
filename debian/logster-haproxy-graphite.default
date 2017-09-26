@@ -27,4 +27,5 @@ HAPROXY_SOCKET=/var/run/haproxy.socket
 # Optional - Calculating ip variance can be time consuming
 # Use this option to set a threshold, ignoring all ip's with
 # a hit count less than this number
+# Use a negative number to disable ip variance calculation.
 #VARIANCETHRESHOLD=250

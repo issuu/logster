@@ -677,7 +677,7 @@ class HaProxyLogster(LogsterParser):
         optparser.add_option('--verifybot', '-b', dest='verifybot', default=None,
                             help='Verify the bot identity - reverse dns. A comma separated list: googlebot, bingbot')
         optparser.add_option('--variancethreshold', '-w', dest='variancethreshold', default=0, type="int",
-                            help='When calculating variance on ips, ignore ips with hits less than this number.')
+                            help='When calculating variance on ips, ignore ips with hits less than this number. Use a negative number to disable variance calculation.')
 
         opts, args = optparser.parse_args(args=options)
 
@@ -1471,23 +1471,24 @@ class HaProxyLogster(LogsterParser):
         '''get_state, can be called more than once'''
         metrics = []
 
-        for backend in self.ip_counter:
-            suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
-            variance = 0
-            try:
-                ips = self.ip_counter[backend]
-                self.counters["{}.stats.backend.ip-uniq.{}".format(self.prefix, suffix)] = len(ips)
-                if len(ips) > 0:
-                    _l = ips.values()
-                    if self.ignore_variance_below > 0:
-                        sample = filter(lambda x: x >= self.ignore_variance_below, _l)
-                    else:
-                        sample = _l
-                    if len(sample) > 0:
-                        variance = reduce(lambda x,y: x+y, map(lambda xi: (xi-(float(reduce(lambda x,y : x+y, sample)) / len(sample)))**2, sample))/ len(sample)
-            except:
-                pass
-            self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = int(variance)
+        if self.ignore_variance_below >= 0:
+            for backend in self.ip_counter:
+                suffix = "{}.{}".format(self.nodename, backend.replace(".", "-"))
+                variance = 0
+                try:
+                    ips = self.ip_counter[backend]
+                    self.counters["{}.stats.backend.ip-uniq.{}".format(self.prefix, suffix)] = len(ips)
+                    if len(ips) > 0:
+                        _l = ips.values()
+                        if self.ignore_variance_below > 0:
+                            sample = filter(lambda x: x >= self.ignore_variance_below, _l)
+                        else:
+                            sample = _l
+                        if len(sample) > 0:
+                            variance = reduce(lambda x,y: x+y, map(lambda xi: (xi-(float(reduce(lambda x,y : x+y, sample)) / len(sample)))**2, sample))/ len(sample)
+                except:
+                    pass
+                self.counters["{}.stats.backend.ip-variance.{}".format(self.prefix, suffix)] = int(variance)
 
         for name, value in self.counters.items():
             metrics.append(MetricObject(name, value))
@@ -1496,8 +1497,9 @@ class HaProxyLogster(LogsterParser):
         for name, value in self.gauges.items():
             metrics.extend(value.as_metrics(name))
 
-        for name, value in self.variance.items():
-            metrics.append(MetricObject(name, value.variance()))
+        if self.ignore_variance_below >= 0:
+            for name, value in self.variance.items():
+                metrics.append(MetricObject(name, value.variance()))
 
         # reset dynamic non int dicts
         self.gauges = defaultdict(PercentileMetric)

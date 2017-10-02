@@ -68,6 +68,7 @@ ISSUUOEMBED_PATTERN = re.compile('^/(oembed|oembed_wp|oembed_tumblr)($|/.+)')
 ISSUUPUBLISHERSTORE_PATTERN = re.compile('^/store/publishers/(?P<publisher>[^/]+)/docs/.+')
 ISSUUSTORE_PATTERN = re.compile('^/store($|/.+)')
 ISSUUCLAIM_PATTERN = re.compile('^/claim-account($|/.+)')
+ISSUUDIRECTORY_PATTERN = re.compile('^/dir($|/.+)')
 
 ISSUU_THINLAYER_CALLS = [
     '_debug',
@@ -1367,6 +1368,8 @@ class HaProxyLogster(LogsterParser):
                             self.urlstat(__d, "emailrejected")
                         elif ISSUUOPTOUT_PATTERN.match(__iu.path):
                             self.urlstat(__d, "optout")
+                        elif ISSUUDIRECTORY_PATTERN.match(__iu.path):
+                            self.urlstat(__d, "directory")
                         elif ISSUUCLAIM_PATTERN.match(__iu.path):
                             self.urlstat(__d, "claim-account")
                         elif ISSUUOEMBED_PATTERN.match(__iu.path):

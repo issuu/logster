@@ -1319,6 +1319,8 @@ class HaProxyLogster(LogsterParser):
                         try:
                             self.ip_counter['backend-'+__d['backend_name']][client_ip.ip] += 1
                         except:
+                            if not 'backend-'+__d['backend_name'] in self.ip_counter:
+                                self.ip_counter['backend-'+__d['backend_name']] = {}
                             self.ip_counter['backend-'+__d['backend_name']][client_ip.ip] = 1
                     try:
                         self.ip_counter['all-backends'][client_ip.ip] += 1

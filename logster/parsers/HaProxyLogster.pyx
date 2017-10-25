@@ -715,7 +715,9 @@ class HaProxyLogster(LogsterParser):
         #Feb  1 14:26:47 localhost haproxy[14146]: '
         # - or
         #2015-08-31T14:27:15.868400+00:00 prod-web-proxy haproxy[3488]: INFO 10.141.243.144:39290
-        self.add_pattern('log_time', r'(\S+( |  )\d+ \d+:\d+:\d+|\d+\-\d+\-\d+T\d+:\d+:\d+\.\d+\+\d+:\d+)')
+        # - or
+        #2017-10-25T08:26:22+00:00
+        self.add_pattern('log_time', r'(\S+( |  )\d+ \d+:\d+:\d+|\d+\-\d+\-\d+T\d+:\d+:\d+(\.\d+)?\+\d+:\d+)')
         self.add_pattern('hostname', r'\S+')
         self.add_pattern('process_id', r'\S+', ': ')
 
@@ -800,7 +802,7 @@ class HaProxyLogster(LogsterParser):
         # 2016-08-02T07:33:13.129175+00:00 wwwproxy-1 haproxy[726]: NOTICE Server crawler/www5 is UP. 3 active and 0 backup servers online. 0 sessions requeued, 0 total in queue.
         #
         self.reset_pattern()
-        self.add_pattern('log_time', r'(\S+( |  )\d+ \d+:\d+:\d+|\d+\-\d+\-\d+T\d+:\d+:\d+\.\d+\+\d+:\d+)')
+        self.add_pattern('log_time', r'(\S+( |  )\d+ \d+:\d+:\d+|\d+\-\d+\-\d+T\d+:\d+:\d+(\.\d+)?\+\d+:\d+)')
         self.add_pattern('hostname', r'\S+')
         self.add_pattern('process_id', r'\S+', ': ')
         self.add_pattern('level', r'\S+')
@@ -823,7 +825,7 @@ class HaProxyLogster(LogsterParser):
         # 2016-08-02T07:33:25.822150+00:00 wwwproxy-1 haproxy[726]: NOTICE Health check for server crawler/www6 succeeded, reason: Layer7 check passed, code: 200, info: "OK", check duration: 242ms, status: 1/2 DOWN.
         #
         self.reset_pattern()
-        self.add_pattern('log_time', r'(\S+( |  )\d+ \d+:\d+:\d+|\d+\-\d+\-\d+T\d+:\d+:\d+\.\d+\+\d+:\d+)')
+        self.add_pattern('log_time', r'(\S+( |  )\d+ \d+:\d+:\d+|\d+\-\d+\-\d+T\d+:\d+:\d+(\.\d+)?\+\d+:\d+)')
         self.add_pattern('hostname', r'\S+')
         self.add_pattern('process_id', r'\S+', ': ')
         self.add_pattern('level', r'\S+')
@@ -845,7 +847,7 @@ class HaProxyLogster(LogsterParser):
         #
         self.reset_pattern()
         # start/stop/pause haproxy
-        self.add_pattern('log_time', r'(\S+( |  )\d+ \d+:\d+:\d+|\d+\-\d+\-\d+T\d+:\d+:\d+\.\d+\+\d+:\d+)')
+        self.add_pattern('log_time', r'(\S+( |  )\d+ \d+:\d+:\d+|\d+\-\d+\-\d+T\d+:\d+:\d+(\.\d+)?\+\d+:\d+)')
         self.add_pattern('hostname', r'\S+')
         self.add_pattern('process_id', r'\S+', ': ')
         self.add_pattern('level', r'\S+')
@@ -857,7 +859,7 @@ class HaProxyLogster(LogsterParser):
         #
         self.reset_pattern()
         # start/stop/pause haproxy
-        self.add_pattern('log_time', r'(\S+( |  )\d+ \d+:\d+:\d+|\d+\-\d+\-\d+T\d+:\d+:\d+\.\d+\+\d+:\d+)')
+        self.add_pattern('log_time', r'(\S+( |  )\d+ \d+:\d+:\d+|\d+\-\d+\-\d+T\d+:\d+:\d+(\.\d+)?\+\d+:\d+)')
         self.add_pattern('hostname', r'\S+')
         self.add_pattern('process_id', r'\S+', ': ')
         self.add_pattern('level', r'\S+')

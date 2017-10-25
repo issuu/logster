@@ -691,24 +691,23 @@ class HaProxyLogster(LogsterParser):
  
         self.ignore_variance_below = opts.variancethreshold
 
-        if opts.pxy_socket is None:
-            print >> sys.stderr, 'Missing --socket option'
-            raise Exception("Missing --socket option")
-
         self.verifybot = []
         if opts.verifybot:
             self.verifybot = [x.lower() for x in opts.verifybot.split(',')]
 
-        # Get/parse running haproxy config (frontends, backends, servers)
-        # Plus info stat - session rate ....
-        haproxy = HaPConn(opts.pxy_socket)
-        cmd = showInfo
-        ha_info = haproxy.sendCmd(cmd(), objectify=True)
-        haproxy.close()
-        haproxy = HaPConn(opts.pxy_socket)
-        cmd = listStats
-        ha_stats = haproxy.sendCmd(cmd(), objectify=True)
-        haproxy.close()
+        if opts.pxy_socket is not None:
+            # Get/parse running haproxy config (frontends, backends, servers)
+            # Plus info stat - session rate ....
+            haproxy = HaPConn(opts.pxy_socket)
+            cmd = showInfo
+            ha_info = haproxy.sendCmd(cmd(), objectify=True)
+            haproxy.close()
+            haproxy = HaPConn(opts.pxy_socket)
+            cmd = listStats
+            ha_stats = haproxy.sendCmd(cmd(), objectify=True)
+            haproxy.close()
+        else:
+            ha_stats = []
 
         #consists of
         #Nov 29 14:26:47 localhost haproxy[14146]: '

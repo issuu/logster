@@ -707,6 +707,7 @@ class HaProxyLogster(LogsterParser):
             ha_stats = haproxy.sendCmd(cmd(), objectify=True)
             haproxy.close()
         else:
+            ha_info = None
             ha_stats = []
 
         #consists of
@@ -875,9 +876,10 @@ class HaProxyLogster(LogsterParser):
         self.counters["{}.meta.health-notice.{}".format(self.prefix, self.nodename)] = 0
         self.counters["{}.meta.exceptions.{}".format(self.prefix, self.nodename)] = 0
 
-        self.counters["{}.stats.cur-conns.{}".format(self.prefix, self.nodename)] = int(ha_info['CurrConns'])
-        self.counters["{}.stats.tasks.{}".format(self.prefix, self.nodename)] = int(ha_info['Tasks'])
-        self.counters["{}.stats.run-queue.{}".format(self.prefix, self.nodename)] = int(ha_info['Run_queue'])
+        if ha_info is not None:
+            self.counters["{}.stats.cur-conns.{}".format(self.prefix, self.nodename)] = int(ha_info['CurrConns'])
+            self.counters["{}.stats.tasks.{}".format(self.prefix, self.nodename)] = int(ha_info['Tasks'])
+            self.counters["{}.stats.run-queue.{}".format(self.prefix, self.nodename)] = int(ha_info['Run_queue'])
 
         self.counters["{}.request.internal.{}".format(self.prefix, self.nodename)] = 0
         self.counters["{}.request.external.{}".format(self.prefix, self.nodename)] = 0

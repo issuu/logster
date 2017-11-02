@@ -944,6 +944,9 @@ class HaProxyLogster(LogsterParser):
                     self.counters["{}.stats.browser.ua.crawlers.fake-bingbot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.real-bingbot.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.fake-bingpreview.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.real-bingpreview.{}".format(self.prefix, suffix)] = 0
+                    self.counters["{}.stats.browser.ua.crawlers.bingpreview.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, suffix)] = 0
                     self.counters["{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, suffix)] = 0
@@ -1181,6 +1184,13 @@ class HaProxyLogster(LogsterParser):
                                     else:
                                         self.increment("{}.stats.browser.ua.crawlers.real-bingbot.{}".format(self.prefix, suffix))
                                 self.increment("{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, suffix))
+                            elif 'bingpreview' in _iua:
+                                if 'bingbot' in self.verifybot:
+                                    if not verifyBingBot(client_ip):
+                                        self.increment("{}.stats.browser.ua.crawlers.fake-bingpreview.{}".format(self.prefix, suffix))
+                                    else:
+                                        self.increment("{}.stats.browser.ua.crawlers.real-bingpreview.{}".format(self.prefix, suffix))
+                                self.increment("{}.stats.browser.ua.crawlers.bingpreview.{}".format(self.prefix, suffix))
                             elif 'applebot' in _iua:
                                 if 'applebot' in self.verifybot:
                                     if not verifyAppleBot(client_ip):

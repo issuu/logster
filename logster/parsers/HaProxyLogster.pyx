@@ -1116,19 +1116,112 @@ class HaProxyLogster(LogsterParser):
             self.is_preview_browser = False
 
             if ua:
+                _iua = ua['string'].lower()
                 # Spider
                 if ua['device']['family'] == 'Spider':
                     self.is_spider = True
                 elif ua['device']['family'] == 'Other' or ua['os']['family'] == 'Other':
-                    if BOT_PATTERN.match(ua['string']):
+                    if BOT_PATTERN.match(_iua):
                         self.is_spider = True
-                    elif IMGPROXY_PATTERN.match(ua['string']):
+                    elif IMGPROXY_PATTERN.match(_iua):
                         self.is_img_proxy = True
-                    elif PREVIEW_PATTERN.match(ua['string']):
+                    elif PREVIEW_PATTERN.match(_iua):
                         self.is_preview_browser = True
+                if self.is_spider:
+                    if 'googlebot-news' in _iua:
+                        crawler = "googlebot-news"
+                    elif 'googlebot-image' in _iua:
+                        crawler = "googlebot-image"
+                    elif 'googlebot-video' in _iua:
+                        crawler = "googlebot-video"
+                    elif 'googlebot-mobile' in _iua:
+                        crawler = "googlebot-mobile"
+                    elif 'mediapartners-google' in _iua:
+                        crawler = "google-adsense"
+                    elif 'adsbot-google' in _iua:
+                        crawler = "google-adsbot"
+                    elif ua['user_agent']['family'] == 'Googlebot' or 'google' in _iua:
+                        if 'googlebot' in self.verifybot:
+                            if not verifyGoogleBot(client_ip):
+                                crawler = "fake-googlebot"
+                            else:
+                                crawler = "real-googlebot"
+                        else:
+                            crawler = "googlebot"
+                    elif 'bingbot' in _iua:
+                        if 'bingbot' in self.verifybot:
+                            if not verifyBingBot(client_ip):
+                                crawler = "fake-bingbot"
+                            else:
+                                crawler = "real-bingbot"
+                        else:
+                            crawler = "bingbot"
+                    elif 'bingpreview' in _iua:
+                        if 'bingbot' in self.verifybot:
+                            if not verifyBingBot(client_ip):
+                                crawler = "fake-bingpreview"
+                            else:
+                                crawler = "real-bingpreview"
+                        else:
+                            crawler = "bingpreview"
+                    elif 'applebot' in _iua:
+                        if 'applebot' in self.verifybot:
+                            if not verifyAppleBot(client_ip):
+                                crawler = "fake-applebot"
+                            else:
+                                crawler = "real-applebot"
+                        else:
+                            crawler = "applebot"
+                    elif 'yahoo! slurp' in _iua:
+                        crawler = "yahoo"
+                    elif 'baiduspider' in _iua:
+                        crawler = "baiduspider"
+                    elif 'yandexbot' in _iua:
+                        crawler = "yandex"
+                    elif 'python' in _iua:
+                        crawler = "python"
+                    elif 'clickagy' in _iua:
+                        crawler = "clickagy"
+                    elif 'twitterbot' in _iua:
+                        crawler = "twitterbot"
+                    elif 'whatsapp' in _iua:
+                        crawler = "whatsapp"
+                    elif 'turnitinbot' in _iua:
+                        crawler = "turnitinbot"
+                    elif 'getintent' in _iua:
+                        crawler = "getintent"
+                    elif 'coldfusion' in _iua:
+                        crawler = "coldfusion"
+                    elif 'sentry' in _iua:
+                        crawler = "sentry"
+                    elif 'java' in _iua:
+                        crawler = "java"
+                    elif 'curl' in _iua:
+                        crawler = "curl"
+                    elif 'nutch' in _iua:
+                        crawler = "nutch"
+                    elif 'node-fetch' in _iua:
+                        crawler = "node-fetch"
+                    elif 'facebook' in _iua:
+                        crawler = "facebook"
+                    elif 'pinterest' in _iua:
+                        crawler = "pinterest"
+                    elif 'opensiteexplorer' in _iua:
+                        crawler = "opensiteexplorer"
+                    elif 'seznambot' in _iua:
+                        crawler = "seznambot"
+                    elif 'siteimprove' in _iua:
+                        crawler = "siteimprove"
+                    elif 'archive-it' in _iua:
+                        crawler = "archive-it"
+                    elif 'mj12bot' in _iua:
+                        crawler = "mj12bot"
+                    else:
+                        crawler = "other"
             elif ua is None and 'crh_user-agent' in __d and client_ip.iptype() != 'PRIVATE':
                 # Empty User-Agent string and none private network - mark it as a spider
                 self.is_spider = True
+
 
             # try and do all this in one for-loop
             for backend in ["backend-" + __d['backend_name'], "all-backends"]:
@@ -1156,96 +1249,7 @@ class HaProxyLogster(LogsterParser):
                     self.increment("{}.stats.browser.ua.crawlers.{}".format(self.prefix, suffix))
                     if ua:
                         self.increment("{}.stats.browser.ua.crawlers.real.{}".format(self.prefix, suffix))
-                        _iua = ua['string'].lower()
-                        try:
-                            if 'googlebot-news' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.googlebot-news.{}".format(self.prefix, suffix))
-                            elif 'googlebot-image' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.googlebot-image.{}".format(self.prefix, suffix))
-                            elif 'googlebot-video' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.googlebot-video.{}".format(self.prefix, suffix))
-                            elif 'googlebot-mobile' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.googlebot-mobile.{}".format(self.prefix, suffix))
-                            elif 'mediapartners-google' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.google-adsense.{}".format(self.prefix, suffix))
-                            elif 'adsbot-google' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.google-adsbot.{}".format(self.prefix, suffix))
-                            elif ua['user_agent']['family'] == 'Googlebot' or 'google' in _iua:
-                                if 'googlebot' in self.verifybot:
-                                    if not verifyGoogleBot(client_ip):
-                                        self.increment("{}.stats.browser.ua.crawlers.fake-googlebot.{}".format(self.prefix, suffix))
-                                    else:
-                                        self.increment("{}.stats.browser.ua.crawlers.real-googlebot.{}".format(self.prefix, suffix))
-                                self.increment("{}.stats.browser.ua.crawlers.googlebot.{}".format(self.prefix, suffix))
-                            elif 'bingbot' in _iua:
-                                if 'bingbot' in self.verifybot:
-                                    if not verifyBingBot(client_ip):
-                                        self.increment("{}.stats.browser.ua.crawlers.fake-bingbot.{}".format(self.prefix, suffix))
-                                    else:
-                                        self.increment("{}.stats.browser.ua.crawlers.real-bingbot.{}".format(self.prefix, suffix))
-                                self.increment("{}.stats.browser.ua.crawlers.bingbot.{}".format(self.prefix, suffix))
-                            elif 'bingpreview' in _iua:
-                                if 'bingbot' in self.verifybot:
-                                    if not verifyBingBot(client_ip):
-                                        self.increment("{}.stats.browser.ua.crawlers.fake-bingpreview.{}".format(self.prefix, suffix))
-                                    else:
-                                        self.increment("{}.stats.browser.ua.crawlers.real-bingpreview.{}".format(self.prefix, suffix))
-                                self.increment("{}.stats.browser.ua.crawlers.bingpreview.{}".format(self.prefix, suffix))
-                            elif 'applebot' in _iua:
-                                if 'applebot' in self.verifybot:
-                                    if not verifyAppleBot(client_ip):
-                                        self.increment("{}.stats.browser.ua.crawlers.fake-applebot.{}".format(self.prefix, suffix))
-                                    else:
-                                        self.increment("{}.stats.browser.ua.crawlers.real-applebot.{}".format(self.prefix, suffix))
-                                self.increment("{}.stats.browser.ua.crawlers.applebot.{}".format(self.prefix, suffix))
-                            elif 'yahoo! slurp' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.yahoo.{}".format(self.prefix, suffix))
-                            elif 'baiduspider' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.baiduspider.{}".format(self.prefix, suffix))
-                            elif 'yandexbot' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.yandex.{}".format(self.prefix, suffix))
-                            elif 'python' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.python.{}".format(self.prefix, suffix))
-                            elif 'clickagy' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.clickagy.{}".format(self.prefix, suffix))
-                            elif 'twitterbot' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.twitterbot.{}".format(self.prefix, suffix))
-                            elif 'whatsapp' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.whatsapp.{}".format(self.prefix, suffix))
-                            elif 'turnitinbot' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.turnitinbot.{}".format(self.prefix, suffix))
-                            elif 'getintent' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.getintent.{}".format(self.prefix, suffix))
-                            elif 'coldfusion' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.coldfusion.{}".format(self.prefix, suffix))
-                            elif 'sentry' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.sentry.{}".format(self.prefix, suffix))
-                            elif 'java' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.java.{}".format(self.prefix, suffix))
-                            elif 'curl' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.curl.{}".format(self.prefix, suffix))
-                            elif 'nutch' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.nutch.{}".format(self.prefix, suffix))
-                            elif 'node-fetch' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.node-fetch.{}".format(self.prefix, suffix))
-                            elif 'facebook' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.facebook.{}".format(self.prefix, suffix))
-                            elif 'pinterest' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.pinterest.{}".format(self.prefix, suffix))
-                            elif 'opensiteexplorer' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.opensiteexplorer.{}".format(self.prefix, suffix))
-                            elif 'seznambot' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.seznambot.{}".format(self.prefix, suffix))
-                            elif 'siteimprove' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.siteimprove.{}".format(self.prefix, suffix))
-                            elif 'archive-it' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.archive-it.{}".format(self.prefix, suffix))
-                            elif 'mj12bot' in _iua:
-                                self.increment("{}.stats.browser.ua.crawlers.mj12bot.{}".format(self.prefix, suffix))
-                            else:
-                                self.increment("{}.stats.browser.ua.crawlers.other.{}".format(self.prefix, suffix))
-                        except:
-                            pass
+                        self.increment("{}.stats.browser.ua.crawlers.{}.{}".format(self.prefix, crawler, suffix))
                     else:
                         self.increment("{}.stats.browser.ua.crawlers.empty-ua.{}".format(self.prefix, suffix))
                     if self.sc >= 400 and self.sc <= 499:
